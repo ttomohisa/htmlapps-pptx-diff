@@ -1,0 +1,26 @@
+{
+  "$schema": "./schemas/app-config.schema.json",
+  "name": "PPTX Diff",
+  "nameJa": "PPTX Diff",
+  "slug": "pptx-diff",
+  "version": "1.0.0",
+  "description": "Compare two PowerPoint PPTX files locally with semantic and visual differences, speaker-note comparison, filters, and a high-fidelity self-extracting HTML report.",
+  "descriptionJa": "2つのPowerPoint（PPTX）ファイルを完全ローカル処理で比較し、内容・配置・書式・発表者ノートの差分と高精細プレビュー、自己展開HTMLレポートで変更を確認するツールです。",
+  "defaultLanguage": "auto",
+  "repository": {
+    "owner": "ttomohisa",
+    "name": "htmlapps-pptx-diff"
+  },
+  "build": {
+    "output": "dist/index.html",
+    "blockRuntimeNetwork": true,
+    "selfExtract": {
+      "enabled": true,
+      "output": "dist/index.self-extract.html"
+    },
+    "sizeBudget": {
+      "readableWarningMb": 25,
+      "selfExtractWarningMb": 12
+    }
+  }
+}
