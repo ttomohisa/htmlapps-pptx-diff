@@ -233,6 +233,16 @@ $buildArguments = @{}
 if ($ForceDownload) { $buildArguments.ForceDownload = $true }
 & (Join-Path $Root "build-standalone.ps1") @buildArguments
 
+if (-not (Get-Command node -ErrorAction SilentlyContinue)) { throw "Node.js 22 or newer is required for repository regression checks." }
+& node (Join-Path $Root "scripts/test-release-v100.mjs")
+if ($LASTEXITCODE -ne 0) { throw "Stable-release regression checks failed." }
+& node (Join-Path $Root "scripts/test-release-parity.mjs")
+if ($LASTEXITCODE -ne 0) { throw "Generated-release parity checks failed." }
+foreach ($target in @("src/index.template.html", "dist/index.html", "pptx-diff.html", "dist/index.self-extract.html")) {
+  & node (Join-Path $Root "scripts/test-comparison-ownership.mjs") $target
+  if ($LASTEXITCODE -ne 0) { throw "Comparison ownership regression checks failed: $target" }
+}
+
 Write-Host "[OK] Repository check passed." -ForegroundColor Green
 
 # WebRTC readiness DataChannel regression

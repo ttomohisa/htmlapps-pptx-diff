@@ -1003,6 +1003,7 @@
       <ol>
         <li data-i18n="helpStep1">「元のファイル」と「変更後のファイル」に、それぞれ .pptx を選択します。</li>
         <li data-i18n="helpStep2">「スライドを比較」を押すと、2つの資料をブラウザ内で解析します。</li>
+        <li data-i18n="helpReplacement">ファイルを選び直す・入れ替える・再比較する・配置許容値を変更すると、保存中のレポートは中止されます。新しい比較結果から再度保存してください。</li>
         <li data-i18n="helpStep3">比較結果でスライドを確認し、「変更内容を見る」と「見た目で比較」を使い分けて差分を確認できます。</li>
       </ol>
       <h3 data-i18n="helpPrivacyTitle">プライバシー</h3>
@@ -1129,6 +1130,7 @@
 
       const translations = {
         ja: {
+          helpReplacement:'ファイルを選び直す・入れ替える・再比較する・配置許容値を変更すると、保存中のレポートは中止されます。新しい比較結果から再度保存してください。',
           brandMeta:'PowerPoint比較 · 完全ローカル処理', helpTitle:'使い方と注意事項', close:'閉じる',
           introTitle:'PowerPointの変更を、見た目まで比較', lead:'2つのPPTXをブラウザ内で解析し、文章・数値・画像に加えて配置や書式の変更まで確認します。', localBadge:'完全ローカル処理',
           workspaceTitle:'比較する2つのファイル', workspaceBody:'スライドの追加・削除・移動を考慮しながら、内容差分と見た目の違いをまとめて比較します。',
@@ -1145,6 +1147,7 @@
           invalidType:'PPTXファイルを選択してください。', invalidZip:'PowerPointファイルを読み込めませんでした。ファイルが破損しているか、対応していない形式の可能性があります。', encryptedZip:'パスワードで保護されたPowerPointには対応していません。', zip64Unsupported:'このPowerPointは現在対応していない大容量ZIP形式です。', compressionUnsupported:'このPPTXで使われている圧縮方式には対応していません。', browserUnsupported:'このブラウザでは圧縮されたPPTXを展開できません。ChromeまたはEdgeの最新版でお試しください。', pptxStructureMissing:'PowerPointのスライド構造を確認できませんでした。', malformedXml:'PowerPoint内部のXMLを読み取れませんでした。', analysisFailed:'比較できませんでした。', swapped:'ファイルを入れ替えました。', saveReport:'比較結果をHTMLで保存', reportConfirm:'保存するHTMLには比較した資料の文字・画像・発表者ノートなどが含まれます。共有する場合は内容を確認してください。', reportConfirmTitle:'HTMLレポートを保存', reportConfirmCancel:'キャンセル', reportConfirmOk:'保存する', reportPreparing:'高精細プレビューを準備して圧縮しています…', reportSaved:'比較結果を自己展開HTMLで保存しました。', reportFailed:'HTMLレポートを作成できませんでした。', reportTitle:'PPTX Diff 比較レポート', reportGenerated:'生成日時', reportFiles:'比較ファイル', reportHighFidelityPreview:'高精細プレビュー', reportPreviewFallback:'プレビューを生成できませんでした。', reportPrivacy:'このHTMLには比較した資料の文字・画像・発表者ノートが含まれる場合があります。共有前に内容を確認してください。'
         },
         en: {
+          helpReplacement:'Replacing or swapping files, comparing again, or changing geometry tolerance cancels a pending report. Save again from the new comparison.',
           brandMeta:'PowerPoint comparison · Fully local processing', helpTitle:'How to use & notes', close:'Close',
           introTitle:'Compare PowerPoint revisions down to layout and formatting', lead:'Analyze two PPTX files in your browser and review text, numbers, images, layout, and basic formatting changes.', localBadge:'Fully local processing',
           workspaceTitle:'Choose two files', workspaceBody:'Match slides while accounting for additions, removals, and moves, then compare content differences and the visual result together.',
@@ -1190,6 +1193,7 @@
         visualRenderHandles: [],
         visualRenderGeneration: 0,
         reportBusy: false,
+        reportJob: null,
         errorCode: ''
       };
 
@@ -1242,6 +1246,7 @@
       }
       function setPhase(phase) { state.phase=phase; updateReadyState(); }
       function updateReadyState() {
+        updateReportState();
         const ready=Boolean(state.slots.original.file && state.slots.revised.file);
         $('#analyzeButton').disabled=!ready || state.phase==='processing';
         $('#swapButton').disabled=state.phase==='processing' || (!state.slots.original.file && !state.slots.revised.file);
@@ -1261,11 +1266,33 @@
         }
       }
 
+      function updateReportState() {
+        const button=$('#saveReportButton');
+        button.disabled=Boolean(state.reportJob)||state.phase!=='result'||!state.models||!state.matching;
+        if(state.reportBusy) button.setAttribute('aria-busy','true'); else button.removeAttribute('aria-busy');
+        $('#saveReportSpinner').hidden=!state.reportBusy;
+        $('#saveReportButtonLabel').textContent=t(state.reportBusy?'reportPreparing':'saveReport');
+      }
+      function invalidateReport() {
+        // A stale job keeps only its own temporary resources until its await settles.
+        state.reportJob=null; state.reportBusy=false; updateReportState();
+      }
+      function resetComparison() {
+        state.runGeneration+=1;
+        releaseModelUrls(state.models); disposeVisualRenderHandles();
+        state.rendererPresentations={original:null,revised:null};
+        clearRendererCache('original'); clearRendererCache('revised');
+        state.rendererMediaCaches={original:new Map(),revised:new Map()};
+        state.models=null; state.matching=null; state.errorCode='';
+        invalidateReport(); $('#resultSection').hidden=true;
+        $('#workspace').removeAttribute('aria-busy'); $('#analyzeSpinner').hidden=true; $('#analyzeButtonLabel').textContent=t('analyze');
+      }
+
       function acceptFile(slot,file) {
         if (!file) return;
         if (!/\.pptx$/i.test(file.name)) { AppToast.show({message:t('invalidType'),tone:'error'}); return; }
         const target=state.slots[slot]; target.generation+=1; target.file=file;
-        releaseModelUrls(state.models); disposeVisualRenderHandles(); state.rendererPresentations.original=null; state.rendererPresentations.revised=null; clearRendererCache('original'); clearRendererCache('revised'); state.runGeneration+=1; state.models=null; state.matching=null; state.diffFilter='all'; state.changedOnly=false; state.selectedPairId=null; state.phase='ready'; state.errorCode=''; $('#resultSection').hidden=true;
+        resetComparison(); state.diffFilter='all'; state.changedOnly=false; state.selectedPairId=null; state.phase='ready';
         renderFileSlot(slot); updateReadyState();
       }
 
@@ -1283,7 +1310,7 @@
       $('#swapButton').addEventListener('click',()=>{
         if (state.phase==='processing') return;
         const tmp=state.slots.original; state.slots.original=state.slots.revised; state.slots.revised=tmp;
-        releaseModelUrls(state.models); disposeVisualRenderHandles(); state.rendererPresentations.original=null; state.rendererPresentations.revised=null; clearRendererCache('original'); clearRendererCache('revised'); state.slots.original.generation+=1; state.slots.revised.generation+=1; state.runGeneration+=1; state.models=null; state.matching=null; state.diffFilter='all'; state.changedOnly=false; state.selectedPairId=null; state.phase='ready'; state.errorCode=''; $('#resultSection').hidden=true;
+        state.slots.original.generation+=1; state.slots.revised.generation+=1; resetComparison(); state.diffFilter='all'; state.changedOnly=false; state.selectedPairId=null; state.phase='ready';
         renderFileSlot('original'); renderFileSlot('revised'); updateReadyState(); AppToast.show({message:t('swapped')});
       });
 
@@ -1572,17 +1599,19 @@
       }
       async function hydrateImagePreviews(slides,zip,guard) {
         const cache=new Map(), urls=[];
-        for(const slide of slides) {
-          for(const obj of slide.objects) {
-            if(obj.type!=='image'||!obj.resource?.path) continue;
-            if(cache.has(obj.resource.path)) { obj.resource.previewUrl=cache.get(obj.resource.path); continue; }
-            guard(); const bytes=await readZipEntry(zip,obj.resource.path); guard();
-            if(!bytes) continue;
-            const url=URL.createObjectURL(new Blob([bytes],{type:imageMimeType(obj.resource.path)}));
-            cache.set(obj.resource.path,url); urls.push(url); obj.resource.previewUrl=url;
+        try {
+          for(const slide of slides) {
+            for(const obj of slide.objects) {
+              if(obj.type!=='image'||!obj.resource?.path) continue;
+              if(cache.has(obj.resource.path)) { obj.resource.previewUrl=cache.get(obj.resource.path); continue; }
+              guard(); const bytes=await readZipEntry(zip,obj.resource.path); guard();
+              if(!bytes) continue;
+              const url=URL.createObjectURL(new Blob([bytes],{type:imageMimeType(obj.resource.path)}));
+              cache.set(obj.resource.path,url); urls.push(url); obj.resource.previewUrl=url;
+            }
           }
-        }
-        return urls;
+          return urls;
+        } catch(error) { releaseModelUrls({original:{previewUrls:urls}}); throw error; }
       }
       function releaseModelUrls(models) {
         if(!models) return;
@@ -1615,7 +1644,8 @@
           slides.push(slide);
           progress?.(i+1,slideIds.length);
         }
-        const previewUrls=await hydrateImagePreviews(slides,zip,guard); guard();
+        const previewUrls=await hydrateImagePreviews(slides,zip,guard);
+        try { guard(); } catch(error) { releaseModelUrls({original:{previewUrls}}); throw error; }
         const textElementCount=slides.reduce((sum,slide)=>sum+slide.text.length,0);
         const objectCount=slides.reduce((sum,slide)=>sum+slide.objects.length,0);
         const notesCount=slides.filter(slide=>slide.notesText?.trim()).length;
@@ -2020,31 +2050,38 @@
 
       async function analyze() {
         const original=state.slots.original.file, revised=state.slots.revised.file; if(!original||!revised) return;
-        const run=++state.runGeneration, og=state.slots.original.generation, rg=state.slots.revised.generation;
-        const guard=()=>{ if(run!==state.runGeneration || og!==state.slots.original.generation || rg!==state.slots.revised.generation) throw new DOMException('Stale analysis','AbortError'); };
+        resetComparison();
+        const run=state.runGeneration, og=state.slots.original.generation, rg=state.slots.revised.generation;
+        const isCurrent=()=>run===state.runGeneration&&og===state.slots.original.generation&&rg===state.slots.revised.generation;
+        const guard=()=>{ if(!isCurrent()) throw new DOMException('Stale analysis','AbortError'); };
+        const models={original:null,revised:null}; let committed=false;
         setPhase('processing'); $('#resultSection').hidden=true; $('#workspace').setAttribute('aria-busy','true'); $('#analyzeSpinner').hidden=false; $('#analyzeButtonLabel').textContent=t('analyzing');
         try {
           let phaseLabel=t('original');
-          const showProgress=(done,total)=>setStatus(`${t('statusProcessing')} — ${phaseLabel}: ${done} / ${total}`,'processing');
+          const showProgress=(done,total)=>{ guard(); setStatus(`${t('statusProcessing')} — ${phaseLabel}: ${done} / ${total}`,'processing'); };
           setStatus(`${t('statusProcessing')} — ${phaseLabel}`,'processing');
-          const originalModel=await parsePresentation(original,showProgress,guard); guard();
+          const originalModel=models.original=await parsePresentation(original,showProgress,guard); guard();
           phaseLabel=t('revised'); setStatus(`${t('statusProcessing')} — ${phaseLabel}`,'processing');
-          const revisedModel=await parsePresentation(revised,showProgress,guard); guard();
-          await Promise.all([prepareHighFidelityPresentation('original',originalModel),prepareHighFidelityPresentation('revised',revisedModel)]); guard();
+          const revisedModel=models.revised=await parsePresentation(revised,showProgress,guard); guard();
+          await Promise.all([prepareHighFidelityPresentation('original',originalModel,guard),prepareHighFidelityPresentation('revised',revisedModel,guard)]); guard();
           setStatus(t('statusMatching'),'processing');
           await new Promise(resolve=>setTimeout(resolve,0)); guard();
           const matching=matchSlides(originalModel,revisedModel); guard();
           setStatus(t('statusSemantic'),'processing');
           await new Promise(resolve=>setTimeout(resolve,0)); guard();
           attachSemanticDiff(matching); guard();
-          state.models={original:originalModel,revised:revisedModel}; state.matching=matching; state.phase='result'; renderResults(state.models); $('#resultSection').hidden=false; setStatus(t('statusDone'),'success');
+          state.models=models; committed=true; state.matching=matching; state.phase='result'; renderResults(state.models); $('#resultSection').hidden=false; setStatus(t('statusDone'),'success');
           $('#resultSection').scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'});
           $('#resultTitle').focus({preventScroll:true});
         } catch(error) {
-          if(error?.name==='AbortError') return;
+          if(!isCurrent()) return;
+          committed=false;
+          if(error?.name==='AbortError') { setPhase('ready'); return; }
+          disposeVisualRenderHandles(); state.rendererPresentations={original:null,revised:null}; clearRendererCache('original'); clearRendererCache('revised');
           state.models=null; state.matching=null; state.phase='error'; state.errorCode=error instanceof PptxError ? error.code : 'analysisFailed'; $('#resultSection').hidden=true; setStatus(errorMessage(error),'error');
         } finally {
-          $('#workspace').removeAttribute('aria-busy'); $('#analyzeSpinner').hidden=true; $('#analyzeButtonLabel').textContent=t('analyze'); updateReadyState();
+          if(!committed) releaseModelUrls(models);
+          if(isCurrent()) { $('#workspace').removeAttribute('aria-busy'); $('#analyzeSpinner').hidden=true; $('#analyzeButtonLabel').textContent=t('analyze'); updateReadyState(); }
         }
       }
       $('#analyzeButton').addEventListener('click',analyze);
@@ -2150,16 +2187,16 @@
         card.append(body); return card;
       }
       function mixedValue(value) { return typeof value==='string'&&value.startsWith('mixed:'); }
-      function displayPropertyValue(value,kind) {
-        if(value===null||value===undefined||value==='') return t('notSpecified');
-        if(mixedValue(value)) return t('mixedValue');
+      function displayPropertyValue(value,kind,translate=t) {
+        if(value===null||value===undefined||value==='') return translate('notSpecified');
+        if(mixedValue(value)) return translate('mixedValue');
         if(kind==='emu') return `${(Number(value)/360000).toFixed(2)} cm`;
         if(kind==='degree') return `${Number(value).toFixed(1)}°`;
         if(kind==='pt') return `${Number(value).toFixed(1).replace(/\.0$/,'')} pt`;
-        if(kind==='boolean') return value===true||value==='true'?t('enabledValue'):t('disabledValue');
-        if(kind==='fill' && String(value).startsWith('gradient:')) return t('gradientValue');
-        if(kind==='fill' && String(value).startsWith('pattern:')) return t('patternValue');
-        if((kind==='fill'||kind==='color') && value==='none') return t('noneValue');
+        if(kind==='boolean') return value===true||value==='true'?translate('enabledValue'):translate('disabledValue');
+        if(kind==='fill' && String(value).startsWith('gradient:')) return translate('gradientValue');
+        if(kind==='fill' && String(value).startsWith('pattern:')) return translate('patternValue');
+        if((kind==='fill'||kind==='color') && value==='none') return translate('noneValue');
         return String(value);
       }
       function propertyValueNode(value,kind) {
@@ -2357,7 +2394,10 @@
         for(const handle of state.visualRenderHandles.splice(0)){ try{ handle?.dispose?.(); }catch{} }
       }
       function clearRendererCache(side) {
-        const cache=state.rendererMediaCaches?.[side]; if(!cache) return;
+        releaseRendererCache(state.rendererMediaCaches?.[side]);
+      }
+      function releaseRendererCache(cache) {
+        if(!cache) return;
         for(const value of cache.values()){ if(typeof value==='string'&&value.startsWith('blob:')) try{URL.revokeObjectURL(value);}catch{} }
         cache.clear();
       }
@@ -2383,13 +2423,14 @@
         })();
         return state.rendererModulePromise;
       }
-      async function prepareHighFidelityPresentation(side,model) {
-        clearRendererCache(side); state.rendererPresentations[side]=null;
-        const module=await loadHighFidelityRenderer(); if(!module||!model?.sourceBuffer) return false;
+      async function prepareHighFidelityPresentation(side,model,guard) {
+        guard();
+        const module=await loadHighFidelityRenderer(); guard(); if(!module||!model?.sourceBuffer) return false;
         try{
-          const files=await module.parseZip(model.sourceBuffer,module.RECOMMENDED_ZIP_LIMITS);
-          state.rendererPresentations[side]=module.buildPresentation(files); return true;
-        }catch(error){ console.warn(`High-fidelity ${side} render preparation failed`,error); return false; }
+          const files=await module.parseZip(model.sourceBuffer,module.RECOMMENDED_ZIP_LIMITS); guard();
+          const presentation=module.buildPresentation(files); guard();
+          state.rendererPresentations[side]=presentation; return true;
+        }catch(error){ guard(); console.warn(`High-fidelity ${side} render preparation failed`,error); return false; }
       }
       function renderedSize(element) {
         const width=parseFloat(element.style?.width)||element.scrollWidth||element.offsetWidth||960;
@@ -2465,13 +2506,14 @@
         const module=state.rendererModule||await loadHighFidelityRenderer(), presentation=state.rendererPresentations?.[side];
         if(!module||!presentation||!slide||generation!==state.visualRenderGeneration||!mount.isConnected) return;
         const rendererSlide=presentation.slides?.[Math.max(0,slide.index-1)]; if(!rendererSlide) return;
+        const mediaUrlCache=state.rendererMediaCaches[side];
         let handle=null,frame=null;
         try{
           // Charts inside @aiden0z/pptx-renderer initialize on the next animation frame
           // only when their container is connected and has a measurable size. Mount the
           // slide immediately, then await ready; awaiting first leaves chart containers
           // detached and ECharts intentionally skips initialization.
-          handle=module.renderSlide(presentation,rendererSlide,{mediaUrlCache:state.rendererMediaCaches[side],pdfjs:false,onNodeError:(nodeId,error)=>console.warn('PPTX node',nodeId,error)});
+          handle=module.renderSlide(presentation,rendererSlide,{mediaUrlCache,pdfjs:false,onNodeError:(nodeId,error)=>console.warn('PPTX node',nodeId,error)});
           frame=document.createElement('div'); frame.className='pptx-render-frame'; frame.append(handle.element);
           mount.replaceChildren(frame,createHighlightOverlay(slide,highlightRegions,side,mount)); state.visualRenderHandles.push(handle);
           requestAnimationFrame(()=>fitRenderFrame(mount,frame,handle.element));
@@ -2482,6 +2524,9 @@
           if(handle){ const index=state.visualRenderHandles.indexOf(handle); if(index>=0) state.visualRenderHandles.splice(index,1); try{handle.dispose?.();}catch{} }
           try{frame?.remove();}catch{}
           console.warn('High-fidelity visual preview fallback',error);
+        } finally {
+          // Some renderer callbacks settle after dispose; retire only this source's cache.
+          if(mediaUrlCache!==state.rendererMediaCaches[side]) releaseRendererCache(mediaUrlCache);
         }
       }
       function createMissingPane(label,message,layered=false) {
@@ -2568,12 +2613,27 @@
         const root=$('#resultColumns'); root.replaceChildren(resultCard(models.original,t('original')),resultCard(models.revised,t('revised')));
       }
 
+      function captureReportContext() {
+        const language=state.language;
+        return Object.freeze({
+          generation:state.runGeneration, sourceModels:state.models, sourceMatching:state.matching,
+          models:Object.freeze({original:Object.freeze({filename:state.models.original.filename}),revised:Object.freeze({filename:state.models.revised.filename})}),
+          matching:structuredClone(state.matching), language,
+          translate:key=>translations[language]?.[key]??translations.en[key]??key,
+          rendererModule:state.rendererModule, rendererPresentations:Object.freeze({...state.rendererPresentations}),
+          mediaCaches:{original:new Map(),revised:new Map()}
+        });
+      }
+      function guardReport(context) {
+        if(state.reportJob!==context||context.generation!==state.runGeneration||context.sourceModels!==state.models||context.sourceMatching!==state.matching||state.phase!=='result') throw new DOMException('Stale report','AbortError');
+      }
+
       function reportEscape(value) { return String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch])); }
-      function reportDiffText(change,side) {
+      function reportDiffText(change,side,t) {
         const segments=change?.diff?.[side]||[];
         return segments.map(seg=>`<span class="${seg.kind==='equal'?'':side==='original'?'del':'add'}">${reportEscape(seg.text)}</span>`).join('') || `<span class="muted">${reportEscape(t('emptyText'))}</span>`;
       }
-      function reportStatus(row) { const d=statusDescriptor(row); return t(d.key); }
+      function reportStatus(row,t) { const d=statusDescriptor(row); return t(d.key); }
       function reportFaviconHref() { return document.querySelector('link[rel~="icon"]')?.href || ''; }
       const REPORT_BLOB_URL_PATTERN=/blob:[^\s"'()<>]+/g;
       async function reportDataUrlForBlobReference(url,cache) {
@@ -2622,64 +2682,67 @@
         await Promise.all(waits);
         await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
       }
-      async function reportHighFidelitySnapshot(side,slide) {
+      async function reportHighFidelitySnapshot(side,slide,context) {
+        guardReport(context);
         if(!slide) return null;
-        const module=state.rendererModule||await loadHighFidelityRenderer(), presentation=state.rendererPresentations?.[side];
+        const module=context.rendererModule, presentation=context.rendererPresentations[side];
         if(!module||!presentation) return null;
         const rendererSlide=presentation.slides?.[Math.max(0,slide.index-1)]; if(!rendererSlide) return null;
         const chartInstances=new Set();
-        const handle=module.renderSlide(presentation,rendererSlide,{mediaUrlCache:state.rendererMediaCaches[side],chartInstances,pdfjs:false,onNodeError:(nodeId,error)=>console.warn('PPTX report node',nodeId,error)});
+        const handle=module.renderSlide(presentation,rendererSlide,{mediaUrlCache:context.mediaCaches[side],chartInstances,pdfjs:false,onNodeError:(nodeId,error)=>console.warn('PPTX report node',nodeId,error)});
         let host=null;
         try{
           // Keep the rendered slide connected while renderer async tasks run. ECharts
           // requires a connected, measurable container before it can create its canvas.
           host=document.createElement('div'); host.style.cssText='position:fixed;left:-100000px;top:0;width:1200px;height:800px;overflow:visible;pointer-events:none;background:#fff;z-index:-9999;';
           host.append(handle.element); document.body.append(host);
-          await handle.ready;
-          await waitForReportCharts(chartInstances);
+          await handle.ready; guardReport(context);
+          await waitForReportCharts(chartInstances); guardReport(context);
           const source=handle.element, {width,height}=renderedSize(source), clone=source.cloneNode(true);
-          reportInlineComputedStyles(source,clone); await reportInlineBlobReferences(source,clone);
+          reportInlineComputedStyles(source,clone); await reportInlineBlobReferences(source,clone); guardReport(context);
           return {html:clone.outerHTML,width,height};
         } finally { try{host?.remove();}catch{} try{handle.dispose?.();}catch{} }
       }
-      async function buildReportPreviewSnapshots(rows) {
+      async function buildReportPreviewSnapshots(context) {
+        const rows=context.matching.rows;
         const cache=new Map(), snapshots=new Map();
         for(const row of rows){
           for(const side of ['original','revised']){
+            guardReport(context);
             const slide=row[side]; if(!slide) continue;
             const key=`${side}:${slide.index}`; if(cache.has(key)){ snapshots.set(key,cache.get(key)); continue; }
-            let snap=null; try{ snap=await reportHighFidelitySnapshot(side,slide); }catch(error){ console.warn('High-fidelity report preview fallback',side,slide.index,error); }
+            let snap=null; try{ snap=await reportHighFidelitySnapshot(side,slide,context); guardReport(context); }catch(error){ guardReport(context); console.warn('High-fidelity report preview fallback',side,slide.index,error); }
             cache.set(key,snap); snapshots.set(key,snap);
           }
         }
         return snapshots;
       }
-      function reportPreviewMarkup(side,slide,snapshots) {
+      function reportPreviewMarkup(side,slide,snapshots,t) {
         if(!slide) return `<div class="report-preview empty">—</div>`;
         const snap=snapshots?.get(`${side}:${slide.index}`);
         if(!snap) return `<div class="report-preview empty">${reportEscape(t('reportPreviewFallback'))}</div>`;
         const ratio=(snap.width/snap.height)||16/9;
         return `<div class="report-preview hf" style="aspect-ratio:${ratio}"><div class="report-render-frame" data-render-width="${snap.width}" data-render-height="${snap.height}">${snap.html}</div></div>`;
       }
-      function reportPropertyLabel(prop) { const key=prop?.labelKey||prop?.key||''; return t(key)||key; }
-      function reportPropertyValue(prop,value) { return displayPropertyValue(value,prop?.kind); }
-      function reportChangeBlocks(row) {
+      function reportPropertyLabel(prop,t) { const key=prop?.labelKey||prop?.key||''; return t(key)||key; }
+      function reportPropertyValue(prop,value,t) { return displayPropertyValue(value,prop?.kind,t); }
+      function reportChangeBlocks(row,t) {
         const s=row.semantic||{}, blocks=[];
-        (s.textChanges||[]).forEach((c,i)=>blocks.push(`<section class="change"><h4>${reportEscape(t('semanticText'))} ${i+1}</h4><div class="two"><div><b>${reportEscape(t('beforeLabel'))}</b><p>${reportDiffText(c,'original')}</p></div><div><b>${reportEscape(t('afterLabel'))}</b><p>${reportDiffText(c,'revised')}</p></div></div></section>`));
+        (s.textChanges||[]).forEach((c,i)=>blocks.push(`<section class="change"><h4>${reportEscape(t('semanticText'))} ${i+1}</h4><div class="two"><div><b>${reportEscape(t('beforeLabel'))}</b><p>${reportDiffText(c,'original',t)}</p></div><div><b>${reportEscape(t('afterLabel'))}</b><p>${reportDiffText(c,'revised',t)}</p></div></div></section>`));
         (s.numberChanges||[]).length&&blocks.push(`<section class="change"><h4>${reportEscape(t('semanticNumber'))}</h4><div class="chips">${s.numberChanges.map(c=>`<span>${reportEscape(c.original||'—')} → ${reportEscape(c.revised||'—')}</span>`).join('')}</div></section>`);
         const generic=(items,key)=>items.forEach((c,i)=>blocks.push(`<section class="change"><h4>${reportEscape(t(key))} ${i+1}</h4><p>${reportEscape(c.kind||c.reason||'changed')}</p></section>`));
         generic(s.objectChanges||[],'semanticObject'); generic(s.imageChanges||[],'semanticImage');
-        (s.layoutChanges||[]).forEach((c,i)=>blocks.push(`<section class="change"><h4>${reportEscape(t('semanticLayout'))} ${i+1}</h4><ul>${(c.changes||[]).map(prop=>`<li>${reportEscape(reportPropertyLabel(prop))}: ${reportEscape(reportPropertyValue(prop,prop.original))} → ${reportEscape(reportPropertyValue(prop,prop.revised))}</li>`).join('')}</ul></section>`));
-        (s.formattingChanges||[]).forEach((c,i)=>blocks.push(`<section class="change"><h4>${reportEscape(t('semanticFormatting'))} ${i+1}</h4><ul>${(c.changes||[]).map(prop=>`<li>${reportEscape(reportPropertyLabel(prop))}: ${reportEscape(reportPropertyValue(prop,prop.original))} → ${reportEscape(reportPropertyValue(prop,prop.revised))}</li>`).join('')}</ul></section>`));
-        (s.notesChanges||[]).forEach((c,i)=>blocks.push(`<section class="change"><h4>${reportEscape(t('semanticNotes'))} ${i+1}</h4><div class="two"><div><b>${reportEscape(t('beforeLabel'))}</b><p>${reportDiffText(c,'original')}</p></div><div><b>${reportEscape(t('afterLabel'))}</b><p>${reportDiffText(c,'revised')}</p></div></div></section>`));
+        (s.layoutChanges||[]).forEach((c,i)=>blocks.push(`<section class="change"><h4>${reportEscape(t('semanticLayout'))} ${i+1}</h4><ul>${(c.changes||[]).map(prop=>`<li>${reportEscape(reportPropertyLabel(prop,t))}: ${reportEscape(reportPropertyValue(prop,prop.original,t))} → ${reportEscape(reportPropertyValue(prop,prop.revised,t))}</li>`).join('')}</ul></section>`));
+        (s.formattingChanges||[]).forEach((c,i)=>blocks.push(`<section class="change"><h4>${reportEscape(t('semanticFormatting'))} ${i+1}</h4><ul>${(c.changes||[]).map(prop=>`<li>${reportEscape(reportPropertyLabel(prop,t))}: ${reportEscape(reportPropertyValue(prop,prop.original,t))} → ${reportEscape(reportPropertyValue(prop,prop.revised,t))}</li>`).join('')}</ul></section>`));
+        (s.notesChanges||[]).forEach((c,i)=>blocks.push(`<section class="change"><h4>${reportEscape(t('semanticNotes'))} ${i+1}</h4><div class="two"><div><b>${reportEscape(t('beforeLabel'))}</b><p>${reportDiffText(c,'original',t)}</p></div><div><b>${reportEscape(t('afterLabel'))}</b><p>${reportDiffText(c,'revised',t)}</p></div></div></section>`));
         return blocks.join('');
       }
-      function createReportHtml(snapshots) {
-        const matching=state.matching, models=state.models, lang=state.language, rows=matching.rows;
+      function createReportHtml(snapshots,context) {
+        const {matching,models,language:lang,translate:t}=context, rows=matching.rows;
         const generated=new Intl.DateTimeFormat(lang,{dateStyle:'medium',timeStyle:'short'}).format(new Date());
         const summary=[['summaryUnchanged',matching.summary.unchanged],['summaryChanged',matching.summary.changed],['summaryAdded',matching.summary.added],['summaryRemoved',matching.summary.removed],['summaryMoved',matching.summary.moved]];
         const semantic=[['semanticText',matching.semanticSummary.text],['semanticNumber',matching.semanticSummary.number],['semanticImage',matching.semanticSummary.image],['semanticLayout',matching.semanticSummary.layout],['semanticFormatting',matching.semanticSummary.formatting],['semanticNotes',matching.semanticSummary.notes]];
-        const rowHtml=rows.map((row,index)=>{ const title=row.revised?.title||row.original?.title||t('noTitle'); return `<details class="slide" open><summary><span class="slide-summary-main"><span class="slide-index">#${index+1}</span><strong>${reportEscape(title)}</strong></span><span class="slide-status">${reportEscape(reportStatus(row))}</span></summary><div class="slide-body"><div class="pair"><div class="preview-col"><div class="preview-label">${reportEscape(t('original'))}</div>${reportPreviewMarkup('original',row.original,snapshots)}</div><div class="preview-col"><div class="preview-label">${reportEscape(t('revised'))}</div>${reportPreviewMarkup('revised',row.revised,snapshots)}</div></div>${reportChangeBlocks(row)}</div></details>`; }).join('');
+        const rowHtml=rows.map((row,index)=>{ const title=row.revised?.title||row.original?.title||t('noTitle'); return `<details class="slide" open><summary><span class="slide-summary-main"><span class="slide-index">#${index+1}</span><strong>${reportEscape(title)}</strong></span><span class="slide-status">${reportEscape(reportStatus(row,t))}</span></summary><div class="slide-body"><div class="pair"><div class="preview-col"><div class="preview-label">${reportEscape(t('original'))}</div>${reportPreviewMarkup('original',row.original,snapshots,t)}</div><div class="preview-col"><div class="preview-label">${reportEscape(t('revised'))}</div>${reportPreviewMarkup('revised',row.revised,snapshots,t)}</div></div>${reportChangeBlocks(row,t)}</div></details>`; }).join('');
         return `<!doctype html><html lang="${lang}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src data:; style-src 'unsafe-inline'; script-src 'unsafe-inline'; base-uri 'none'; form-action 'none'"><title>${reportEscape(t('reportTitle'))}</title><link rel="icon" href="${reportEscape(reportFaviconHref())}"><style>:root{--a:#16624F;--bg:#f5f5f2;--line:#d9dbd5;--muted:#666963}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:#20211f;font:14px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans JP",Meiryo,sans-serif}.wrap{max-width:1180px;margin:auto;padding:28px 18px 60px}h1{margin:0 0 4px;font-size:26px}.meta{color:var(--muted);margin:0 0 18px}.privacy{padding:10px 12px;border:1px solid #e5c98f;border-radius:10px;background:#fff7e4}.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin:14px 0}.card{padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#fff}.card b{display:block;font-size:20px;color:var(--a)}.files{padding:12px;border:1px solid var(--line);border-radius:10px;background:#fff;margin:14px 0}.slide{margin:14px 0;border:1px solid var(--line);border-radius:12px;background:#fff;overflow:hidden}.slide>summary{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:12px 14px;cursor:pointer;list-style:none}.slide>summary::-webkit-details-marker{display:none}.slide>summary::before{content:'›';color:var(--a);font-size:22px;line-height:1;transform:rotate(90deg);transition:transform .15s}.slide:not([open])>summary::before{transform:rotate(0deg)}.slide-summary-main{display:flex;align-items:center;gap:9px;min-width:0;flex:1}.slide-summary-main strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.slide-index{color:var(--muted);font-size:12px}.slide-status{flex:0 0 auto;color:var(--a);font-size:12px;font-weight:750}.slide-body{padding:0 14px 14px;border-top:1px solid var(--line)}.pair{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}.preview-col{min-width:0}.preview-label{margin:0 0 5px;color:var(--muted);font-size:11px;font-weight:750}.report-preview{position:relative;width:100%;border:1px solid var(--line);border-radius:8px;background:#fff;overflow:hidden}.report-preview.hf{box-shadow:0 1px 8px rgba(25,28,24,.08)}.report-preview.empty{display:grid;place-items:center;min-height:180px;color:var(--muted)}.report-render-frame{position:absolute;left:0;top:0;transform-origin:0 0}.change{margin-top:10px;border:1px solid var(--line);border-radius:8px;overflow:hidden}.change h4{margin:0;padding:7px 9px;background:#f6f7f5;font-size:12px}.change p,.change ul{margin:0;padding:9px;white-space:pre-wrap}.two{display:grid;grid-template-columns:1fr 1fr}.two>div{padding:9px}.two>div+div{border-left:1px solid var(--line)}.two p{padding:5px 0}.del{background:#fde3df;color:#8f251f}.add{background:#dcefe8;color:#0f5d49}.chips{display:flex;flex-wrap:wrap;gap:6px;padding:9px}.chips span{padding:3px 7px;border-radius:999px;background:#e1f0ea;color:#0f5d49}.muted{color:var(--muted)}@media(max-width:650px){.pair,.two{grid-template-columns:1fr}.two>div+div{border-left:0;border-top:1px solid var(--line)}.slide>summary{align-items:flex-start}.slide-summary-main{align-items:flex-start}}</style></head><body><main class="wrap"><h1>${reportEscape(t('reportTitle'))}</h1><p class="meta">${reportEscape(t('reportGenerated'))}: ${reportEscape(generated)}</p><p class="privacy">${reportEscape(t('reportPrivacy'))}</p><section class="files"><b>${reportEscape(t('reportFiles'))}</b><div>${reportEscape(models.original.filename)} → ${reportEscape(models.revised.filename)}</div></section><div class="cards">${summary.map(([k,v])=>`<div class="card"><span>${reportEscape(t(k))}</span><b>${v}</b></div>`).join('')}</div><div class="cards">${semantic.map(([k,v])=>`<div class="card"><span>${reportEscape(t(k))}</span><b>${v||0}</b></div>`).join('')}</div>${rowHtml}</main><script>(()=>{const fit=()=>document.querySelectorAll('.report-render-frame[data-render-width]').forEach(frame=>{const shell=frame.parentElement,w=Number(frame.dataset.renderWidth)||960,h=Number(frame.dataset.renderHeight)||540,scale=Math.min(shell.clientWidth/w,shell.clientHeight/h);frame.style.width=w+'px';frame.style.height=h+'px';frame.style.transform='scale('+scale+')'});fit();addEventListener('resize',fit)})();<\/script></body></html>`;
       }
       function showAppConfirmDialog({title,message,okText,cancelText}) {
@@ -2703,23 +2766,32 @@
         const compressedStream=new Blob([html],{type:'text/html;charset=utf-8'}).stream().pipeThrough(new CompressionStream('gzip'));
         return new Uint8Array(await new Response(compressedStream).arrayBuffer());
       }
-      function createSelfExtractingReportHtml(reportHtml,compressedBytes) {
+      function createSelfExtractingReportHtml(reportHtml,compressedBytes,context) {
+        const {language,translate:t}=context;
         const payload=bytesToBase64(compressedBytes), favicon=reportEscape(reportFaviconHref()), title=reportEscape(t('reportTitle'));
-        return `<!doctype html><html lang="${state.language==='en'?'en':'ja'}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; base-uri 'none'; form-action 'none'"><meta name="robots" content="noindex,nofollow"><title>${title}</title><link rel="icon" href="${favicon}"><style>:root{color-scheme:light;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans JP",Meiryo,sans-serif}body{margin:0;min-height:100vh;display:grid;place-items:center;background:#f5f5f2;color:#20211f}.loader{width:min(34rem,calc(100% - 2rem));padding:24px;text-align:center}.spinner{width:30px;height:30px;margin:0 auto 14px;border:3px solid #d9dbd5;border-top-color:#16624F;border-radius:50%;animation:s .8s linear infinite}.loader h1{font-size:16px;margin:0 0 7px}.loader p{margin:0;color:#666963;font-size:13px;line-height:1.6}.error{display:none;margin-top:14px;padding:10px;border:1px solid #e3b7b2;border-radius:8px;background:#fff0ef;color:#8f251f;white-space:pre-wrap;text-align:left}body.failed .spinner{display:none}body.failed .error{display:block}@keyframes s{to{transform:rotate(360deg)}}</style></head><body><main class="loader"><div class="spinner" aria-hidden="true"></div><h1>${state.language==='en'?'Opening comparison report':'比較レポートを開いています'}</h1><p>${state.language==='en'?'The compressed report is being restored locally. No network request is made.':'圧縮したレポートを端末内で展開しています。外部通信は行いません。'}</p><pre class="error" id="error"></pre></main><script id="payload" type="application/octet-stream">${payload}<\/script><script>(()=>{const fail=e=>{document.body.classList.add('failed');document.getElementById('error').textContent=(e&&e.message)||String(e)};const decode=s=>{s=s.replace(/\\s+/g,'');const chunks=[];for(let i=0;i<s.length;i+=32768){const b=atob(s.slice(i,i+32768)),u=new Uint8Array(b.length);for(let j=0;j<b.length;j++)u[j]=b.charCodeAt(j);chunks.push(u)}return new Blob(chunks,{type:'application/gzip'})};(async()=>{if(typeof DecompressionStream!=='function')throw new Error('This browser does not support DecompressionStream.');const blob=decode(document.getElementById('payload').textContent),stream=blob.stream().pipeThrough(new DecompressionStream('gzip')),reader=stream.getReader(),decoder=new TextDecoder();let html='';for(;;){const part=await reader.read();if(part.done)break;html+=decoder.decode(part.value,{stream:true})}html+=decoder.decode();if(!/^\\s*<!doctype html>/i.test(html))throw new Error('Invalid report payload.');document.open('text/html','replace');document.write(html);document.close()})().catch(fail)})();<\/script></body></html>`;
+        return `<!doctype html><html lang="${language==='en'?'en':'ja'}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; base-uri 'none'; form-action 'none'"><meta name="robots" content="noindex,nofollow"><title>${title}</title><link rel="icon" href="${favicon}"><style>:root{color-scheme:light;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans JP",Meiryo,sans-serif}body{margin:0;min-height:100vh;display:grid;place-items:center;background:#f5f5f2;color:#20211f}.loader{width:min(34rem,calc(100% - 2rem));padding:24px;text-align:center}.spinner{width:30px;height:30px;margin:0 auto 14px;border:3px solid #d9dbd5;border-top-color:#16624F;border-radius:50%;animation:s .8s linear infinite}.loader h1{font-size:16px;margin:0 0 7px}.loader p{margin:0;color:#666963;font-size:13px;line-height:1.6}.error{display:none;margin-top:14px;padding:10px;border:1px solid #e3b7b2;border-radius:8px;background:#fff0ef;color:#8f251f;white-space:pre-wrap;text-align:left}body.failed .spinner{display:none}body.failed .error{display:block}@keyframes s{to{transform:rotate(360deg)}}</style></head><body><main class="loader"><div class="spinner" aria-hidden="true"></div><h1>${language==='en'?'Opening comparison report':'比較レポートを開いています'}</h1><p>${language==='en'?'The compressed report is being restored locally. No network request is made.':'圧縮したレポートを端末内で展開しています。外部通信は行いません。'}</p><pre class="error" id="error"></pre></main><script id="payload" type="application/octet-stream">${payload}<\/script><script>(()=>{const fail=e=>{document.body.classList.add('failed');document.getElementById('error').textContent=(e&&e.message)||String(e)};const decode=s=>{s=s.replace(/\\s+/g,'');const chunks=[];for(let i=0;i<s.length;i+=32768){const b=atob(s.slice(i,i+32768)),u=new Uint8Array(b.length);for(let j=0;j<b.length;j++)u[j]=b.charCodeAt(j);chunks.push(u)}return new Blob(chunks,{type:'application/gzip'})};(async()=>{if(typeof DecompressionStream!=='function')throw new Error('This browser does not support DecompressionStream.');const blob=decode(document.getElementById('payload').textContent),stream=blob.stream().pipeThrough(new DecompressionStream('gzip')),reader=stream.getReader(),decoder=new TextDecoder();let html='';for(;;){const part=await reader.read();if(part.done)break;html+=decoder.decode(part.value,{stream:true})}html+=decoder.decode();if(!/^\\s*<!doctype html>/i.test(html))throw new Error('Invalid report payload.');document.open('text/html','replace');document.write(html);document.close()})().catch(fail)})();<\/script></body></html>`;
       }
-      async function buildDownloadableReportHtml(reportHtml) {
-        const compressed=await gzipReportHtml(reportHtml);
+      async function buildDownloadableReportHtml(reportHtml,context) {
+        const compressed=await gzipReportHtml(reportHtml); guardReport(context);
         if(!compressed) return {html:reportHtml,compressed:false,sourceBytes:new Blob([reportHtml]).size,outputBytes:new Blob([reportHtml]).size};
-        const wrapper=createSelfExtractingReportHtml(reportHtml,compressed);
+        const wrapper=createSelfExtractingReportHtml(reportHtml,compressed,context);
         return {html:wrapper,compressed:true,sourceBytes:new Blob([reportHtml]).size,outputBytes:new Blob([wrapper]).size};
       }
       $('#saveReportButton').addEventListener('click',async()=>{
-        if(!state.matching||!state.models||state.reportBusy) return;
-        const approved=await showAppConfirmDialog({title:t('reportConfirmTitle'),message:t('reportConfirm'),okText:t('reportConfirmOk'),cancelText:t('reportConfirmCancel')}); if(!approved) return;
-        const button=$('#saveReportButton'), label=$('#saveReportButtonLabel'), spinner=$('#saveReportSpinner'); state.reportBusy=true; button.disabled=true; button.setAttribute('aria-busy','true'); spinner.hidden=false; label.textContent=t('reportPreparing');
-        try{ const snapshots=await buildReportPreviewSnapshots(state.matching.rows), reportHtml=createReportHtml(snapshots), packed=await buildDownloadableReportHtml(reportHtml); downloadBlobFile(new Blob([packed.html],{type:'text/html;charset=utf-8'}),'pptx-diff-report.html'); AppToast.show({message:t('reportSaved')}); }
-        catch(error){ console.error(error); AppToast.show({message:t('reportFailed'),tone:'error'}); }
-        finally{ state.reportBusy=false; button.disabled=false; button.removeAttribute('aria-busy'); spinner.hidden=true; label.textContent=t('saveReport'); }
+        if(state.phase!=='result'||!state.matching||!state.models||state.reportJob) return;
+        const context=captureReportContext(); state.reportJob=context; updateReportState();
+        try{
+          const approved=await showAppConfirmDialog({title:t('reportConfirmTitle'),message:t('reportConfirm'),okText:t('reportConfirmOk'),cancelText:t('reportConfirmCancel')});
+          guardReport(context); if(!approved) return;
+          state.reportBusy=true; updateReportState();
+          const snapshots=await buildReportPreviewSnapshots(context); guardReport(context);
+          const reportHtml=createReportHtml(snapshots,context), packed=await buildDownloadableReportHtml(reportHtml,context); guardReport(context);
+          downloadBlobFile(new Blob([packed.html],{type:'text/html;charset=utf-8'}),'pptx-diff-report.html'); AppToast.show({message:t('reportSaved')});
+        }catch(error){ if(state.reportJob===context&&error?.name!=='AbortError') { console.error(error); AppToast.show({message:t('reportFailed'),tone:'error'}); } }
+        finally{
+          releaseRendererCache(context.mediaCaches.original); releaseRendererCache(context.mediaCaches.revised);
+          if(state.reportJob===context) { state.reportJob=null; state.reportBusy=false; updateReportState(); }
+        }
       });
       document.querySelectorAll('[data-diff-filter]').forEach(button=>button.addEventListener('click',()=>{ state.diffFilter=button.dataset.diffFilter; if(state.matching) renderMatching(state.matching); }));
       $('#changedOnlyButton').addEventListener('click',()=>{ state.changedOnly=!state.changedOnly; if(state.matching) renderMatching(state.matching); });
@@ -2727,7 +2799,7 @@
       $('#visualHighlightToggle').addEventListener('click',()=>{ state.visualHighlights=!state.visualHighlights; const section=$('#visualCompare'); section.dataset.highlights=state.visualHighlights?'on':'off'; const button=$('#visualHighlightToggle'); button.setAttribute('aria-pressed',String(state.visualHighlights)); $('#visualHighlightToggleLabel').textContent=t(state.visualHighlights?'hideVisualHighlights':'showVisualHighlights'); });
       document.querySelectorAll('[data-overlay-top]').forEach(button=>button.addEventListener('click',()=>{ state.visualOverlayTop=button.dataset.overlayTop; if(state.matching) renderVisualCompare(state.matching); }));
       $('#visualPrevButton').addEventListener('click',()=>navigateVisual(-1)); $('#visualNextButton').addEventListener('click',()=>navigateVisual(1));
-      $('#layoutTolerance').addEventListener('change',event=>{ state.layoutTolerance=event.target.value; if(state.matching){ attachSemanticDiff(state.matching); renderMatching(state.matching); } });
+      $('#layoutTolerance').addEventListener('change',event=>{ state.layoutTolerance=event.target.value; invalidateReport(); if(state.matching){ attachSemanticDiff(state.matching); renderMatching(state.matching); } });
 
       $('#languageButton').addEventListener('click',()=>{ state.language=state.language==='ja'?'en':'ja'; try{localStorage.setItem('pptx-diff-language',state.language);}catch{} applyLanguage(); });
       const helpDialog=$('#helpDialog');

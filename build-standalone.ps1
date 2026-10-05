@@ -461,3 +461,9 @@ Write-Host "[OK] Fetch/XHR/WebSocket-style runtime network access is blocked by 
 if ($selfExtractEnabled) {
   Write-Host "[OK] Self-extracting HTML: $selfExtractOutputPath" -ForegroundColor Green
 }
+
+# Keep the tracked download alias generated from the same default release.
+# An explicitly requested custom output must not overwrite the root download.
+if (-not $OutputPathWasSpecified) {
+  Copy-Item -LiteralPath $OutputPath -Destination (Join-Path $Root "pptx-diff.html") -Force
+}

@@ -362,3 +362,13 @@ Visual Compare deliberately avoids estimating the exact changed word position in
 ## 21. Release status
 
 - **v1.0.0** — Stable release
+
+## 22. Comparison and report ownership
+
+- Source replacement, swapping, and repeated comparison invalidate prior parsing, renderer preparation, results, and report work. Only the current analysis may publish renderer/model state, errors, progress, or busy-control cleanup.
+- Invalid/empty file-picker input does not replace a valid source. No new Cancel control is introduced.
+- A report captures one comparison's filenames, semantic rows, language, and renderer presentations before confirmation. Duplicate save clicks do not open overlapping confirmations.
+- Replacing/swapping files, comparing again, or changing geometry tolerance cancels a pending report. Stale snapshot/compression completions do not download or show saved/failed notifications for the new comparison.
+- Report media caches and transient render handles belong to the report that created them; obsolete cleanup cannot clear a successor report's busy state or media.
+- Reports still include all comparison rows regardless of category or changed-only view filters. Renderer failure retains structural comparison and report preview fallbacks.
+- Regression checks use tiny fictitious slides with parser, renderer, and DOM boundary doubles. They cover interrupted success/failure, retry, confirmation cancellation, busy ownership, matching/filter/navigation controls, and source/root/readable/self-extract parity. They do not establish real browser PPTX rendering or download behavior.

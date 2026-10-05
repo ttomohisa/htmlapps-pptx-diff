@@ -110,3 +110,11 @@ Keep source in one HTML while it remains understandable. When an app grows subst
 - No runtime external resource.
 - Clear state ownership.
 - A build that fails on missing input.
+
+## Comparison/report lifecycle
+
+`resetComparison` advances the analysis generation and clears derived state. Analysis owns its parsed models until publication and checks its generation before renderer commits, progress, error state, and busy-control cleanup. Retired renderer caches are detached from the next comparison.
+
+Report jobs snapshot serializable comparison rows, filenames, language, and presentation references before asking for confirmation. `guardReport` checks the job identity and source generation across confirmation, slide readiness, chart readiness, media embedding, compression, and download. Each report has independent media caches; it always releases its own handles/caches, while only the active job can update the report controls. Source/recomparison/tolerance changes retire the active job. Display filters and navigation do not change report scope.
+
+The default builder refreshes the tracked `pptx-diff.html` alias. Repository checks execute the same ownership regressions against source, readable release, root alias, and the locally inflated self-extract release. Custom output builds do not update the root alias.
