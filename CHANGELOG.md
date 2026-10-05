@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+- Keep asynchronous parsing and renderer results owned by their current comparison; stale completion cannot replace a new result or clear its busy indicator.
+- Capture one comparison and language for report export, cancel stale reports after source/recomparison/tolerance changes, and isolate temporary report media cleanup.
+- Add source-level lifecycle regressions and source/root/readable/self-extract parity checks, and regenerate the root download during default builds.
+- Validation uses synthetic boundary doubles; real browser PPTX rendering and download flows remain unverified for this change.
+
 ## 1.0.0
 
 - Promote PPTX Diff from the v0.9.0 release candidate to the first stable release without expanding feature scope.

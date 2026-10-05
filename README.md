@@ -47,7 +47,7 @@ Just [open the demo](https://ttomohisa.github.io/htmlapps-pptx-diff/). No instal
 3. The first build downloads the exact dependency version pinned in `dependencies.lock.json`.
 4. Use the generated `dist/index.html` or `dist/index.self-extract.html`.
 
-The builder uses Windows PowerShell and `tar.exe`; Node.js, Python, and a local web server are not required for the normal build.
+The builder uses Windows PowerShell and `tar.exe`; Node.js, Python, and a local web server are not required for the normal build. The full `scripts/check-repository.ps1` regression check additionally requires Node.js 22 or newer and checks the source, root download, readable build, and restored self-extract build. Default builds also refresh `pptx-diff.html`; custom `-OutputPath` builds leave that root download unchanged.
 
 ## Usage
 
@@ -68,6 +68,8 @@ Semantic Diff is the source of truth for detected changes. The visual renderer i
 For text changes, PPTX Diff outlines the matched text box rather than guessing the exact changed word position on the rendered slide. The detailed before/after text view below the preview provides the fine-grained text and number highlighting.
 
 ### HTML report
+
+Replacing or swapping files, comparing again, or changing geometry tolerance cancels a pending report. Save again from the new comparison. Each report keeps one comparison and language throughout confirmation, preview generation, and compression. View filters still do not limit the exported slides.
 
 The exported report contains the comparison summary, semantic differences, speaker-note changes, and high-fidelity slide snapshots. Individual slide sections can be collapsed.
 
