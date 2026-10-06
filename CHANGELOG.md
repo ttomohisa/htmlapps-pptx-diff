@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Add localized First / Last controls for the currently filtered comparison rows, with disabled boundary/empty states and a separate navigation row on narrow screens.
+- Expose the current comparison row with `aria-current`, retaining expanded details, focus, and scroll position when navigating.
+- Cover navigation and current-row state with synthetic regression checks across source, root, readable, and self-extract releases; preserve the report implementation byte-for-byte.
+
 - Keep asynchronous parsing and renderer results owned by their current comparison; stale completion cannot replace a new result or clear its busy indicator.
 - Capture one comparison and language for report export, cancel stale reports after source/recomparison/tolerance changes, and isolate temporary report media cleanup.
 - Add source-level lifecycle regressions and source/root/readable/self-extract parity checks, and regenerate the root download during default builds.

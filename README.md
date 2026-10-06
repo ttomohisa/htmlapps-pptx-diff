@@ -63,6 +63,8 @@ The builder uses Windows PowerShell and `tar.exe`; Node.js, Python, and a local 
 
 ### Visual comparison
 
+Use **First / Previous / Next / Last** beside the preview to move through the currently filtered comparison rows. First and Last jump to the visible boundaries, including added and removed slides. Navigation preserves expanded change details and scroll position; the current row is also identified for assistive technology.
+
 Semantic Diff is the source of truth for detected changes. The visual renderer is used to confirm how those changes look on the slide.
 
 For text changes, PPTX Diff outlines the matched text box rather than guessing the exact changed word position on the rendered slide. The detailed before/after text view below the preview provides the fine-grained text and number highlighting.
