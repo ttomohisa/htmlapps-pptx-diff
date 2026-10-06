@@ -313,7 +313,9 @@ Current stable Chrome and Edge are primary. Firefox and Safari are best-effort. 
 ### Visual Compare behavior retained from v0.6.x
 
 - Visual Compare accepts matched, added, and removed slide rows.
-- Previous / next controls move through the currently visible slide result rows.
+- First / previous / next / last controls move through the currently visible comparison rows, respecting the category and Changed slides only filters. First / last select the first / last visible row, including added and removed slides; these are result positions, not source slide numbers.
+- First / previous are disabled at the first visible result; next / last are disabled at the last. All four controls are disabled for an empty result, and repeated first / last activation at the same boundary does not rerender the preview.
+- Exactly one visible selected row exposes `aria-current="true"`; other rows omit the attribute. Empty filtered results expose no current row. Selection changes retain existing result-row DOM, expanded details, focus, and scroll state.
 - Semantic changes for the selected slide are repeated immediately below the visual canvas.
 - Split comparison uses only the draggable boundary handle on the canvas. No duplicate range slider is shown.
 - Overlay comparison lets the user choose Original or Revised as the upper semi-transparent layer.
@@ -332,7 +334,7 @@ Visual Compare deliberately avoids estimating the exact changed word position in
 
 ### Visual Compare navigation and marker linkage
 
-- Previous / next navigation stays in a fixed top-right position independent of the selected slide title length.
+- First / previous / next / last navigation stays at the top right on wide screens and on its own full-width row on narrow screens, next to the preview and independent of the selected slide title length.
 - Change labels use the same category labels and ordinal numbers as the corresponding cards under **Changes on this slide** (for example, `Text 1`, `Layout 1`, `Formatting 1`).
 - Clicking a change label highlights the linked visual frame and Semantic Diff card in place. It does not scroll the page or move the user to another location.
 - Users can hide or show all on-slide markers without changing comparison results or the Semantic Diff cards.

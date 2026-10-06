@@ -118,3 +118,7 @@ Keep source in one HTML while it remains understandable. When an app grows subst
 Report jobs snapshot serializable comparison rows, filenames, language, and presentation references before asking for confirmation. `guardReport` checks the job identity and source generation across confirmation, slide readiness, chart readiness, media embedding, compression, and download. Each report has independent media caches; it always releases its own handles/caches, while only the active job can update the report controls. Source/recomparison/tolerance changes retire the active job. Display filters and navigation do not change report scope.
 
 The default builder refreshes the tracked `pptx-diff.html` alias. Repository checks execute the same ownership regressions against source, readable release, root alias, and the locally inflated self-extract release. Custom output builds do not update the root alias.
+
+## Visible comparison navigation
+
+First / Last derive their targets from `visibleVisualRows` and reuse `selectVisualPair`, so category and changed-only filters define the navigation order. Repeated activation at the current boundary is a no-op. Initial row rendering and `syncMatchSelection` keep `aria-current` aligned with the existing visual selection, without replacing result nodes during navigation. Boundary-navigation regressions run beside the unchanged ownership suite against every release variant and pin the report implementation to the preceding ownership fix.
