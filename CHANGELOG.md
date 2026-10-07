@@ -11,6 +11,12 @@
 - Add source-level lifecycle regressions and source/root/readable/self-extract parity checks, and regenerate the root download during default builds.
 - Validation uses synthetic boundary doubles; real browser PPTX rendering and download flows remain unverified for this change.
 
+## 1.0.1
+
+- Normalize the language switch to EN / JA and describe the target language in localized accessible names and tooltips.
+- Preserve localized Help labels, privacy wording, and header layout; document the language controls in Help.
+- Add source, readable, root-alias, and self-extract header regressions for repeated switching and saved language restoration.
+
 ## 1.0.0
 
 - Promote PPTX Diff from the v0.9.0 release candidate to the first stable release without expanding feature scope.
