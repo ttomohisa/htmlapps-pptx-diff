@@ -3,7 +3,7 @@
 ## 1. Product identity
 
 - **Name:** PPTX Diff
-- **Version:** v1.0.0
+- **Version:** v1.0.1
 - **Purpose:** Compare two `.pptx` files locally, match corresponding slides, review semantic and visual changes, compare speaker notes, and save a local high-fidelity HTML report.
 - **Primary users:** People reviewing revisions of business presentations.
 - **Release artifacts:** `dist/index.html` and `dist/index.self-extract.html`.
@@ -363,7 +363,7 @@ Visual Compare deliberately avoids estimating the exact changed word position in
 
 ## 21. Release status
 
-- **v1.0.0** — Stable release
+- **v1.0.1** — Stable release with normalized header language controls
 
 ## 22. Comparison and report ownership
 
@@ -374,3 +374,11 @@ Visual Compare deliberately avoids estimating the exact changed word position in
 - Report media caches and transient render handles belong to the report that created them; obsolete cleanup cannot clear a successor report's busy state or media.
 - Reports still include all comparison rows regardless of category or changed-only view filters. Renderer failure retains structural comparison and report preview fallbacks.
 - Regression checks use tiny fictitious slides with parser, renderer, and DOM boundary doubles. They cover interrupted success/failure, retry, confirmation cancellation, busy ownership, matching/filter/navigation controls, and source/root/readable/self-extract parity. They do not establish real browser PPTX rendering or download behavior.
+
+## Header language controls
+
+- Japanese UI shows `EN`; English UI shows `JA`. Both switch without a reload and retain the language preference.
+- The language button title and accessible name describe the target language in the current UI language: `英語に切り替え` / `Switch to Japanese`.
+- Keep the existing localized Help button title, accessible name, icon and dialog heading.
+- Keep Japanese privacy copy `完全ローカル処理` and the existing accurate English equivalent.
+- Header styles, responsive layout, and application workflows remain unchanged.

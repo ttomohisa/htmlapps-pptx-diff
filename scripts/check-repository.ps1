@@ -236,6 +236,8 @@ if ($ForceDownload) { $buildArguments.ForceDownload = $true }
 if (-not (Get-Command node -ErrorAction SilentlyContinue)) { throw "Node.js 22 or newer is required for repository regression checks." }
 & node (Join-Path $Root "scripts/test-release-v100.mjs")
 if ($LASTEXITCODE -ne 0) { throw "Stable-release regression checks failed." }
+& node (Join-Path $Root "scripts/test-header-language.mjs")
+if ($LASTEXITCODE -ne 0) { throw "Header language regression checks failed." }
 & node (Join-Path $Root "scripts/test-release-parity.mjs")
 if ($LASTEXITCODE -ne 0) { throw "Generated-release parity checks failed." }
 foreach ($target in @("src/index.template.html", "dist/index.html", "pptx-diff.html", "dist/index.self-extract.html")) {

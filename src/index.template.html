@@ -776,12 +776,12 @@
           <img id="appBrandIcon" src="__APP_ICON_DATA_URI__" alt="">
         </div>
         <div class="brand-copy">
-          <p class="brand-name"><span id="brandName">PPTX Diff</span><span class="version-badge" id="versionBadge">v1.0.0</span></p>
+          <p class="brand-name"><span id="brandName">PPTX Diff</span><span class="version-badge" id="versionBadge">v1.0.1</span></p>
           <p class="brand-meta" data-i18n="brandMeta">Single file · Local-first · GitHub Pages</p>
         </div>
       </div>
       <div class="header-actions">
-        <button class="language-button" id="languageButton" type="button" aria-label="Switch language">EN</button>
+        <button class="language-button" id="languageButton" type="button" data-i18n-title="switchLanguage" data-i18n-aria-label="switchLanguage" title="英語に切り替え" aria-label="英語に切り替え">EN</button>
         <button class="icon-button header-icon-button" id="helpButton" type="button" data-i18n-title="helpTitle" data-i18n-aria-label="helpTitle" title="使い方と注意事項" aria-label="使い方と注意事項">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.8 9a2.35 2.35 0 1 1 3.72 1.9c-.92.67-1.52 1.12-1.52 2.1"/><path d="M12 17h.01"/></svg>
         </button>
@@ -1002,6 +1002,7 @@
     </div>
     <div class="dialog-body">
       <!-- APP:HELP:BEGIN -->
+      <p data-i18n="helpLanguage">ヘッダーのENで英語、JAで日本語に切り替えられます。</p>
       <h3 data-i18n="helpBasicsTitle">基本操作</h3>
       <ol>
         <li data-i18n="helpStep1">「元のファイル」と「変更後のファイル」に、それぞれ .pptx を選択します。</li>
@@ -1135,6 +1136,7 @@
       const translations = {
         ja: {
           helpReplacement:'ファイルを選び直す・入れ替える・再比較する・配置許容値を変更すると、保存中のレポートは中止されます。新しい比較結果から再度保存してください。',
+          switchLanguage:'英語に切り替え', helpLanguage:'ヘッダーのENで英語、JAで日本語に切り替えられます。',
           brandMeta:'PowerPoint比較 · 完全ローカル処理', helpTitle:'使い方と注意事項', close:'閉じる',
           introTitle:'PowerPointの変更を、見た目まで比較', lead:'2つのPPTXをブラウザ内で解析し、文章・数値・画像に加えて配置や書式の変更まで確認します。', localBadge:'完全ローカル処理',
           workspaceTitle:'比較する2つのファイル', workspaceBody:'スライドの追加・削除・移動を考慮しながら、内容差分と見た目の違いをまとめて比較します。',
@@ -1152,6 +1154,7 @@
         },
         en: {
           helpReplacement:'Replacing or swapping files, comparing again, or changing geometry tolerance cancels a pending report. Save again from the new comparison.',
+          switchLanguage:'Switch to Japanese', helpLanguage:'Use EN in the header to switch to English, or JA to switch to Japanese.',
           brandMeta:'PowerPoint comparison · Fully local processing', helpTitle:'How to use & notes', close:'Close',
           introTitle:'Compare PowerPoint revisions down to layout and formatting', lead:'Analyze two PPTX files in your browser and review text, numbers, images, layout, and basic formatting changes.', localBadge:'Fully local processing',
           workspaceTitle:'Choose two files', workspaceBody:'Match slides while accounting for additions, removals, and moves, then compare content differences and the visual result together.',
@@ -1232,8 +1235,7 @@
         document.querySelectorAll('[data-i18n]').forEach(el=>{ el.textContent=t(el.dataset.i18n); });
         document.querySelectorAll('[data-i18n-title]').forEach(el=>{ el.title=t(el.dataset.i18nTitle); });
         document.querySelectorAll('[data-i18n-aria-label]').forEach(el=>{ el.setAttribute('aria-label',t(el.dataset.i18nAriaLabel)); });
-        $('#languageButton').textContent=state.language==='ja'?'EN':'日本語';
-        $('#languageButton').setAttribute('aria-label',state.language==='ja'?'英語に切り替え':'Switch to Japanese');
+        $('#languageButton').textContent=state.language==='ja'?'EN':'JA';
         document.title=state.language==='ja'?APP_CONFIG.nameJa:APP_CONFIG.name;
         $('#brandName').textContent=state.language==='ja'?APP_CONFIG.nameJa:APP_CONFIG.name;
         $('#footerName').textContent=state.language==='ja'?APP_CONFIG.nameJa:APP_CONFIG.name;
