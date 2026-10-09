@@ -1,9 +1,14 @@
 # PPTX Diff — APP_SPEC.md
 
+## v1.0.2 — Icon normalization
+
+- Use #16624f with exact quarter-width/quarter-height background corner arcs; retain all compound-path cutouts and supplied artwork.
+- Keep header, favicon, and generated variants consistent; runtime dependencies and behavior stay unchanged.
+
 ## 1. Product identity
 
 - **Name:** PPTX Diff
-- **Version:** v1.0.1
+- **Version:** v1.0.2
 - **Purpose:** Compare two `.pptx` files locally, match corresponding slides, review semantic and visual changes, compare speaker notes, and save a local high-fidelity HTML report.
 - **Primary users:** People reviewing revisions of business presentations.
 - **Release artifacts:** `dist/index.html` and `dist/index.self-extract.html`.

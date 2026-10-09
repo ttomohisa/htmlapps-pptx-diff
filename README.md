@@ -156,7 +156,7 @@ PPTX ZIP parsing, slide matching, Semantic Diff, filtering, and report generatio
 
 ## Release status
 
-**v1.0.1 is the stable release.** This patch standardizes the header language controls as EN / JA with localized tooltips and accessible names, retaining the established comparison and report features.
+**v1.0.2 is the stable release.** This patch standardizes the header language controls as EN / JA with localized tooltips and accessible names, retaining the established comparison and report features.
 
 ## Contributing
 
