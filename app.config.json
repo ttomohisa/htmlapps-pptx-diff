@@ -3,7 +3,7 @@
   "name": "PPTX Diff",
   "nameJa": "PPTX Diff",
   "slug": "pptx-diff",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Compare two PowerPoint PPTX files locally with semantic and visual differences, speaker-note comparison, filters, and a high-fidelity self-extracting HTML report.",
   "descriptionJa": "2つのPowerPoint（PPTX）ファイルを完全ローカル処理で比較し、内容・配置・書式・発表者ノートの差分と高精細プレビュー、自己展開HTMLレポートで変更を確認するツールです。",
   "defaultLanguage": "auto",

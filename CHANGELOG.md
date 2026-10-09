@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.2 - 2026-10-09
+
+- Normalize icon background green and exact 25% corner geometry, retaining all foreground and cutout paths.
+- Rebuild matching header/favicon and standalone aliases without changing runtime assets.
+
 ## Unreleased
 
 - Add localized First / Last controls for the currently filtered comparison rows, with disabled boundary/empty states and a separate navigation row on narrow screens.
