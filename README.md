@@ -61,8 +61,6 @@ The builder uses Windows PowerShell and `tar.exe`; Node.js, Python, and a local 
 8. Use the category filters or **Changed slides only** to narrow the result list.
 9. Use **Save comparison as HTML** when you need an offline report. The app asks for confirmation because the report can contain presentation text, images, and speaker notes.
 
-The Help and report-confirmation dialogs keep the background page still. On short screens, scroll inside the dialog to reach its final content or Save/Cancel; the close button remains at the top. Closing the dialog restores normal page scrolling.
-
 ### Visual comparison
 
 Use **First / Previous / Next / Last** beside the preview to move through the currently filtered comparison rows. First and Last jump to the visible boundaries, including added and removed slides. Navigation preserves expanded change details and scroll position; the current row is also identified for assistive technology.
@@ -158,7 +156,7 @@ PPTX ZIP parsing, slide matching, Semantic Diff, filtering, and report generatio
 
 ## Release status
 
-**v1.0.3 is the stable release.** This patch keeps modal contents reachable on short screens and stops background scrolling while a dialog is open, retaining the established comparison and report features.
+**v1.0.3 is the stable release.**
 
 ## Contributing
 
