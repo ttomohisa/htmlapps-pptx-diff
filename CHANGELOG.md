@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.0.3
+
+- Lock background page scrolling while Help or the report confirmation is open.
+- Keep the report confirmation header visible and let its body, including Save/Cancel, scroll within short viewports; retain smartphone safe-area padding and the existing Help shell.
+- Update Japanese/English Help and usage notes. Add modal CSS/confirmation-logic guards for source, root download, readable, and restored self-extract targets.
+- Preserve comparison, report, navigation, local-processing shield/check, and dependencies. Source/VM guards do not establish native-browser layout or download behavior.
+
 ## 1.0.2 - 2026-10-09
 
 - Normalize icon background green and exact 25% corner geometry, retaining all foreground and cutout paths.

@@ -245,6 +245,8 @@ foreach ($target in @("src/index.template.html", "dist/index.html", "pptx-diff.h
   if ($LASTEXITCODE -ne 0) { throw "Comparison ownership regression checks failed: $target" }
   & node (Join-Path $Root "scripts/test-boundary-navigation.mjs") $target
   if ($LASTEXITCODE -ne 0) { throw "Comparison boundary navigation regression checks failed: $target" }
+  & node (Join-Path $Root "scripts/test-dialog-layout.mjs") $target
+  if ($LASTEXITCODE -ne 0) { throw "Dialog layout contract checks failed: $target" }
 }
 
 Write-Host "[OK] Repository check passed." -ForegroundColor Green

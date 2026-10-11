@@ -1,5 +1,12 @@
 # PPTX Diff — APP_SPEC.md
 
+## v1.0.3 — Bounded modal dialogs
+
+- Lock root/body scrolling only while a native modal is open; release the lock automatically after dismissal.
+- Preserve the existing Help shell. Bound report confirmation to the viewport with a non-shrinking header and internally scrolling body, including its Save/Cancel actions and mobile safe-area padding.
+- Retain native dialog dismissal, comparison ownership, report generation, navigation, shield/check privacy badge, and pinned renderer unchanged.
+- Test source/CSS contracts and unchanged confirmation callbacks separately from native-browser geometry, wheel/key scrolling, focus, and full compare/save verification.
+
 ## v1.0.2 — Icon normalization
 
 - Use #16624f with exact quarter-width/quarter-height background corner arcs; retain all compound-path cutouts and supplied artwork.
@@ -8,7 +15,7 @@
 ## 1. Product identity
 
 - **Name:** PPTX Diff
-- **Version:** v1.0.2
+- **Version:** v1.0.3
 - **Purpose:** Compare two `.pptx` files locally, match corresponding slides, review semantic and visual changes, compare speaker notes, and save a local high-fidelity HTML report.
 - **Primary users:** People reviewing revisions of business presentations.
 - **Release artifacts:** `dist/index.html` and `dist/index.self-extract.html`.
