@@ -77,10 +77,10 @@ test(`${target}: application execution after translations stays byte-identical`,
   assert.equal(hash(runtime), '2e0bca3ac359550f865001d37cae158c3b1df303d22ec367d5df0e6206ae3011', 'parser, engine, report, navigation, and modal handlers are untouched');
 });
 
-test(`${target}: localized Help explains the bounded dialogs`, () => {
-  assert.match(html, /<p data-i18n="helpDialogs">[^<]+<\/p>/);
-  assert.match(html, /helpDialogs:'[^']*背景[^']*スクロール[^']*'/);
-  assert.match(html, /helpDialogs:'[^']*background page[^']*scroll[^']*'/);
+test(`${target}: Help omits layout implementation commentary`, () => {
+  assert.doesNotMatch(html, /<p data-i18n="helpDialogs">[^<]+<\/p>/);
+  assert.doesNotMatch(html, /helpDialogs:'[^']*背景[^']*スクロール[^']*'/);
+  assert.doesNotMatch(html, /helpDialogs:'[^']*background page[^']*scroll[^']*'/);
 });
 
 test('canonical checker runs the modal contracts for all existing release targets', () => {
