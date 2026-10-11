@@ -28,6 +28,8 @@ See [WebRTC QR Pairing Component](WEBRTC_QR_PAIRING.md) for the complete integra
 
 ## Confirmation dialog
 
+The confirmation shell is a viewport-bounded flex column only while open. Its header does not shrink, and its body scrolls internally with overscroll containment so short screens can reach the actions. Mobile safe-area padding is retained. PPTX Diff additionally locks root/body scrolling while either native modal is open.
+
 `components/confirm-dialog.html` is the preferred replacement for `window.confirm()` when an action is irreversible or high-risk. The starter keeps the API available, while its reversible Clear action demonstrates Toast + Undo instead.
 
 - Centered modal on desktop
