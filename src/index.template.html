@@ -782,7 +782,10 @@
     @media (prefers-reduced-motion: reduce) {
       .spinner, .analysis-status[data-tone="processing"]::before { animation-duration:.01ms !important; }
     }
-  </style>
+    @media (max-width: 760px) { body > footer { display: none; } }
+  #helpDialog .help-build .build-grid { grid-template-columns:minmax(0,1fr); }
+  #helpDialog .help-build { margin-top:20px; padding-top:12px; border-top:1px solid var(--line); color:var(--muted); font-size:11px; overflow-wrap:anywhere; }
+</style>
 </head>
 <body>
   <header class="app-header">
@@ -974,16 +977,7 @@
       </div>
     </section>
 
-    <section class="shell section">
-      <details>
-        <summary data-i18n="buildInfo">Build information</summary>
-        <div class="build-grid">
-          <div class="build-item"><span data-i18n="appVersion">App version</span><strong id="buildVersion">—</strong></div>
-          <div class="build-item"><span data-i18n="builtAt">Built at</span><strong id="builtAt">—</strong></div>
-          <div class="build-item"><span data-i18n="dependencies">Embedded dependencies</span><strong id="dependencyCount">0</strong></div>
-        </div>
-      </details>
-    </section>
+
   </main>
 
   <footer><span id="footerName">PPTX Diff</span> · MIT License · <span data-i18n="footer">Generated as one self-contained HTML file</span></footer>
@@ -1039,6 +1033,14 @@
       </ul>
       <p class="dialog-note" data-i18n="helpOffline">処理中もファイルは端末外へ送信されません。</p>
       <!-- APP:HELP:END -->
+      <section class="help-build"><details>
+        <summary data-i18n="buildInfo">Build information</summary>
+        <div class="build-grid">
+          <div class="build-item"><span data-i18n="appVersion">App version</span><strong id="buildVersion">—</strong></div>
+          <div class="build-item"><span data-i18n="builtAt">Built at</span><strong id="builtAt">—</strong></div>
+          <div class="build-item"><span data-i18n="dependencies">Embedded dependencies</span><strong id="dependencyCount">0</strong></div>
+        </div>
+      </details></section>
     </div>
   </dialog>
 
@@ -2837,7 +2839,7 @@
       $('#languageButton').addEventListener('click',()=>{ state.language=state.language==='ja'?'en':'ja'; try{localStorage.setItem('pptx-diff-language',state.language);}catch{} applyLanguage(); });
       const helpDialog=$('#helpDialog');
       $('#helpButton').addEventListener('click',()=>helpDialog.showModal()); $('#closeHelpButton').addEventListener('click',()=>helpDialog.close());
-      helpDialog.addEventListener('click',event=>{ const r=helpDialog.getBoundingClientRect(); if(event.clientX<r.left||event.clientX>r.right||event.clientY<r.top||event.clientY>r.bottom) helpDialog.close(); });
+      helpDialog.addEventListener('click',event=>{ if(event.target!==event.currentTarget)return; const r=helpDialog.getBoundingClientRect(); if(event.clientX<r.left||event.clientX>r.right||event.clientY<r.top||event.clientY>r.bottom) helpDialog.close(); });
       $('#versionBadge').textContent=`v${APP_CONFIG.version}`; $('#buildVersion').textContent=APP_CONFIG.version; $('#builtAt').textContent=BUILD_MANIFEST.generatedAtUtc||'—'; $('#dependencyCount').textContent=String(BUILD_MANIFEST.dependencies?.length||0);
       applyLanguage();
     })();

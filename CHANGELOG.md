@@ -14,6 +14,9 @@
 
 ## Unreleased
 
+- Standardize the phone informational footer, final Help build metadata, and equivalent local-processing badge wording.
+
+
 - Add localized First / Last controls for the currently filtered comparison rows, with disabled boundary/empty states and a separate navigation row on narrow screens.
 - Expose the current comparison row with `aria-current`, retaining expanded details, focus, and scroll position when navigating.
 - Cover navigation and current-row state with synthetic regression checks across source, root, readable, and self-extract releases; preserve the report implementation byte-for-byte.

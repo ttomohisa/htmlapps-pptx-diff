@@ -72,9 +72,12 @@ test(`${target}: existing Help layout and shield/check badge stay byte-identical
   assert.equal(hash(badge), '379a65902ddd049c6d59431f50cfcd1de82ab45de04605d2666e559e21f68fab');
 });
 
-test(`${target}: application execution after translations stays byte-identical`, () => {
+test(`${target}: application execution stays byte-identical except the scoped Help descendant guard`, () => {
   const runtime = html.slice(html.indexOf('      // Template repository contract'));
-  assert.equal(hash(runtime), '2e0bca3ac359550f865001d37cae158c3b1df303d22ec367d5df0e6206ae3011', 'parser, engine, report, navigation, and modal handlers are untouched');
+  const guard = "helpDialog.addEventListener('click',event=>{ if(event.target!==event.currentTarget)return; const r=";
+  assert.equal(runtime.split(guard).length - 1, 1, 'exactly one scoped Help descendant guard');
+  const originalRuntime = runtime.replace(guard, "helpDialog.addEventListener('click',event=>{ const r=");
+  assert.equal(hash(originalRuntime), '2e0bca3ac359550f865001d37cae158c3b1df303d22ec367d5df0e6206ae3011', 'parser, engine, report, navigation, and modal handlers are untouched');
 });
 
 test(`${target}: Help omits layout implementation commentary`, () => {

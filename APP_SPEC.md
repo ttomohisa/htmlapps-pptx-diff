@@ -1,5 +1,11 @@
 # PPTX Diff — APP_SPEC.md
 
+## Phone footer and Help metadata
+
+- Hide only the informational footer at the existing 760px phone breakpoint. Preserve functional navigation and controls.
+- Show existing build metadata quietly at the very end of How to use & Notes on both desktop and phone. No new phone metadata hiding.
+- Use `Fully local processing` for the existing `完全ローカル処理` badge. Keep distinct privacy statements, app versions, dependencies and application behavior unchanged.
+
 ## v1.0.3 — Bounded modal dialogs
 
 - Lock root/body scrolling only while a native modal is open; release the lock automatically after dismissal.
