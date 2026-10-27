@@ -22,10 +22,10 @@ function indexAfter(text, earlier, later, label) {
   expect(a >= 0 && b > a, label);
 }
 
-expect(config.version === '1.0.3', 'app.config.json must be v1.0.3');
-expect(source.includes('id="versionBadge">v1.0.3</span>'), 'source version badge is not v1.0.3');
-expect(dist.includes('\"version\":\"1.0.3\"'), 'dist/index.html does not embed v1.0.3 config');
-expect(depManifest.app?.version === '1.0.3', 'dependency manifest version is not v1.0.3');
+expect(config.version === '1.0.4', 'app.config.json must be v1.0.4');
+expect(source.includes('id="versionBadge">v1.0.4</span>'), 'source version badge is not v1.0.4');
+expect(dist.includes('\"version\":\"1.0.4\"'), 'dist/index.html does not embed v1.0.4 config');
+expect(depManifest.app?.version === '1.0.4', 'dependency manifest version is not v1.0.4');
 expect(!/__([A-Z0-9_]+)__/.test(dist), 'dist/index.html contains unresolved build placeholders');
 expect(dist.includes("connect-src 'none'"), 'runtime network blocking CSP is missing');
 expect(!/https?:\/\//i.test(dist.match(/<script[^>]*src=["'][^"']+/gi)?.join('\n') || ''), 'external runtime script reference found');
@@ -62,7 +62,7 @@ expect(source.includes('<link rel="icon" href="${reportEscape(reportFaviconHref(
 // Embedded dependency contract.
 expect(depManifest.dependencies?.length === 1, 'unexpected release dependency count');
 expect(depManifest.dependencies[0].package === '@aiden0z/pptx-renderer', 'pptx renderer dependency is missing');
-expect(depManifest.dependencies[0].version === '1.2.4', 'pptx renderer must remain pinned at 1.2.4 for v1.0.3');
+expect(depManifest.dependencies[0].version === '1.2.4', 'pptx renderer must remain pinned at 1.2.4 for v1.0.4');
 
 // README structure follows the established PDF Organizer repository style.
 for (const [name, text] of [['README.md', readme], ['README.ja.md', readmeJa]]) {
@@ -76,10 +76,10 @@ for (const [name, text] of [['README.md', readme], ['README.ja.md', readmeJa]]) 
 expect(readme.includes('assets/screenshot-en.png'), 'English README must reference screenshot-en.png');
 expect(readmeJa.includes('assets/screenshot.png'), 'Japanese README must reference screenshot.png');
 
-expect(readme.includes('**v1.0.3 is the stable release.**'), 'English README stable-release status is missing');
-expect(readmeJa.includes('**v1.0.3 は正式版です。**'), 'Japanese README stable-release status is missing');
-expect(read('APP_SPEC.md').includes('**Version:** v1.0.3'), 'APP_SPEC version is not v1.0.3');
-expect(read('CHANGELOG.md').includes('## 1.0.3'), 'CHANGELOG 1.0.3 entry is missing');
+expect(readme.includes('**v1.0.4 is the stable release.**'), 'English README stable-release status is missing');
+expect(readmeJa.includes('**v1.0.4 は正式版です。**'), 'Japanese README stable-release status is missing');
+expect(read('APP_SPEC.md').includes('**Version:** v1.0.4'), 'APP_SPEC version is not v1.0.4');
+expect(read('CHANGELOG.md').includes('## 1.0.4'), 'CHANGELOG 1.0.4 entry is missing');
 expect(bytes('assets/screenshot.png').length > 10000, 'Japanese release screenshot is missing or unexpectedly small');
 expect(bytes('assets/screenshot-en.png').length > 10000, 'English release screenshot is missing or unexpectedly small');
 
@@ -92,4 +92,4 @@ expect(restored.equals(distBytes), 'self-extract payload does not restore dist/i
 const sourceHash = crypto.createHash('sha256').update(distBytes).digest('hex');
 expect(selfExtract.includes(`name="self-extract-source-sha256" content="${sourceHash}"`), 'self-extract source hash metadata does not match dist/index.html');
 
-console.log('[OK] v1.0.3 stable-release guards passed.');
+console.log('[OK] v1.0.4 stable-release guards passed.');

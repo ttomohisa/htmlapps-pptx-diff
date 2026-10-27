@@ -21,7 +21,7 @@
 ## 1. Product identity
 
 - **Name:** PPTX Diff
-- **Version:** v1.0.3
+- **Version:** v1.0.4
 - **Purpose:** Compare two `.pptx` files locally, match corresponding slides, review semantic and visual changes, compare speaker notes, and save a local high-fidelity HTML report.
 - **Primary users:** People reviewing revisions of business presentations.
 - **Release artifacts:** `dist/index.html` and `dist/index.self-extract.html`.

@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.4 - 2026-10-27
+
+- Keep the header version badge visible at narrow widths by truncating only the app title.
+- Remove redundant language-switching instructions from Japanese and English Help.
+
+
 ## 1.0.3
 
 - Lock background page scrolling while Help or the report confirmation is open.
