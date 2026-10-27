@@ -77,7 +77,7 @@
     }
     .brand-mark img { width: 100%; height: 100%; display: block; }
     .brand-copy { min-width: 0; }
-    .brand-name {
+    .brand-name { display: flex; align-items: center;
       margin: 0;
       font-size: 17px;
       line-height: 1.2;
@@ -86,7 +86,8 @@
       overflow: hidden;
       text-overflow: ellipsis;
     }
-    .version-badge {
+    #brandName { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .version-badge { flex-shrink: 0;
       display: inline-flex;
       align-items: center;
       margin-left: 7px;
@@ -107,7 +108,7 @@
       overflow: hidden;
       text-overflow: ellipsis;
     }
-    .header-actions { margin-left: auto; display: flex; align-items: center; gap: 12px; }
+    .header-actions { flex-shrink: 0; margin-left: auto; display: flex; align-items: center; gap: 12px; }
     .button {
       border: 1px solid var(--line);
       background: var(--surface);
@@ -795,7 +796,7 @@
           <img id="appBrandIcon" src="__APP_ICON_DATA_URI__" alt="">
         </div>
         <div class="brand-copy">
-          <p class="brand-name"><span id="brandName">PPTX Diff</span><span class="version-badge" id="versionBadge">v1.0.3</span></p>
+          <p class="brand-name"><span id="brandName">PPTX Diff</span><span class="version-badge" id="versionBadge">v1.0.4</span></p>
           <p class="brand-meta" data-i18n="brandMeta">Single file · Local-first · GitHub Pages</p>
         </div>
       </div>
@@ -1012,7 +1013,6 @@
     </div>
     <div class="dialog-body">
       <!-- APP:HELP:BEGIN -->
-      <p data-i18n="helpLanguage">ヘッダーのENで英語、JAで日本語に切り替えられます。</p>
 
       <h3 data-i18n="helpBasicsTitle">基本操作</h3>
       <ol>
@@ -1155,8 +1155,7 @@
       const translations = {
         ja: {
           helpReplacement:'ファイルを選び直す・入れ替える・再比較する・配置許容値を変更すると、保存中のレポートは中止されます。新しい比較結果から再度保存してください。',
-          switchLanguage:'英語に切り替え', helpLanguage:'ヘッダーのENで英語、JAで日本語に切り替えられます。',
-          brandMeta:'PowerPoint比較 · 完全ローカル処理', helpTitle:'使い方と注意事項', close:'閉じる',
+          switchLanguage:'英語に切り替え', brandMeta:'PowerPoint比較 · 完全ローカル処理', helpTitle:'使い方と注意事項', close:'閉じる',
           introTitle:'PowerPointの変更を、見た目まで比較', lead:'2つのPPTXをブラウザ内で解析し、文章・数値・画像に加えて配置や書式の変更まで確認します。', localBadge:'完全ローカル処理',
           workspaceTitle:'比較する2つのファイル', workspaceBody:'スライドの追加・削除・移動を考慮しながら、内容差分と見た目の違いをまとめて比較します。',
           original:'元のファイル', revised:'変更後のファイル', dropTitle:'PPTXをここにドロップ', dropNote:'またはファイルを選択', chooseFile:'ファイルを選択', replaceFile:'ファイルを変更', swapFiles:'ファイルを入れ替え', analyze:'スライドを比較', analyzing:'比較しています…',
@@ -1173,8 +1172,7 @@
         },
         en: {
           helpReplacement:'Replacing or swapping files, comparing again, or changing geometry tolerance cancels a pending report. Save again from the new comparison.',
-          switchLanguage:'Switch to Japanese', helpLanguage:'Use EN in the header to switch to English, or JA to switch to Japanese.',
-          brandMeta:'PowerPoint comparison · Fully local processing', helpTitle:'How to use & notes', close:'Close',
+          switchLanguage:'Switch to Japanese', brandMeta:'PowerPoint comparison · Fully local processing', helpTitle:'How to use & notes', close:'Close',
           introTitle:'Compare PowerPoint revisions down to layout and formatting', lead:'Analyze two PPTX files in your browser and review text, numbers, images, layout, and basic formatting changes.', localBadge:'Fully local processing',
           workspaceTitle:'Choose two files', workspaceBody:'Match slides while accounting for additions, removals, and moves, then compare content differences and the visual result together.',
           original:'Original', revised:'Revised', dropTitle:'Drop a PPTX here', dropNote:'or choose a file', chooseFile:'Choose file', replaceFile:'Replace file', swapFiles:'Swap files', analyze:'Compare slides', analyzing:'Comparing…',

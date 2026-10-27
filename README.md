@@ -156,7 +156,7 @@ PPTX ZIP parsing, slide matching, Semantic Diff, filtering, and report generatio
 
 ## Release status
 
-**v1.0.3 is the stable release.**
+**v1.0.4 is the stable release.**
 
 ## Contributing
 
