@@ -44,7 +44,7 @@ function setup() {
   const context=vm.createContext({console:{warn(){},error(){}},Map,Set,Intl,Date,TextDecoder,Uint16Array,DOMException,Blob,Response,URL:{revokeObjectURL:url=>revoked.push(url)},setTimeout,clearTimeout,structuredClone,CompressionStream:undefined,
     detectLanguage:()=> 'en', $:node, translations:{en:{reportTitle:'Comparison report'},ja:{reportTitle:'比較レポート'}},
     document:{querySelector:selector=>selector==='link[rel~="icon"]'?{href:'data:image/svg+xml,fake'}:node(selector),querySelectorAll:()=>[],createElement:()=>node(`element-${++serial}`),body:{append(){}}},
-    t:key=>key,formatBytes:String,AppToast:{show:value=>toasts.push(value)},matchMedia:()=>({matches:true}),renderResults(){},renderMatching(){},renderVisualCompare(){},
+    t:key=>key,formatBytes:String,AppToast:{show:value=>toasts.push(value)},matchMedia:()=>({matches:true}),renderResults(){},renderMatching(){},renderVisualCompare(){},renderSlotThumbnail(){},queueSlotThumbnail(){},releaseSlotThumbnail(){},stopSlotThumbnailView(){},
     loadHighFidelityRenderer:async()=>renderer,
     parsePresentation:async(f,progress)=>{files.set(f.name,f); if(parseGates.has(f.name)) await parseGates.get(f.name).promise; const model={filename:f.name,sourceBuffer:f.name,slides:f.slides||[slide(f.title)],slideCount:1,previewUrls:[`blob:model-${f.name}-${++serial}`]};parsed.push(model);progress(1,1);return model;},
     showAppConfirmDialog:async()=>true,downloadBlobFile:(blob,name)=>downloads.push({blob,name}),waitForReportCharts:async()=>{},reportInlineComputedStyles(){},reportInlineBlobReferences:async()=>{},
