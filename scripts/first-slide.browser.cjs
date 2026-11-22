@@ -1,0 +1,114 @@
+'use strict';
+const assert=require('node:assert/strict');
+const path=require('node:path');
+const {pathToFileURL}=require('node:url');
+const {chromium}=require('playwright');
+
+function crc32(data) {
+  let value=0xffffffff;
+  for(const b of data) {
+    value^=b;
+    for(let i=0;i<8;i++)value=(value>>>1)^((value&1)?0xedb88320:0);
+  }
+  return (value^0xffffffff)>>>0;
+}
+function makeZip(parts) {
+  const local=[],central=[];let offset=0,centralSize=0;
+  for(const [name,xml] of Object.entries(parts)) {
+    const fileName=Buffer.from(name),body=Buffer.from(xml),crc=crc32(body);
+    const head=Buffer.alloc(30);
+    head.writeUInt32LE(0x04034b50,0);head.writeUInt16LE(20,4);
+    head.writeUInt32LE(crc,14);head.writeUInt32LE(body.length,18);head.writeUInt32LE(body.length,22);
+    head.writeUInt16LE(fileName.length,26);
+    local.push(head,fileName,body);
+    const dir=Buffer.alloc(46);
+    dir.writeUInt32LE(0x02014b50,0);dir.writeUInt16LE(20,4);dir.writeUInt16LE(20,6);
+    dir.writeUInt32LE(crc,16);dir.writeUInt32LE(body.length,20);dir.writeUInt32LE(body.length,24);
+    dir.writeUInt16LE(fileName.length,28);dir.writeUInt32LE(offset,42);
+    central.push(dir,fileName);
+    offset+=head.length+fileName.length+body.length;
+    centralSize+=dir.length+fileName.length;
+  }
+  const end=Buffer.alloc(22);
+  end.writeUInt32LE(0x06054b50,0);
+  end.writeUInt16LE(Object.keys(parts).length,8);end.writeUInt16LE(Object.keys(parts).length,10);
+  end.writeUInt32LE(centralSize,12);end.writeUInt32LE(offset,16);
+  return Buffer.concat([...local,...central,end]);
+}
+function slideXml(text) {
+  return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<p:sld xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"
+ xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">
+ <p:cSld><p:spTree>
+  <p:nvGrpSpPr><p:cNvPr id="1" name="Group"/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr><p:grpSpPr/>
+  <p:sp><p:nvSpPr><p:cNvPr id="2" name="Title"/><p:cNvSpPr txBox="1"/><p:nvPr/></p:nvSpPr>
+   <p:spPr><a:xfrm><a:off x="600000" y="600000"/><a:ext cx="7900000" cy="1100000"/></a:xfrm>
+    <a:prstGeom prst="rect"><a:avLst/></a:prstGeom></p:spPr>
+   <p:txBody><a:bodyPr/><a:lstStyle/><a:p><a:r><a:rPr lang="en-US" sz="3000"/>
+    <a:t>${text}</a:t></a:r></a:p></p:txBody>
+  </p:sp>
+ </p:spTree></p:cSld>
+</p:sld>`;
+}
+function pptx(firstLabel,secondLabel='NOT_THE_FIRST_SLIDE') {
+  const relNamespace='http://schemas.openxmlformats.org/package/2006/relationships';
+  const slideType='http://schemas.openxmlformats.org/officeDocument/2006/relationships/slide';
+  return makeZip({
+    '[Content_Types].xml':'<?xml version="1.0"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/ppt/presentation.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.presentation.main+xml"/><Override PartName="/ppt/slides/slide1.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.slide+xml"/><Override PartName="/ppt/slides/slide2.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.slide+xml"/></Types>',
+    '_rels/.rels':'<Relationships xmlns="'+relNamespace+'"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="ppt/presentation.xml"/></Relationships>',
+    'ppt/presentation.xml':'<p:presentation xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><p:sldIdLst><p:sldId id="256" r:id="rId1"/><p:sldId id="257" r:id="rId2"/></p:sldIdLst><p:sldSz cx="9144000" cy="6858000"/></p:presentation>',
+    'ppt/_rels/presentation.xml.rels':'<Relationships xmlns="'+relNamespace+'"><Relationship Id="rId1" Type="'+slideType+'" Target="slides/slide1.xml"/><Relationship Id="rId2" Type="'+slideType+'" Target="slides/slide2.xml"/></Relationships>',
+    'ppt/slides/slide1.xml':slideXml(firstLabel),
+    'ppt/slides/slide2.xml':slideXml(secondLabel)
+  });
+}
+async function expectThumbnail(page,slot) {
+  const host=page.locator('#'+slot+'Thumbnail');
+  await page.waitForFunction(side=>{
+    const element=document.querySelector('#'+side+'Thumbnail');
+    return element?.querySelector('.slide-canvas,.pptx-render-frame');
+  },slot,{timeout:15000});
+  const rect=await host.boundingBox();
+  assert.ok(rect&&rect.width>=95&&rect.height>=55,slot+' preview dimensions');
+  assert.equal(await host.locator('.file-thumbnail-message').count(),0,slot+' left loading state');
+  assert.ok(!((await host.innerText()).includes('NOT_THE_FIRST_SLIDE')),slot+' uses the first slide');
+}
+async function main(){
+  const browser=await chromium.launch();
+  try{
+    for(const [width,lang]of [[360,'ja'],[1280,'en']]){
+      const context=await browser.newContext({viewport:{width,height:820},locale:lang});
+      const page=await context.newPage(),issues=[],requests=[];
+      page.on('pageerror',e=>issues.push(e.message));
+      page.on('request',r=>{if(/^https?:/.test(r.url()))requests.push(r.url());});
+      try{
+        await page.goto(pathToFileURL(path.resolve('dist/index.html')).href);
+        await page.locator('#languageButton').waitFor();
+        if(await page.locator('html').getAttribute('lang')!==lang)await page.locator('#languageButton').click();
+        const preview=async(slot,name,label)=>page.locator('#'+slot+'Input').setInputFiles({
+          name,mimeType:'application/vnd.openxmlformats-officedocument.presentationml.presentation',buffer:pptx(label)
+        });
+        await preview('original','first.pptx','FIRST_SLIDE_ALPHA');
+        await expectThumbnail(page,'original');
+        await preview('revised','second.pptx','FIRST_SLIDE_BETA');
+        await expectThumbnail(page,'revised');
+        assert.equal(await page.locator('#analyzeButton').isEnabled(),true);
+        await page.locator('#swapButton').click();
+        assert.equal(await page.locator('#originalName').innerText(),'second.pptx');
+        assert.equal(await page.locator('#revisedName').innerText(),'first.pptx');
+        await expectThumbnail(page,'original');await expectThumbnail(page,'revised');
+        await preview('original','third.pptx','FIRST_SLIDE_GAMMA');
+        await expectThumbnail(page,'original');
+        assert.equal(await page.locator('#originalName').innerText(),'third.pptx');
+        assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'no horizontal scroll');
+        await page.locator('#originalInput').setInputFiles({name:'broken.pptx',mimeType:'application/vnd.openxmlformats-officedocument.presentationml.presentation',buffer:Buffer.from('bad pptx')});
+        await page.waitForFunction(side=>document.querySelector('#'+side+'Thumbnail')?.textContent?.includes(
+          document.documentElement.lang==='ja'?'プレビューを表示できません':'Preview unavailable'),'original',{timeout:15000});
+        assert.deepEqual(issues,[],lang+': runtime errors');
+        assert.deepEqual(requests,[],lang+': runtime HTTP requests');
+        console.log('PASS first-slide previews: '+lang+' '+width+'px');
+      }finally{await context.close();}
+    }
+  }finally{await browser.close();}
+}
+main().catch(error=>{console.error(error);process.exitCode=1;});
