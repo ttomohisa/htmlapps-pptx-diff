@@ -1497,6 +1497,8 @@
       }
       function resetComparison() {
         state.runGeneration+=1;
+        clearMatchThumbnails();
+        state.focusedEntryId=null;
         releaseModelUrls(state.models); disposeVisualRenderHandles();
         state.rendererPresentations={original:null,revised:null};
         clearRendererCache('original'); clearRendererCache('revised');
@@ -2427,13 +2429,62 @@
         else {path('M7 7h10l-2.7-2.7');path('M17 17H7l2.7 2.7');}
         wrap.append(svg); return wrap;
       }
+      const matchThumbs={observer:null,queue:[],frame:0,token:0};
+      function clearMatchThumbnails() {
+        matchThumbs.token++;
+        matchThumbs.observer?.disconnect();matchThumbs.observer=null;
+        if(matchThumbs.frame)cancelAnimationFrame(matchThumbs.frame);
+        matchThumbs.frame=0;matchThumbs.queue.length=0;
+      }
+      function flushMatchThumbnails() {
+        matchThumbs.frame=0;
+        let rendered=0;
+        while(matchThumbs.queue.length&&rendered<2){
+          const thumb=matchThumbs.queue.shift();
+          if(!thumb.isConnected||thumb.dataset.thumbToken!==String(matchThumbs.token))continue;
+          const slide=thumb._slide;
+          if(!slide)continue;
+          try{
+            const badge=thumb.querySelector('.match-thumb-index');
+            thumb.replaceChildren(createSlideCanvas(slide),badge);
+          }catch(error){console.warn('Slide thumbnail fallback',error);}
+          rendered++;
+        }
+        if(matchThumbs.queue.length)matchThumbs.frame=requestAnimationFrame(flushMatchThumbnails);
+      }
+      function observeMatchThumbnails(root) {
+        const thumbs=[...root.querySelectorAll('.match-thumb[data-thumb-pending="true"]')];
+        if(!thumbs.length)return;
+        const enqueue=thumb=>{
+          if(thumb.dataset.thumbPending!=='true')return;
+          thumb.dataset.thumbPending='false';
+          thumb.dataset.thumbToken=String(matchThumbs.token);
+          matchThumbs.observer?.unobserve(thumb);
+          matchThumbs.queue.push(thumb);
+          if(!matchThumbs.frame)matchThumbs.frame=requestAnimationFrame(flushMatchThumbnails);
+        };
+        if(typeof IntersectionObserver==='function'){
+          matchThumbs.observer=new IntersectionObserver(entries=>{
+            entries.forEach(entry=>{if(entry.isIntersecting)enqueue(entry.target);});
+          },{rootMargin:'240px 0px',threshold:0});
+          thumbs.forEach(thumb=>matchThumbs.observer.observe(thumb));
+        }else thumbs.forEach(enqueue);
+      }
       function slideCell(slide) {
-        const cell=document.createElement('div'); cell.className='match-slide'+(slide?'':' empty');
-        const index=document.createElement('div'); index.className='match-index'; index.textContent=slide?String(slide.index).padStart(2,'0'):'—';
-        const body=document.createElement('div'), title=document.createElement('p'); title.className='match-title'; title.textContent=slide?(slide.title||t('noTitle')):'—';
+        const cell=document.createElement('div');cell.className='match-slide'+(slide?'':' empty');
+        const index=document.createElement('div');index.className='match-thumb';
+        if(slide){
+          const placeholder=document.createElement('span');placeholder.className='match-thumb-placeholder';placeholder.textContent='…';
+          const badge=document.createElement('span');badge.className='match-thumb-index';badge.textContent=String(slide.index);
+          index.append(placeholder,badge);index._slide=slide;index.dataset.thumbPending='true';
+          index.style.aspectRatio=`${slide.slideWidth||12192000} / ${slide.slideHeight||6858000}`;
+        }else {index.textContent='—';}
+        index.setAttribute('aria-hidden','true');
+        const body=document.createElement('div'),title=document.createElement('p');title.className='match-title';
+        title.textContent=slide?(slide.title||t('noTitle')):'—';
         body.append(title);
-        if(slide){ const meta=document.createElement('p'); meta.className='match-meta'; meta.textContent=`${t('textElements')} ${formatNumber(slide.text.length)} · ${t('objects')} ${formatNumber(slide.objects.length)}`; body.append(meta); }
-        cell.append(index,body); return cell;
+        if(slide){const meta=document.createElement('p');meta.className='match-meta';meta.textContent=`${t('textElements')} ${formatNumber(slide.text.length)} · ${t('objects')} ${formatNumber(slide.objects.length)}`;body.append(meta);}
+        cell.append(index,body);return cell;
       }
       function reasonFor(row) {
         if(!row.original) return t('reasonAdded');
@@ -2947,6 +2998,7 @@
         $('#searchResultCount').textContent=state.searchTerms.length?t('searchResult').replace('{count}',formatNumber(found)):'';
       }
       function renderMatching(matching) {
+        clearMatchThumbnails();
         const summaryRoot=$('#matchSummary'); summaryRoot.replaceChildren();
         [['unchanged','summaryUnchanged'],['changed','summaryChanged'],['added','summaryAdded'],['removed','summaryRemoved'],['moved','summaryMoved']].forEach(([key,labelKey])=>{ const item=document.createElement('div'); item.className='match-summary-item'; item.dataset.status=key; const value=document.createElement('span'); value.className='match-summary-value'; value.textContent=formatNumber(matching.summary[key]); const label=document.createElement('span'); label.className='match-summary-label'; label.textContent=t(labelKey); item.append(value,label); summaryRoot.append(item); });
         renderSemanticSummary(matching); renderFilterCounts(matching);
@@ -2962,6 +3014,7 @@
         });
         list.hidden=visible===0; $('#diffEmpty').hidden=visible!==0;
         $('#diffEmpty').textContent=t(state.searchTerms.length?'searchEmpty':'filterEmpty');
+        observeMatchThumbnails(list);
         renderVisualCompare(matching);
       }
       function renderResults(models) {
