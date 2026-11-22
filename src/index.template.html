@@ -1317,7 +1317,8 @@
         if(!thumb)return;
         thumb.viewGeneration=(thumb.viewGeneration||0)+1;
         if(thumb.handle){try{thumb.handle.dispose?.();}catch{}thumb.handle=null;}
-        releaseRendererCache(thumb.mediaCache);
+        const oldCache=thumb.mediaCache;thumb.mediaCache=new Map();
+        releaseRendererCache(oldCache);
       }
       function releaseSlotThumbnail(data) {
         const thumb=data?.thumbnail;if(!thumb)return;
@@ -1341,12 +1342,12 @@
         basic();
         const module=state.rendererModule,rendererSlide=thumb.presentation?.slides?.[0];
         if(!module||!rendererSlide)return;
-        const generation=thumb.viewGeneration;
+        const generation=thumb.viewGeneration,mediaUrlCache=thumb.mediaCache;
         const current=()=>state.slots[slot]===data&&data.thumbnail===thumb&&generation===thumb.viewGeneration&&host.isConnected;
         let handle=null;
         try{
           handle=module.renderSlide(thumb.presentation,rendererSlide,{
-            mediaUrlCache:thumb.mediaCache,pdfjs:false,
+            mediaUrlCache,pdfjs:false,
             onNodeError:(nodeId,error)=>console.warn('Thumbnail node',nodeId,error)
           });
           const frame=document.createElement('div');frame.className='pptx-render-frame';frame.append(handle.element);
@@ -1357,6 +1358,8 @@
             if(!current())return;
             console.warn('First-slide thumbnail fallback',error);
             stopSlotThumbnailView(thumb);basic();
+          }).finally(()=>{
+            if(mediaUrlCache!==thumb.mediaCache)releaseRendererCache(mediaUrlCache);
           });
         }catch(error){
           console.warn('First-slide thumbnail fallback',error);
