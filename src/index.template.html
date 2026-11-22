@@ -1219,8 +1219,8 @@
         phase: 'empty',
         runGeneration: 0,
         slots: {
-          original: { file:null, generation:0 },
-          revised: { file:null, generation:0 }
+          original: { file:null, generation:0, thumbnail:null },
+          revised: { file:null, generation:0, thumbnail:null }
         },
         models: null,
         matching: null,
@@ -1425,9 +1425,9 @@
       function acceptFile(slot,file) {
         if (!file) return;
         if (!/\.pptx$/i.test(file.name)) { AppToast.show({message:t('invalidType'),tone:'error'}); return; }
-        const target=state.slots[slot]; target.generation+=1; target.file=file;
+        const target=state.slots[slot];releaseSlotThumbnail(target);target.generation+=1;target.file=file;
         resetComparison(); state.diffFilter='all'; state.changedOnly=false; state.selectedPairId=null; state.phase='ready';
-        renderFileSlot(slot); updateReadyState();
+        renderFileSlot(slot);updateReadyState();queueSlotThumbnail(slot);
       }
 
       function openPicker(slot) { $(`#${slot}Input`).click(); }
@@ -1443,9 +1443,15 @@
 
       $('#swapButton').addEventListener('click',()=>{
         if (state.phase==='processing') return;
-        const tmp=state.slots.original; state.slots.original=state.slots.revised; state.slots.revised=tmp;
-        state.slots.original.generation+=1; state.slots.revised.generation+=1; resetComparison(); state.diffFilter='all'; state.changedOnly=false; state.selectedPairId=null; state.phase='ready';
-        renderFileSlot('original'); renderFileSlot('revised'); updateReadyState(); AppToast.show({message:t('swapped')});
+        for(const data of [state.slots.original,state.slots.revised]){
+          if(data.thumbnail?.pending)releaseSlotThumbnail(data);
+          else stopSlotThumbnailView(data.thumbnail);
+        }
+        const tmp=state.slots.original;state.slots.original=state.slots.revised;state.slots.revised=tmp;
+        state.slots.original.generation+=1;state.slots.revised.generation+=1;resetComparison();state.diffFilter='all';state.changedOnly=false;state.selectedPairId=null;state.phase='ready';
+        renderFileSlot('original');renderFileSlot('revised');updateReadyState();
+        for(const slot of ['original','revised'])if(state.slots[slot].file&&!state.slots[slot].thumbnail)queueSlotThumbnail(slot);
+        AppToast.show({message:t('swapped')});
       });
 
       class PptxError extends Error { constructor(code,message=''){ super(message||code); this.name='PptxError'; this.code=code; } }
@@ -1778,7 +1784,7 @@
         for(const model of [models.original,models.revised]) for(const url of model?.previewUrls||[]) try{ URL.revokeObjectURL(url); }catch{}
       }
 
-      async function parsePresentation(file,progress,guard) {
+      async function parsePresentation(file,progress,guard,firstSlideOnly=false) {
         if(file.size>MAX_PPTX_BYTES) throw new PptxError('pptxTooLarge');
         const buffer=await file.arrayBuffer(); guard();
         if(buffer.byteLength>MAX_PPTX_BYTES) throw new PptxError('pptxTooLarge');
@@ -1792,9 +1798,9 @@
         const slideSize={ width:Number(sizeNode?.getAttribute('cx'))||12192000, height:Number(sizeNode?.getAttribute('cy'))||6858000 };
         const slideIds=nodesByLocal(presentationDoc,'sldId');
         if(!slideIds.length) throw new PptxError('pptxStructureMissing');
-        const slides=[], themeCache=new Map();
-        for(let i=0;i<slideIds.length;i++) {
-          guard(); const item=slideIds[i];
+        const slides=[], themeCache=new Map(),selectedSlideIds=firstSlideOnly?slideIds.slice(0,1):slideIds;
+        for(let i=0;i<selectedSlideIds.length;i++) {
+          guard(); const item=selectedSlideIds[i];
           const rid=item.getAttribute('r:id') || item.getAttributeNS('http://schemas.openxmlformats.org/officeDocument/2006/relationships','id');
           const path=rels.get(rid); if(!path || !zip.entries.has(path)) throw new PptxError('pptxStructureMissing');
           const slideDoc=parseXml(await readZipText(zip,path)); guard();
@@ -1804,7 +1810,7 @@
           const slide=extractSlide(slideDoc,i+1,item.getAttribute('id'),path,slideRels,zip,theme,slideSize);
           slide.notesText=await extractNotesText(zip,path,slideRelsDoc); guard();
           slides.push(slide);
-          progress?.(i+1,slideIds.length);
+          progress?.(i+1,selectedSlideIds.length);
         }
         const previewUrls=await hydrateImagePreviews(slides,zip,guard);
         try { guard(); } catch(error) { releaseModelUrls({original:{previewUrls}}); throw error; }
@@ -2645,6 +2651,10 @@
       async function prepareHighFidelityPresentation(side,model,guard) {
         guard();
         const module=await loadHighFidelityRenderer(); guard(); if(!module||!model?.sourceBuffer) return false;
+        const thumbnail=state.slots[side]?.thumbnail;
+        if(thumbnail?.file===state.slots[side].file&&thumbnail.presentation){
+          state.rendererPresentations[side]=thumbnail.presentation;return true;
+        }
         try{
           const files=await module.parseZip(model.sourceBuffer,module.RECOMMENDED_ZIP_LIMITS); guard();
           const presentation=module.buildPresentation(files); guard();
@@ -3027,6 +3037,9 @@
       $('#helpButton').addEventListener('click',()=>helpDialog.showModal()); $('#closeHelpButton').addEventListener('click',()=>helpDialog.close());
       helpDialog.addEventListener('click',event=>{ if(event.target!==event.currentTarget)return; const r=helpDialog.getBoundingClientRect(); if(event.clientX<r.left||event.clientX>r.right||event.clientY<r.top||event.clientY>r.bottom) helpDialog.close(); });
       $('#versionBadge').textContent=`v${APP_CONFIG.version}`; $('#buildVersion').textContent=APP_CONFIG.version; $('#builtAt').textContent=BUILD_MANIFEST.generatedAtUtc||'—'; $('#dependencyCount').textContent=String(BUILD_MANIFEST.dependencies?.length||0);
+      window.addEventListener('pagehide',()=>{
+        for(const slot of ['original','revised'])releaseSlotThumbnail(state.slots[slot]);
+      });
       applyLanguage();
     })();
   </script>
