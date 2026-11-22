@@ -116,7 +116,7 @@ async function main(){
           const button=page.locator('[data-visual-mode="'+mode+'"]');
           await button.click();
           assert.equal(await button.getAttribute('aria-pressed'),'true',mode+' selected');
-          assert.equal(await modeControls.locator('[aria-pressed="true"]').count(),1,'only one active mode');
+          assert.equal(await page.locator('[data-visual-mode][aria-pressed="true"]').count(),1,'only one active mode');
           await page.locator('#visualCompareStage .visual-stack[data-mode="'+mode+'"]').waitFor({state:'attached'});
         }
         const toggle=page.locator('#visualHighlightToggle');
