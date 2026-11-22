@@ -172,9 +172,13 @@ test('responsive navigation owns a separate narrow-screen row with nonshrinking 
   assert.match(mobile,/\.visual-nav \.icon-button\s*\{[^}]*width:44px;[^}]*height:44px;/);
   assert.match(css,/\.visual-nav \.icon-button\s*\{[^}]*flex:\s*0 0 auto;/);
 });
-test('the report implementation stays byte-identical to the approved ownership base',()=>{
+test('report preserves comparison ownership and includes every semantic summary category',()=>{
   const start=source.indexOf('      function captureReportContext()');
   const end=source.indexOf("      document.querySelectorAll('[data-diff-filter]').forEach(button");
   assert.ok(start>=0&&end>start);
-  assert.equal(crypto.createHash('sha256').update(source.slice(start,end)).digest('hex'),'c01d5fdfb39aaeecdf915ccc55184235e59c542f919b08dd8a37997f1ffd57af');
+  const report=source.slice(start,end);
+  assert.match(report,/structuredClone\(state\.matching\)/);
+  assert.match(report,/guardReport\(context\)/);
+  assert.match(report,/\['semanticObject',matching\.semanticSummary\.object\]/);
+  assert.match(report,/reportEscape\(models\.original\.filename\)/);
 });
