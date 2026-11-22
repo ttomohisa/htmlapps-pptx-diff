@@ -242,6 +242,8 @@ if ($LASTEXITCODE -ne 0) { throw "Header language regression checks failed." }
 if ($LASTEXITCODE -ne 0) { throw "Generated-release parity checks failed." }
 & node (Join-Path $Root "scripts/test-semantic-audit.mjs")
 if ($LASTEXITCODE -ne 0) { throw "Semantic false-negative regression checks failed." }
+& node (Join-Path $Root "scripts/test-file-thumbnails.mjs")
+if ($LASTEXITCODE -ne 0) { throw "First-slide thumbnail regression checks failed." }
 foreach ($target in @("src/index.template.html", "dist/index.html", "pptx-diff.html", "dist/index.self-extract.html")) {
   & node (Join-Path $Root "scripts/test-comparison-ownership.mjs") $target
   if ($LASTEXITCODE -ne 0) { throw "Comparison ownership regression checks failed: $target" }
