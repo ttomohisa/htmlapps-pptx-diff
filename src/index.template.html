@@ -1309,7 +1309,95 @@
         if (has) {
           $(`#${slot}Name`).textContent=data.file.name;
           $(`#${slot}Meta`).textContent=`${formatBytes(data.file.size)} · PPTX`;
+          renderSlotThumbnail(slot);
         }
+      }
+
+      function stopSlotThumbnailView(thumb) {
+        if(!thumb)return;
+        thumb.viewGeneration=(thumb.viewGeneration||0)+1;
+        if(thumb.handle){try{thumb.handle.dispose?.();}catch{}thumb.handle=null;}
+        releaseRendererCache(thumb.mediaCache);
+      }
+      function releaseSlotThumbnail(data) {
+        const thumb=data?.thumbnail;if(!thumb)return;
+        stopSlotThumbnailView(thumb);
+        releaseModelUrls({original:thumb.model});
+        data.thumbnail=null;
+      }
+      function renderSlotThumbnail(slot) {
+        const data=state.slots[slot],thumb=data.thumbnail,host=$('#'+slot+'Thumbnail');
+        if(!host)return;
+        stopSlotThumbnailView(thumb);
+        host.style.aspectRatio='16 / 9';
+        if(!thumb?.model?.slides?.length){
+          const message=document.createElement('span');message.className='file-thumbnail-message';
+          message.textContent=t(thumb?.error?'thumbnailUnavailable':'thumbnailLoading');
+          host.replaceChildren(message);return;
+        }
+        const slide=thumb.model.slides[0];
+        host.style.aspectRatio=(slide.slideWidth||12192000)+' / '+(slide.slideHeight||6858000);
+        const basic=()=>host.replaceChildren(createSlideCanvas(slide));
+        basic();
+        const module=state.rendererModule,rendererSlide=thumb.presentation?.slides?.[0];
+        if(!module||!rendererSlide)return;
+        const generation=thumb.viewGeneration;
+        const current=()=>state.slots[slot]===data&&data.thumbnail===thumb&&generation===thumb.viewGeneration&&host.isConnected;
+        let handle=null;
+        try{
+          handle=module.renderSlide(thumb.presentation,rendererSlide,{
+            mediaUrlCache:thumb.mediaCache,pdfjs:false,
+            onNodeError:(nodeId,error)=>console.warn('Thumbnail node',nodeId,error)
+          });
+          const frame=document.createElement('div');frame.className='pptx-render-frame';frame.append(handle.element);
+          host.replaceChildren(frame);thumb.handle=handle;
+          const fit=()=>{if(current())fitRenderFrame(host,frame,handle.element);};
+          requestAnimationFrame(fit);
+          Promise.resolve(handle.ready).then(()=>requestAnimationFrame(fit)).catch(error=>{
+            if(!current())return;
+            console.warn('First-slide thumbnail fallback',error);
+            stopSlotThumbnailView(thumb);basic();
+          });
+        }catch(error){
+          console.warn('First-slide thumbnail fallback',error);
+          if(handle)try{handle.dispose?.();}catch{}
+          thumb.handle=null;basic();
+        }
+      }
+      function queueSlotThumbnail(slot) {
+        const data=state.slots[slot],file=data.file;if(!file)return;
+        const generation=data.generation,thumb={
+          file,model:null,presentation:null,pending:true,error:false,handle:null,mediaCache:new Map(),viewGeneration:0
+        };
+        data.thumbnail=thumb;renderFileSlot(slot);
+        const current=()=>state.slots[slot]===data&&data.file===file&&data.generation===generation&&data.thumbnail===thumb;
+        const guard=()=>{if(!current())throw new DOMException('Stale thumbnail','AbortError');};
+        (async()=>{
+          let model=null;
+          try{
+            model=await parsePresentation(file,null,guard,true);guard();
+            thumb.model=model;renderFileSlot(slot);
+            const module=await loadHighFidelityRenderer();guard();
+            if(module){
+              try{
+                const files=await module.parseZip(model.sourceBuffer,module.RECOMMENDED_ZIP_LIMITS);guard();
+                thumb.presentation=module.buildPresentation(files);guard();
+              }catch(error){
+                if(error?.name==='AbortError')throw error;
+                console.warn('First-slide high-fidelity renderer unavailable',error);
+              }
+            }
+            guard();thumb.pending=false;model.sourceBuffer=null;renderFileSlot(slot);
+          }catch(error){
+            if(!current())return;
+            thumb.pending=false;
+            if(!thumb.model){thumb.error=true;console.warn('First-slide thumbnail unavailable',error);}
+            else console.warn('First-slide high-fidelity renderer unavailable',error);
+            renderFileSlot(slot);
+          }finally{
+            if(!current()&&model)releaseModelUrls({original:model});
+          }
+        })();
       }
 
       function updateReportState() {
