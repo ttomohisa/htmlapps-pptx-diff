@@ -118,7 +118,8 @@ async function main(){
         await page.waitForFunction(()=>document.querySelector('#matchList .match-row')&&!document.querySelector('#matchList').hidden);
         assert.equal(await page.locator('#matchList .match-row').count(),1);
         await search.fill('');
-        await page.waitForFunction(()=>document.querySelector('#matchList .match-row')&&!document.querySelector('#matchList').hidden);
+        await page.waitForFunction(()=>document.querySelector('#searchResultCount')?.textContent==='' &&
+          document.querySelector('#matchList .match-row')&&!document.querySelector('#matchList').hidden);
         const filterCount=await page.locator('[data-filter-count="all"]').innerText();
         assert.match(filterCount,lang==='ja'?/枚/:/slides/,'filter counts represent slides');
         const unit=await page.locator('#semanticSummary .semantic-summary-unit').first().innerText();
@@ -132,7 +133,7 @@ async function main(){
         const firstDetails=page.locator('#matchList .semantic-details').first();
         assert.ok(await firstDetails.count(),'at least one slide has a change');
         await firstDetails.evaluate(el=>{el.open=true;});
-        const inspect=page.locator('#matchList .change-inspect-button').first();
+        const inspect=firstDetails.locator('.change-inspect-button').first();
         assert.ok(await inspect.count(),'changes have a preview action');
         await inspect.click();
         await page.locator('#visualCompare').waitFor({state:'visible'});
