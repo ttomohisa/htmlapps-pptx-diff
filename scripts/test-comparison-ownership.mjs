@@ -85,7 +85,7 @@ test('current analysis failure releases earlier parsed models and permits retry'
   assert.equal(h.state.phase,'error');assert.ok(h.revoked.includes(h.parsed[0].previewUrls[0]));assert.equal(h.node('#saveReportButton').disabled,true);h.parseGates.clear();await h.context.analyze();assert.equal(h.state.phase,'result');assert.equal(h.node('#analyzeSpinner').hidden,true);
 });
 test('renderer failure retains current structural comparison fallback',async()=>{
-  const h=setup();h.context.loadHighFidelityRenderer=async()=>({parseZip:async()=>{throw new Error('renderer unavailable');}});await initial(h);assert.equal(h.state.rendererPresentations.original,null);assert.equal(h.state.matching.rows.length,2);
+  const h=setup();h.context.loadHighFidelityRenderer=async()=>({parseZip:async()=>{throw new Error('renderer unavailable');}});await initial(h);assert.equal(h.state.rendererPresentations.original,null);assert.equal(h.state.matching.rows.length,1);assert.equal(h.state.matching.rows[0].reviewRequired,true);
 });
 for(const mutation of ['replace','swap','reanalyze','tolerance']) test(`report snapshot interrupted by ${mutation} produces no download`,async()=>{
   const h=setup();await initial(h);const gate=deferred();h.snapshotGates.set('Original-A.pptx:Alpha',gate);const saving=h.node('#saveReportButton').click();await until(()=>h.renderCalls.length===1);
