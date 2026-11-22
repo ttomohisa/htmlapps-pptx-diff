@@ -1,5 +1,15 @@
 # PPTX Diff — APP_SPEC.md
 
+## Selected-file thumbnails and compact introduction
+
+- Keep the app name in the header; omit the redundant hero title and use a short, practical introduction.
+- Hide the existing local-processing badge at phone widths (760px or narrower); keep it visible on desktop.
+- Use a PowerPoint slide-diff description rather than another local-processing claim in the header subtitle.
+- Keep the feature explanations in How to use & Notes, not in a separate feature-card section; do not mention the host site in Help privacy copy.
+- Present first-slide thumbnails when PPTX files are chosen (before Compare), using embedded resources only, preserving the local-only runtime contract.
+- Prefer high-fidelity presentation rendering with a basic slide fallback; handle loading, invalid PPTX, replacement and swap without stale content or URLs.
+- Keep Comparison settings expandable but without a surrounding border.
+
 ## Phone footer and Help metadata
 
 - Hide only the informational footer at the existing 760px phone breakpoint. Preserve functional navigation and controls.
