@@ -55,7 +55,7 @@ function setup(rows = [row(10), row(30), row(70)]) {
     node.dataset.i18nTitle=match[0].match(/data-i18n-title="([^"]+)"/)?.[1];
     node.dataset.i18nAriaLabel=match[0].match(/data-i18n-aria-label="([^"]+)"/)?.[1];
   }
-  const state = {language:'en', phase:'result', selectedPairId:null, diffFilter:'all', changedOnly:false, visualMode:'side', visualHighlights:true,
+  const state = {language:'en', phase:'result', selectedPairId:null, diffFilter:'all', changedOnly:false, searchTerms:[], visualMode:'side', visualZoom:100, visualHighlights:true,
     rendererPresentations:{original:null,revised:null}, visualRenderGeneration:0,
     matching:{rows,summary:{unchanged:rows.length,changed:0,added:0,removed:0,moved:0,review:0}}};
   const context=vm.createContext({state, $:get, document, APP_CONFIG:{name:'PPTX Diff',nameJa:'PPTX Diff'}, formatNumber:String,
@@ -64,6 +64,7 @@ function setup(rows = [row(10), row(30), row(70)]) {
     semanticDetails(){const n=makeNode('details');n.open=true;return n;},
     disposeVisualRenderHandles(){state.visualRenderGeneration++;previewRenders++;}, changedObjectsForRow:()=>({original:[],revised:[]}),
     createVisualMarkerBar:()=>makeNode(), createVisualPane:()=>makeNode(), renderVisualDiffPanel(){}, requestAnimationFrame(){},
+    clearMatchThumbnails(){}, observeMatchThumbnails(){}, applyVisualZoom(){},
   });
   const names=['t','applyLanguage','rowMatchesFilter','selectedVisualRow','visibleVisualRows','visualRowIndex','syncMatchSelection','selectVisualPair','navigateVisual','navigateVisualBoundary','renderMatching','renderVisualCompare','compareModeNote'];
   const navigationListeners=source.split('\n').filter(line=>/^      \$\('#visual(?:First|Prev|Next|Last)Button'\)\.addEventListener\('click'/.test(line)).join('\n');
