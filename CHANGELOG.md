@@ -6,6 +6,8 @@
 - Detect case/whitespace edits, picture crop/appearance edits, shape kind, slide background, slide size and overlapping shape order changes.
 - Bound PPTX input sizes and ZIP inflation to reduce memory exhaustion from malformed or oversized archives.
 - Include object-change totals in HTML reports and test the comparison engine across standalone distributions.
+- Simplify the introduction and file-selection copy, remove the extra hero heading and framed comparison settings, hide the local-processing badge on phones, and move feature descriptions into Help.
+- Show the first slide of each selected PPTX before comparison. Use the local high-fidelity renderer when possible, fall back to a basic thumbnail, and discard stale previews when files change.
 
 
 ## 1.0.4 - 2026-10-27
