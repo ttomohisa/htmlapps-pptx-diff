@@ -100,6 +100,38 @@ async function main(){
         await preview('original','third.pptx','FIRST_SLIDE_GAMMA');
         await expectThumbnail(page,'original');
         assert.equal(await page.locator('#originalName').innerText(),'third.pptx');
+        // Compare actual local fixture PPTX files, then exercise the result UI.
+        await page.locator('#analyzeButton').click();
+        await page.locator('#resultSection').waitFor({state:'visible',timeout:30000});
+        assert.equal(await page.locator('#matchSummary .match-summary-item').count(),5);
+        assert.equal(await page.locator('#semanticSummary .semantic-summary-item').count(),7);
+        assert.equal(await page.locator('#changeBreakdownTitle').innerText(),lang==='ja'?'変更内訳':'Change breakdown');
+        assert.equal(await page.locator('.change-breakdown').count(),1);
+        assert.equal(await page.locator('#semanticSummary [role="listitem"]').count(),7);
+        assert.equal(await page.locator('#matchSummary').getAttribute('aria-label'),lang==='ja'?'スライドの集計':'Slide summary');
+        const modeControls=page.locator('[data-visual-mode]');
+        assert.equal(await modeControls.count(),4);
+        assert.equal(await modeControls.locator('svg').count(),4);
+        for(const mode of ['side','overlay','split','blink']){
+          const button=page.locator('[data-visual-mode="'+mode+'"]');
+          await button.click();
+          assert.equal(await button.getAttribute('aria-pressed'),'true',mode+' selected');
+          assert.equal(await modeControls.locator('[aria-pressed="true"]').count(),1,'only one active mode');
+          await page.locator('#visualCompareStage .visual-stack[data-mode="'+mode+'"]').waitFor({state:'attached'});
+        }
+        const toggle=page.locator('#visualHighlightToggle');
+        const label=lang==='ja'?'差分を表示':'Show differences';
+        assert.equal(await page.locator('#visualHighlightToggleLabel').innerText(),label);
+        assert.equal(await toggle.getAttribute('aria-pressed'),'true');
+        await toggle.click();
+        assert.equal(await toggle.getAttribute('aria-pressed'),'false');
+        assert.equal(await page.locator('#visualHighlightToggleLabel').innerText(),label);
+        await toggle.click();
+        assert.equal(await toggle.getAttribute('aria-pressed'),'true');
+        if(width===360){
+          assert.equal(await page.locator('.visual-modes').evaluate(el=>getComputedStyle(el).gridTemplateColumns.split(' ').length),2);
+        }
+        await page.screenshot({path:path.resolve('test-results/mobile-layout','comparison-'+lang+'-'+width+'.png')});
         assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'no horizontal scroll');
         await page.locator('#originalInput').setInputFiles({name:'broken.pptx',mimeType:'application/vnd.openxmlformats-officedocument.presentationml.presentation',buffer:Buffer.from('bad pptx')});
         await page.waitForFunction(side=>document.querySelector('#'+side+'Thumbnail')?.textContent?.includes(
