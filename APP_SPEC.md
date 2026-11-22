@@ -1,5 +1,14 @@
 # PPTX Diff — APP_SPEC.md
 
+## Result navigation and visual zoom
+
+- Expose changed-element counts separately from counts of matching slides; a change can appear in more than one category.
+- Search both presentations' slide titles and text without any network call; combine query with existing category/changed-only filters and preserve the query across language changes.
+- Render small matched-slide thumbnails only when they approach the visible area; disconnect observers and discard pending draws when results are replaced.
+- Provide an explicit action on each change detail to navigate to the corresponding selected slide and highlight geometric changes. Explain when a change has no slide coordinates, such as speaker notes.
+- Show one short description for the selected side-by-side / overlay / split / blink mode near the controls.
+- Allow local visual-only zoom steps of 50%, 75%, 100%, 125%, 150% and 200%; keep overflow within the preview viewport and retain split dragging and highlighting.
+
 ## Selected-file thumbnails and compact introduction
 
 - Keep the app name in the header; omit the redundant hero title and use a short, practical introduction.
