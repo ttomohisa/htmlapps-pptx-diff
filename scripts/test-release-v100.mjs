@@ -35,8 +35,8 @@ expect(source.includes('scroll-margin-top:76px'), 'sticky-header result/visual o
 expect(source.includes('id="resultFilePair"'), 'result file-pair summary is missing');
 expect(source.includes('id="analyzeSpinner"') && source.includes('id="saveReportSpinner"'), 'busy indicators are missing');
 expect(source.includes("event.target.closest('.semantic-details,button,a,input,select,textarea,label,summary')"), 'nested Semantic Diff click guard is missing');
-expect(source.includes('function selectVisualPair(pairId)'), 'Visual Compare selection helper is missing');
-expect(source.includes('syncMatchSelection(); renderVisualCompare(state.matching);'), 'Visual Compare selection should not rebuild the result list');
+expect(source.includes('function selectVisualPair(pairId,entryId=null)'), 'Visual Compare selection helper with focused-entry support is missing');
+expect(source.includes('syncMatchSelection();renderVisualCompare(state.matching);'), 'Visual Compare selection should not rebuild the result list');
 expect(source.includes("btn.disabled=key!=='all'&&count===0&&key!==state.diffFilter"), 'zero-result filter disabling is missing');
 expect(!source.includes('id="originalDrop" role="button"'), 'drop zone must not contain nested button semantics');
 
