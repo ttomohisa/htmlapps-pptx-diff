@@ -505,7 +505,9 @@
     .match-summary-item[data-status="changed"] .match-summary-value { color:var(--accent); }
     .match-summary-label { display:block; margin-top:5px; color:var(--muted); font-size:11px; font-weight:650; white-space:nowrap; }
     .change-breakdown { margin:0 0 14px; padding:12px 15px 3px; border:1px solid var(--line); border-radius:12px; background:var(--surface); }
-    .change-breakdown h3 { margin:0 0 6px; font-size:13px; font-weight:780; }
+    .change-breakdown h3 { margin:0 0 3px; font-size:13px; font-weight:780; }
+    .breakdown-hint { margin:0 0 8px; color:var(--muted); font-size:10px; line-height:1.5; }
+    .semantic-summary-unit { margin-left:3px; color:var(--muted); font-size:10px; font-weight:500; }
     .semantic-summary { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); column-gap:24px; margin:0; }
     .semantic-summary-item { min-width:0; display:flex; align-items:center; justify-content:space-between; gap:10px; padding:10px 2px; border-top:1px solid var(--line); }
     .semantic-summary-copy { min-width:0; }
@@ -514,6 +516,11 @@
     .semantic-summary-value { flex:0 0 auto; font-size:16px; font-weight:800; line-height:1; font-variant-numeric:tabular-nums; }
     .semantic-summary-item[data-zero="true"] .semantic-summary-value { color:var(--muted); }
     .semantic-summary-item[data-zero="false"] .semantic-summary-value { color:var(--accent); }
+    .slide-search-wrap { display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin:0 0 10px; }
+    .slide-search-label { font-size:11px; font-weight:750; white-space:nowrap; }
+    .slide-search { width:min(100%,320px); flex:0 1 260px; min-width:0; min-height:38px; padding:7px 11px; border:1px solid var(--line-strong); border-radius:9px; background:var(--surface); color:var(--text); font:inherit; font-size:12px; }
+    .slide-search:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+    .slide-search-count { min-width:0; color:var(--muted); font-size:11px; }
     .diff-toolbar { display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; margin:0 0 10px; }
     .diff-toolbar-label { color:var(--muted); font-size:11px; font-weight:720; }
     .result-actions { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
@@ -544,7 +551,12 @@
     .match-row { display:grid; grid-template-columns:minmax(0,1fr) 156px minmax(0,1fr); gap:12px; align-items:center; min-height:76px; padding:11px 13px; border-bottom:1px solid var(--line); }
     .match-row:last-child { border-bottom:0; }
     .match-row[data-review="true"] { background:#fffdf7; }
-    .match-slide { min-width:0; display:grid; grid-template-columns:34px minmax(0,1fr); gap:9px; align-items:start; }
+    .match-slide { min-width:0; display:grid; grid-template-columns:minmax(0,94px) minmax(0,1fr); gap:10px; align-items:center; }
+    .match-thumb { position:relative; min-width:0; width:100%; aspect-ratio:16 / 9; display:grid; place-items:center; overflow:hidden; border:1px solid var(--line); border-radius:6px; background:#fff; container-type:size; }
+    .match-thumb .slide-canvas { width:100%; height:100%; border:0; border-radius:0; }
+    .match-thumb .preview-text-inner { line-height:1.1; }
+    .match-thumb-index { position:absolute; top:3px; left:3px; z-index:3; min-width:19px; padding:1px 3px; border-radius:3px; background:rgba(32,33,31,.77); color:#fff; font-size:9px; font-weight:800; text-align:center; }
+    .match-thumb-placeholder { font-size:10px; color:var(--muted); }
     .match-slide.empty { opacity:.55; }
     .match-index { display:grid; place-items:center; min-height:28px; padding:4px; border-radius:8px; background:var(--surface-muted); color:var(--muted); font-size:10px; font-weight:800; }
     .match-title { margin:0; font-size:12px; font-weight:760; line-height:1.45; overflow-wrap:anywhere; }
@@ -629,7 +641,17 @@
     .visual-mode:hover:not([aria-pressed="true"]) { background:var(--surface-muted); }
     .visual-mode[aria-pressed="true"] { background:var(--accent); color:#fff; }
     .visual-mode:focus-visible { position:relative; z-index:1; outline:3px solid var(--focus); outline-offset:-3px; }
-    .visual-stage { position:relative; }
+    .visual-zoom-toolbar { display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin:6px 0; }
+    .visual-zoom-actions { display:inline-flex; align-items:center; gap:6px; }
+    .visual-zoom-button, .visual-zoom-reset { min-height:36px; border:1px solid var(--line); border-radius:8px; background:var(--surface); color:var(--text); font:inherit; font-size:12px; font-weight:760; cursor:pointer; }
+    .visual-zoom-button { min-width:36px; padding:5px; font-size:18px; }
+    .visual-zoom-reset { padding:7px 10px; }
+    .visual-zoom-button:disabled, .visual-zoom-reset:disabled { opacity:.4; cursor:not-allowed; }
+    .visual-zoom-value { min-width:45px; text-align:center; color:var(--text); font-size:11px; font-weight:760; font-variant-numeric:tabular-nums; }
+    .visual-mode-description { margin:4px 0 10px; color:var(--muted); font-size:11px; line-height:1.5; }
+    .visual-stage-viewport { width:100%; overflow:auto; overscroll-behavior:contain; }
+    .visual-stage-viewport[data-zoomed="true"] { max-height:75vh; }
+    .visual-stage { position:relative; width:100%; min-width:0; margin-inline:auto; }
     .visual-layer-legend { display:flex; align-items:center; justify-content:space-between; gap:10px; margin:0 0 7px; }
     .visual-layer-label { display:inline-flex; align-items:center; gap:6px; padding:4px 8px; border:1px solid var(--line); border-radius:999px; background:var(--surface); color:var(--muted); font-size:10px; font-weight:780; }
     .visual-layer-label.revised { color:var(--accent); border-color:color-mix(in srgb,var(--accent) 28%,var(--line)); background:var(--accent-soft); }
@@ -764,6 +786,7 @@
       .visual-toolbar-main { width:100%; }
       .visual-modes { width:min(100%,460px); }
       .match-row { grid-template-columns:1fr; gap:7px; padding:12px; }
+      .match-slide { grid-template-columns:minmax(0,94px) minmax(0,1fr); }
       .match-relation { justify-items:start; text-align:left; padding-left:43px; }
       .semantic-summary { grid-template-columns:repeat(2,minmax(0,1fr)); }
       .text-diff-grid { grid-template-columns:1fr; }
@@ -806,6 +829,11 @@
       .property-arrow { display:none; }
       .diff-toolbar { align-items:flex-start; }
       .filter-extra { width:100%; margin-left:0; }
+      .slide-search-wrap { display:grid; grid-template-columns:minmax(0,1fr); gap:5px; }
+      .slide-search { flex:auto; width:100%; }
+      .slide-search-count { min-height:16px; }
+      .visual-zoom-toolbar { gap:8px; }
+      .visual-zoom-button, .visual-zoom-reset { min-height:44px; }
       .result-head { flex-direction:column; align-items:stretch; }
       .result-actions { width:100%; justify-content:flex-start; }
       .result-actions .button { width:100%; min-height:38px; font-size:12px; white-space:nowrap; }
@@ -938,14 +966,20 @@
       <div class="match-summary" id="matchSummary" role="group" data-i18n-aria-label="slideSummaryLabel" aria-label="スライドの集計"></div>
       <section class="change-breakdown" aria-labelledby="changeBreakdownTitle">
         <h3 id="changeBreakdownTitle" data-i18n="changeBreakdownTitle">変更内訳</h3>
+        <p class="breakdown-hint" data-i18n="breakdownHint">変更した要素の件数です。複数の項目に数えられる変更もあります。</p>
         <div class="semantic-summary" id="semanticSummary" role="list"></div>
       </section>
       <div class="review-banner" id="reviewBanner" hidden>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 2.8 19h18.4L12 3Z"/><path d="M12 9v4"/><path d="M12 16.8h.01"/></svg>
         <span id="reviewBannerText"></span>
       </div>
+      <div class="slide-search-wrap">
+        <label for="slideSearch" class="slide-search-label" data-i18n="searchLabel">スライドを検索</label>
+        <input id="slideSearch" class="slide-search" type="search" autocomplete="off" spellcheck="false" placeholder="タイトルや本文で検索" data-i18n-placeholder="searchPlaceholder" aria-describedby="searchResultCount">
+        <span id="searchResultCount" class="slide-search-count" role="status" aria-live="polite"></span>
+      </div>
       <div class="diff-toolbar" id="diffToolbar">
-        <span class="diff-toolbar-label" data-i18n="filterLabel">表示</span>
+        <span class="diff-toolbar-label" data-i18n="filterLabel">表示（スライド枚数）</span>
         <div class="diff-filters" role="group" data-i18n-aria-label="filterLabel">
           <button class="diff-filter" type="button" data-diff-filter="all" aria-pressed="true"><span data-i18n="filterAll">すべて</span><span class="diff-filter-count" data-filter-count="all"></span></button>
           <button class="diff-filter" type="button" data-diff-filter="text" aria-pressed="false"><span data-i18n="filterText">文章変更</span><span class="diff-filter-count" data-filter-count="text"></span></button>
@@ -1006,7 +1040,19 @@
             <button class="overlay-order-button" type="button" data-overlay-top="revised" aria-pressed="true" data-i18n="revised">変更後のファイル</button>
           </div>
         </div>
-        <div class="visual-stage" id="visualCompareStage"></div>
+        <div class="visual-zoom-toolbar">
+          <span class="diff-toolbar-label" data-i18n="visualZoomLabel">拡大・縮小</span>
+          <div class="visual-zoom-actions" role="group" data-i18n-aria-label="visualZoomLabel">
+            <button class="visual-zoom-button" id="visualZoomOut" type="button" data-i18n-title="visualZoomOut" data-i18n-aria-label="visualZoomOut" aria-label="縮小" title="縮小">−</button>
+            <output id="visualZoomValue" class="visual-zoom-value" aria-live="polite">100%</output>
+            <button class="visual-zoom-button" id="visualZoomIn" type="button" data-i18n-title="visualZoomIn" data-i18n-aria-label="visualZoomIn" aria-label="拡大" title="拡大">+</button>
+            <button class="visual-zoom-reset" id="visualZoomReset" type="button" data-i18n="visualZoomReset">100%に戻す</button>
+          </div>
+        </div>
+        <p class="visual-mode-description" id="visualModeDescription" role="status" aria-live="polite">元と変更後を横に並べて表示します。</p>
+        <div class="visual-stage-viewport" id="visualStageViewport">
+          <div class="visual-stage" id="visualCompareStage"></div>
+        </div>
         <p class="visual-note" id="visualCompareNote" data-i18n="visualCompareNote">Semantic Diffで見つかった要素を強調表示します。</p>
         <div class="visual-diff-panel" id="visualCompareDiff"></div>
       </section>
@@ -1256,9 +1302,13 @@
         matching: null,
         diffFilter: 'all',
         changedOnly: false,
+        searchQuery: '',
+        searchTerms: [],
         layoutTolerance: 'auto',
         selectedPairId: null,
         visualMode: 'side',
+        visualZoom: 100,
+        focusedEntryId: null,
         visualSplit: 50,
         visualOverlayTop: 'revised',
         visualHighlights: true,
@@ -1304,6 +1354,7 @@
         document.documentElement.lang=state.language;
         document.querySelectorAll('[data-i18n]').forEach(el=>{ el.textContent=t(el.dataset.i18n); });
         document.querySelectorAll('[data-i18n-title]').forEach(el=>{ el.title=t(el.dataset.i18nTitle); });
+        document.querySelectorAll('[data-i18n-placeholder]').forEach(el=>{ el.placeholder=t(el.dataset.i18nPlaceholder); });
         document.querySelectorAll('[data-i18n-aria-label]').forEach(el=>{ el.setAttribute('aria-label',t(el.dataset.i18nAriaLabel)); });
         $('#languageButton').textContent=state.language==='ja'?'EN':'JA';
         document.title=state.language==='ja'?APP_CONFIG.nameJa:APP_CONFIG.name;
