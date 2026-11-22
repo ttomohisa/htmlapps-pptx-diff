@@ -622,9 +622,13 @@
     .visual-compare-head p { margin:4px 0 0; color:var(--muted); font-size:12px; }
     .visual-selection { grid-column:1 / -1; min-width:0; color:var(--muted); font-size:11px; font-weight:720; overflow-wrap:anywhere; }
     .visual-toolbar { display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; margin-bottom:10px; }
-    .visual-modes { display:flex; flex-wrap:wrap; gap:6px; }
-    .visual-mode { min-height:34px; padding:6px 10px; border:1px solid var(--line); border-radius:999px; background:var(--surface); color:var(--text); font:inherit; font-size:11px; font-weight:760; cursor:pointer; }
-    .visual-mode[aria-pressed="true"] { border-color:var(--accent); background:var(--accent-soft); color:var(--accent); }
+    .visual-modes { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); width:min(100%,460px); min-width:0; overflow:hidden; border:1px solid var(--line-strong); border-radius:11px; background:var(--surface); }
+    .visual-mode { min-width:0; min-height:44px; display:inline-flex; align-items:center; justify-content:center; gap:7px; padding:9px 11px; border:0; border-right:1px solid var(--line); border-radius:0; background:transparent; color:var(--text); font:inherit; font-size:11px; font-weight:760; white-space:nowrap; cursor:pointer; }
+    .visual-mode:last-child { border-right:0; }
+    .visual-mode svg { width:18px; height:18px; flex:0 0 auto; }
+    .visual-mode:hover:not([aria-pressed="true"]) { background:var(--surface-muted); }
+    .visual-mode[aria-pressed="true"] { background:var(--accent); color:#fff; }
+    .visual-mode:focus-visible { position:relative; z-index:1; outline:3px solid var(--focus); outline-offset:-3px; }
     .visual-stage { position:relative; }
     .visual-layer-legend { display:flex; align-items:center; justify-content:space-between; gap:10px; margin:0 0 7px; }
     .visual-layer-label { display:inline-flex; align-items:center; gap:6px; padding:4px 8px; border:1px solid var(--line); border-radius:999px; background:var(--surface); color:var(--muted); font-size:10px; font-weight:780; }
@@ -665,16 +669,18 @@
     .visual-nav { display:flex; align-items:center; justify-content:flex-end; gap:6px; width:max-content; }
     .visual-nav .icon-button { width:34px; height:34px; flex:0 0 auto; }
     .visual-nav-position { min-width:44px; color:var(--muted); font-size:10px; font-weight:760; text-align:center; white-space:nowrap; }
-    .visual-toolbar-main { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+    .visual-toolbar-main { display:flex; align-items:center; gap:10px; flex-wrap:wrap; width:100%; min-width:0; }
+    .visual-highlight-control { display:flex; align-items:center; min-height:44px; margin-left:3px; padding-left:15px; border-left:1px solid var(--line); }
     .overlay-order { display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
     .overlay-order[hidden] { display:none; }
     .overlay-order-label { color:var(--muted); font-size:10px; font-weight:720; }
     .overlay-order-button { min-height:32px; padding:5px 9px; border:1px solid var(--line); border-radius:999px; background:var(--surface); color:var(--text); font:inherit; font-size:10px; font-weight:760; cursor:pointer; }
     .overlay-order-button[aria-pressed="true"] { border-color:var(--accent); background:var(--accent-soft); color:var(--accent); }
-    .visual-highlight-toggle { min-height:32px; display:inline-flex; align-items:center; gap:6px; padding:5px 9px; border:1px solid var(--line); border-radius:999px; background:var(--surface); color:var(--text); font:inherit; font-size:10px; font-weight:760; cursor:pointer; }
-    .visual-highlight-toggle svg { width:14px; height:14px; }
+    .visual-highlight-toggle { min-height:44px; display:inline-flex; align-items:center; justify-content:center; gap:7px; padding:8px 12px; border:1px solid var(--line); border-radius:10px; background:var(--surface); color:var(--muted); font:inherit; font-size:11px; font-weight:760; cursor:pointer; white-space:nowrap; }
+    .visual-highlight-toggle svg { width:17px; height:17px; flex:0 0 auto; }
     .visual-highlight-toggle[aria-pressed="true"] { border-color:var(--accent); background:var(--accent-soft); color:var(--accent); }
-    .visual-highlight-toggle[aria-pressed="false"] { color:var(--muted); }
+    .visual-highlight-toggle:hover { border-color:var(--accent); }
+    .visual-highlight-toggle:focus-visible { outline:3px solid var(--focus); outline-offset:2px; }
     .semantic-marker-badge { display:inline-flex; align-items:center; justify-content:center; flex:0 0 auto; min-height:20px; padding:2px 6px; border-radius:999px; background:var(--accent-soft); color:var(--accent); font-size:8px; font-weight:820; white-space:nowrap; }
     .visual-diff-panel { margin-top:12px; padding-top:12px; border-top:1px solid var(--line); }
     .visual-diff-panel-head { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:8px; }
@@ -974,12 +980,14 @@
           <div class="visual-toolbar-main">
             <span class="diff-toolbar-label" data-i18n="visualModeLabel">表示モード</span>
             <div class="visual-modes" role="group" data-i18n-aria-label="visualModeLabel">
-            <button class="visual-mode" type="button" data-visual-mode="side" aria-pressed="true" data-i18n="visualModeSide">横並び</button>
-            <button class="visual-mode" type="button" data-visual-mode="overlay" aria-pressed="false" data-i18n="visualModeOverlay">重ね合わせ</button>
-            <button class="visual-mode" type="button" data-visual-mode="split" aria-pressed="false" data-i18n="visualModeSplit">分割</button>
-            <button class="visual-mode" type="button" data-visual-mode="blink" aria-pressed="false" data-i18n="visualModeBlink">点滅</button>
+              <button class="visual-mode" type="button" data-visual-mode="side" aria-pressed="true" data-i18n-title="previewModeSideNote"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="4" width="8.5" height="16" rx="1.5"/><rect x="13" y="4" width="8.5" height="16" rx="1.5"/></svg><span data-i18n="visualModeSide">横並び</span></button>
+              <button class="visual-mode" type="button" data-visual-mode="overlay" aria-pressed="false" data-i18n-title="previewModeOverlayNote"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="13.5" height="13.5" rx="2"/><rect x="7.5" y="7.5" width="13.5" height="13.5" rx="2"/></svg><span data-i18n="visualModeOverlay">重ね合わせ</span></button>
+              <button class="visual-mode" type="button" data-visual-mode="split" aria-pressed="false" data-i18n-title="previewModeSplitNote"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M12 4v16"/></svg><span data-i18n="visualModeSplit">分割</span></button>
+              <button class="visual-mode" type="button" data-visual-mode="blink" aria-pressed="false" data-i18n-title="previewModeBlinkNote"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2v4M12 18v4M2 12h4M18 12h4M5 5l2.6 2.6M16.4 16.4 19 19M19 5l-2.6 2.6M7.6 16.4 5 19"/><circle cx="12" cy="12" r="3"/></svg><span data-i18n="visualModeBlink">点滅</span></button>
             </div>
-            <button class="visual-highlight-toggle" id="visualHighlightToggle" type="button" aria-pressed="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"/><circle cx="12" cy="12" r="2.5"/></svg><span id="visualHighlightToggleLabel">差分を隠す</span></button>
+            <div class="visual-highlight-control">
+              <button class="visual-highlight-toggle" id="visualHighlightToggle" type="button" aria-pressed="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"/><circle cx="12" cy="12" r="2.5"/></svg><span id="visualHighlightToggleLabel">差分を表示</span></button>
+            </div>
           </div>
           <div class="overlay-order" id="overlayOrder" hidden>
             <span class="overlay-order-label" data-i18n="overlayTopLabel">上に表示</span>
@@ -2802,7 +2810,7 @@
       function renderVisualCompare(matching) {
         disposeVisualRenderHandles(); const generation=state.visualRenderGeneration;
         const section=$('#visualCompare'), stage=$('#visualCompareStage'), selection=$('#visualCompareSelection'), note=$('#visualCompareNote'), overlayOrder=$('#overlayOrder');
-        const row=selectedVisualRow(matching), nav=visualRowIndex(matching,row); section.dataset.highlights=state.visualHighlights?'on':'off'; document.querySelectorAll('[data-visual-mode]').forEach(btn=>btn.setAttribute('aria-pressed',String(btn.dataset.visualMode===state.visualMode))); document.querySelectorAll('[data-overlay-top]').forEach(btn=>btn.setAttribute('aria-pressed',String(btn.dataset.overlayTop===state.visualOverlayTop))); const highlightToggle=$('#visualHighlightToggle'); highlightToggle.setAttribute('aria-pressed',String(state.visualHighlights)); $('#visualHighlightToggleLabel').textContent=t(state.visualHighlights?'hideVisualHighlights':'showVisualHighlights');
+        const row=selectedVisualRow(matching), nav=visualRowIndex(matching,row); section.dataset.highlights=state.visualHighlights?'on':'off'; document.querySelectorAll('[data-visual-mode]').forEach(btn=>btn.setAttribute('aria-pressed',String(btn.dataset.visualMode===state.visualMode))); document.querySelectorAll('[data-overlay-top]').forEach(btn=>btn.setAttribute('aria-pressed',String(btn.dataset.overlayTop===state.visualOverlayTop))); const highlightToggle=$('#visualHighlightToggle'); highlightToggle.setAttribute('aria-pressed',String(state.visualHighlights)); $('#visualHighlightToggleLabel').textContent=t('showVisualHighlights');
         $('#visualFirstButton').disabled=$('#visualPrevButton').disabled=!row||nav.index<=0; $('#visualLastButton').disabled=$('#visualNextButton').disabled=!row||nav.index>=nav.rows.length-1; $('#visualNavPosition').textContent=row?`${nav.index+1} / ${nav.rows.length}`:'—'; overlayOrder.hidden=state.visualMode!=='overlay'||!row?.original||!row?.revised;
         if(!row){ section.hidden=false; stage.replaceChildren(); const empty=document.createElement('p'); empty.className='visual-empty'; empty.textContent=t('previewUnavailable'); stage.append(empty); selection.textContent=t('visualSelectionEmpty'); note.textContent=t('visualCompareNote'); $('#visualCompareDiff').replaceChildren(); return; }
         section.hidden=false; const leftTitle=row.original?formatPreviewSlideTitle(row.original):t('missingOriginal'), rightTitle=row.revised?formatPreviewSlideTitle(row.revised):t('missingRevised'); selection.textContent=`${leftTitle} → ${rightTitle}`; note.textContent=compareModeNote(state.visualMode)+' '+t(state.rendererPresentations.original||state.rendererPresentations.revised?'rendererPrimary':'rendererFallback');
@@ -3039,7 +3047,7 @@
       document.querySelectorAll('[data-diff-filter]').forEach(button=>button.addEventListener('click',()=>{ state.diffFilter=button.dataset.diffFilter; if(state.matching) renderMatching(state.matching); }));
       $('#changedOnlyButton').addEventListener('click',()=>{ state.changedOnly=!state.changedOnly; if(state.matching) renderMatching(state.matching); });
       document.querySelectorAll('[data-visual-mode]').forEach(button=>button.addEventListener('click',()=>{ state.visualMode=button.dataset.visualMode; if(state.matching) renderVisualCompare(state.matching); }));
-      $('#visualHighlightToggle').addEventListener('click',()=>{ state.visualHighlights=!state.visualHighlights; const section=$('#visualCompare'); section.dataset.highlights=state.visualHighlights?'on':'off'; const button=$('#visualHighlightToggle'); button.setAttribute('aria-pressed',String(state.visualHighlights)); $('#visualHighlightToggleLabel').textContent=t(state.visualHighlights?'hideVisualHighlights':'showVisualHighlights'); });
+      $('#visualHighlightToggle').addEventListener('click',()=>{ state.visualHighlights=!state.visualHighlights; const section=$('#visualCompare'); section.dataset.highlights=state.visualHighlights?'on':'off'; const button=$('#visualHighlightToggle'); button.setAttribute('aria-pressed',String(state.visualHighlights)); $('#visualHighlightToggleLabel').textContent=t('showVisualHighlights'); });
       document.querySelectorAll('[data-overlay-top]').forEach(button=>button.addEventListener('click',()=>{ state.visualOverlayTop=button.dataset.overlayTop; if(state.matching) renderVisualCompare(state.matching); }));
       $('#visualFirstButton').addEventListener('click',()=>navigateVisualBoundary('first'));
       $('#visualPrevButton').addEventListener('click',()=>navigateVisual(-1)); $('#visualNextButton').addEventListener('click',()=>navigateVisual(1));
