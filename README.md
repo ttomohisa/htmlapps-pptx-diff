@@ -142,6 +142,9 @@ The GitHub Pages version requires the initial page request, but the selected PPT
 - Detailed chart data/style diff is not implemented. Chart/detail changes that cannot be compared safely are surfaced as **Review**, while the chart can still be inspected in Visual compare.
 - SmartArt, animations, transitions, complex groups, and some inherited PowerPoint behaviors are not compared in full detail.
 - High-fidelity rendering is intended for review, but it is not a complete PowerPoint rendering engine. Complex effects may differ from PowerPoint.
+- PPTX inputs larger than 100 MiB, ZIP entries larger than 64 MiB when expanded, and archives advertising more than 256 MiB of expanded data are rejected to limit memory exhaustion.
+- Heavily rewritten slides may be matched conservatively with a **Review** status. Shape kinds, picture crops, slide backgrounds and overlapping object stacking changes that cannot be described at property level are flagged for review; slide-size changes are reported under Layout.
+- Master/layout inheritance, animations and other unsupported effects may still escape semantic detection; use Visual compare for an additional check.
 - Very large decks, high-resolution images, and chart-heavy presentations can use substantial browser memory.
 - A saved HTML report can contain presentation text, images, and speaker notes even though it does not contain the original PPTX binaries.
 - Compressed PPTX/report handling depends on the browser's `DecompressionStream` support; report compression additionally uses `CompressionStream` when available.
