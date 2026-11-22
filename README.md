@@ -19,6 +19,10 @@ GitHub Pages delivers the initial HTML. After it loads, PPTX parsing, slide matc
 ## Features
 
 - **Preview selected files** — See the first slide of each PPTX as soon as it is chosen, before running the comparison.
+- **Jump to a change** — Use “Show in preview” in a change detail to select its slide and highlight the affected area when positional information exists. Notes and other non-positional changes cannot be outlined on a slide.
+- **Find slides faster** — Slide-list thumbnails render lazily as they become visible. Search slide titles and text, and combine the search with existing difference filters.
+- **Zoom a visual comparison** — Display slides at 50–200% without changing either presentation or the computed differences.
+- **Distinguish counts** — Breakdown numbers count changed elements, while filter numbers count slides. One change can be counted in more than one breakdown category.
 - **Match slides across revisions** — Compare corresponding slides without relying only on slide numbers, including added, removed, and moved slides.
 - **Review semantic changes** — Detect text, numbers, objects, images, layout, formatting, and speaker-note changes slide by slide.
 - **Confirm changes visually** — Use high-fidelity Side by side, Overlay, Split, and Blink views with optional difference markers.
