@@ -109,6 +109,46 @@ async function main(){
         assert.equal(await page.locator('.change-breakdown').count(),1);
         assert.equal(await page.locator('#semanticSummary [role="listitem"]').count(),7);
         assert.equal(await page.locator('#matchSummary').getAttribute('aria-label'),lang==='ja'?'スライドの集計':'Slide summary');
+        // Search combines with the current slide filters, without sending data to a server.
+        const search=page.locator('#slideSearch');
+        await search.fill('NEVER_PRESENT_IN_SLIDES');
+        await page.waitForFunction(()=>document.querySelector('#diffEmpty')&&!document.querySelector('#diffEmpty').hidden);
+        assert.equal(await page.locator('#searchResultCount').innerText(),lang==='ja'?'0枚のスライド':'0 slides');
+        await search.fill('FIRST_SLIDE_GAMMA');
+        await page.waitForFunction(()=>document.querySelector('#matchList .match-row')&&!document.querySelector('#matchList').hidden);
+        assert.equal(await page.locator('#matchList .match-row').count(),1);
+        await search.fill('');
+        await page.waitForFunction(()=>document.querySelector('#matchList .match-row')&&!document.querySelector('#matchList').hidden);
+        const filterCount=await page.locator('[data-filter-count="all"]').innerText();
+        assert.match(filterCount,lang==='ja'?/枚/:/slides/,'filter counts represent slides');
+        const unit=await page.locator('#semanticSummary .semantic-summary-unit').first().innerText();
+        assert.equal(unit,lang==='ja'?'件':'items','semantic counters represent changed elements');
+
+        const firstThumb=page.locator('#matchList .match-thumb[data-thumb-pending]').first();
+        if(await firstThumb.count()){
+          await firstThumb.scrollIntoViewIfNeeded();
+          await page.waitForFunction(()=>document.querySelectorAll('#matchList .match-thumb .slide-canvas').length>0,{timeout:15000});
+        }
+        const firstDetails=page.locator('#matchList .semantic-details').first();
+        assert.ok(await firstDetails.count(),'at least one slide has a change');
+        await firstDetails.evaluate(el=>{el.open=true;});
+        const inspect=page.locator('#matchList .change-inspect-button').first();
+        assert.ok(await inspect.count(),'changes have a preview action');
+        await inspect.click();
+        await page.locator('#visualCompare').waitFor({state:'visible'});
+        await page.waitForFunction(()=>document.querySelectorAll('#visualCompare [data-visual-entry-id].is-active').length>0,{timeout:5000});
+        assert.equal(await page.locator('#visualHighlightToggle').getAttribute('aria-pressed'),'true');
+
+        const zoomValue=page.locator('#visualZoomValue');
+        assert.equal(await zoomValue.innerText(),'100%');
+        await page.locator('#visualZoomIn').click();
+        assert.equal(await zoomValue.innerText(),'125%');
+        assert.equal(await page.locator('#visualCompareStage').evaluate(el=>el.style.width),'125%');
+        await page.locator('#visualZoomOut').click();
+        assert.equal(await zoomValue.innerText(),'100%');
+        await page.locator('#visualZoomReset').click({force:true});
+        assert.equal(await page.locator('#visualZoomReset').isDisabled(),true);
+
         const modeControls=page.locator('[data-visual-mode]');
         assert.equal(await modeControls.count(),4);
         assert.equal(await modeControls.locator('svg').count(),4);
@@ -116,6 +156,7 @@ async function main(){
           const button=page.locator('[data-visual-mode="'+mode+'"]');
           await button.click();
           assert.equal(await button.getAttribute('aria-pressed'),'true',mode+' selected');
+          assert.ok((await page.locator('#visualModeDescription').innerText()).length>15,'mode explains its behavior');
           assert.equal(await page.locator('[data-visual-mode][aria-pressed="true"]').count(),1,'only one active mode');
           await page.locator('#visualCompareStage .visual-stack[data-mode="'+mode+'"]').waitFor({state:'attached'});
         }
