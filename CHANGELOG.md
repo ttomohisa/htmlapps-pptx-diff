@@ -8,6 +8,7 @@
 - Include object-change totals in HTML reports and test the comparison engine across standalone distributions.
 - Simplify the introduction and file-selection copy, remove the extra hero heading and framed comparison settings, hide the local-processing badge on phones, and move feature descriptions into Help.
 - Show the first slide of each selected PPTX before comparison. Use the local high-fidelity renderer when possible, fall back to a basic thumbnail, and discard stale previews when files change.
+- Replace the comparison result cards with a single slide-count strip and a two-column change breakdown; add SVG icons, clearer active states, and a separate differences toggle for visual compare modes.
 
 
 ## 1.0.4 - 2026-10-27
