@@ -2578,6 +2578,11 @@
       function rowMatchesFilter(row,filter) {
         const changed=Boolean(!row.original||!row.revised||row.semanticChanged||row.moved||row.reviewRequired);
         if(state.changedOnly&&!changed) return false;
+        if(state.searchTerms.length) {
+          const searchText=normalizeMatchText([row.original?.title,row.revised?.title,
+            ...(row.original?.text||[]),...(row.revised?.text||[])].join(' '));
+          if(!state.searchTerms.every(term=>searchText.includes(term))) return false;
+        }
         if(filter==='text') return Boolean(row.semantic?.textChanges.length);
         if(filter==='number') return Boolean(row.semantic?.numberChanges.length);
         if(filter==='object') return Boolean(row.semantic?.objectChanges.length);
@@ -2869,13 +2874,43 @@
         splitter.addEventListener('pointerdown',event=>{ event.preventDefault(); splitter.setPointerCapture?.(event.pointerId); update(event); const move=e=>update(e), up=e=>{ splitter.releasePointerCapture?.(e.pointerId); splitter.removeEventListener('pointermove',move); splitter.removeEventListener('pointerup',up); splitter.removeEventListener('pointercancel',up); }; splitter.addEventListener('pointermove',move); splitter.addEventListener('pointerup',up); splitter.addEventListener('pointercancel',up); });
         splitter.addEventListener('keydown',event=>{ if(!['ArrowLeft','ArrowRight'].includes(event.key)) return; event.preventDefault(); state.visualSplit=Math.max(0,Math.min(100,state.visualSplit+(event.key==='ArrowRight'?2:-2))); splitter.style.left=`${state.visualSplit}%`; topLayer.style.clipPath=`inset(0 ${100-state.visualSplit}% 0 0)`; splitter.setAttribute('aria-valuenow',String(Math.round(state.visualSplit))); });
       }
+      const VISUAL_ZOOMS=[50,75,100,125,150,200];
+      function applyVisualZoom() {
+        const stage=$('#visualCompareStage'),viewport=$('#visualStageViewport'),zoom=state.visualZoom;
+        const prevWidth=stage.getBoundingClientRect().width||viewport.clientWidth;
+        const prevScroll=viewport.scrollLeft+(viewport.clientWidth/2);
+        stage.style.width=zoom+'%';viewport.dataset.zoomed=String(zoom!==100);
+        const newWidth=stage.getBoundingClientRect().width||viewport.clientWidth;
+        viewport.scrollLeft=Math.max(0,prevScroll*(newWidth/Math.max(1,prevWidth))-viewport.clientWidth/2);
+        $('#visualZoomValue').textContent=zoom+'%';
+        $('#visualZoomOut').disabled=zoom<=VISUAL_ZOOMS[0];
+        $('#visualZoomIn').disabled=zoom>=VISUAL_ZOOMS[VISUAL_ZOOMS.length-1];
+        $('#visualZoomReset').disabled=zoom===100;
+        requestAnimationFrame(()=>{
+          stage.querySelectorAll('.slide-canvas .pptx-render-frame').forEach(frame=>{
+            const mount=frame.parentElement,element=frame.firstElementChild;
+            if(mount&&element)fitRenderFrame(mount,frame,element);
+          });
+        });
+      }
+      function setVisualZoom(step) {
+        state.visualZoom=VISUAL_ZOOMS[Math.max(0,Math.min(VISUAL_ZOOMS.length-1,step))];
+        applyVisualZoom();
+      }
+      function moveVisualZoom(direction) {
+        const index=VISUAL_ZOOMS.indexOf(state.visualZoom);
+        setVisualZoom(index+direction);
+      }
       function renderVisualCompare(matching) {
         disposeVisualRenderHandles(); const generation=state.visualRenderGeneration;
         const section=$('#visualCompare'), stage=$('#visualCompareStage'), selection=$('#visualCompareSelection'), note=$('#visualCompareNote'), overlayOrder=$('#overlayOrder');
-        const row=selectedVisualRow(matching), nav=visualRowIndex(matching,row); section.dataset.highlights=state.visualHighlights?'on':'off'; document.querySelectorAll('[data-visual-mode]').forEach(btn=>btn.setAttribute('aria-pressed',String(btn.dataset.visualMode===state.visualMode))); document.querySelectorAll('[data-overlay-top]').forEach(btn=>btn.setAttribute('aria-pressed',String(btn.dataset.overlayTop===state.visualOverlayTop))); const highlightToggle=$('#visualHighlightToggle'); highlightToggle.setAttribute('aria-pressed',String(state.visualHighlights)); $('#visualHighlightToggleLabel').textContent=t('showVisualHighlights');
+        const row=selectedVisualRow(matching), nav=visualRowIndex(matching,row);
+        $('#visualModeDescription').textContent=compareModeNote(state.visualMode);
+        applyVisualZoom();
+        section.dataset.highlights=state.visualHighlights?'on':'off'; document.querySelectorAll('[data-visual-mode]').forEach(btn=>btn.setAttribute('aria-pressed',String(btn.dataset.visualMode===state.visualMode))); document.querySelectorAll('[data-overlay-top]').forEach(btn=>btn.setAttribute('aria-pressed',String(btn.dataset.overlayTop===state.visualOverlayTop))); const highlightToggle=$('#visualHighlightToggle'); highlightToggle.setAttribute('aria-pressed',String(state.visualHighlights)); $('#visualHighlightToggleLabel').textContent=t('showVisualHighlights');
         $('#visualFirstButton').disabled=$('#visualPrevButton').disabled=!row||nav.index<=0; $('#visualLastButton').disabled=$('#visualNextButton').disabled=!row||nav.index>=nav.rows.length-1; $('#visualNavPosition').textContent=row?`${nav.index+1} / ${nav.rows.length}`:'—'; overlayOrder.hidden=state.visualMode!=='overlay'||!row?.original||!row?.revised;
         if(!row){ section.hidden=false; stage.replaceChildren(); const empty=document.createElement('p'); empty.className='visual-empty'; empty.textContent=t('previewUnavailable'); stage.append(empty); selection.textContent=t('visualSelectionEmpty'); note.textContent=t('visualCompareNote'); $('#visualCompareDiff').replaceChildren(); return; }
-        section.hidden=false; const leftTitle=row.original?formatPreviewSlideTitle(row.original):t('missingOriginal'), rightTitle=row.revised?formatPreviewSlideTitle(row.revised):t('missingRevised'); selection.textContent=`${leftTitle} → ${rightTitle}`; note.textContent=compareModeNote(state.visualMode)+' '+t(state.rendererPresentations.original||state.rendererPresentations.revised?'rendererPrimary':'rendererFallback');
+        section.hidden=false; const leftTitle=row.original?formatPreviewSlideTitle(row.original):t('missingOriginal'), rightTitle=row.revised?formatPreviewSlideTitle(row.revised):t('missingRevised'); selection.textContent=`${leftTitle} → ${rightTitle}`; note.textContent=t(state.rendererPresentations.original||state.rendererPresentations.revised?'rendererPrimary':'rendererFallback');
         const highlights=changedObjectsForRow(row), stack=document.createElement('div'); stack.className='visual-stack'; stack.dataset.mode=state.visualMode; const sw=row.original?.slideWidth||row.revised?.slideWidth||12192000, sh=row.original?.slideHeight||row.revised?.slideHeight||6858000; const nodes=[createVisualMarkerBar(row)];
         if(state.visualMode==='side') { stack.append(createVisualPane(row.original,t('original'),highlights.original,'original'),createVisualPane(row.revised,t('revised'),highlights.revised,'revised')); nodes.push(stack); }
         else if(!row.original||!row.revised){ stack.style.aspectRatio=`${sw} / ${sh}`; const side=row.original?'original':'revised', slide=row.original||row.revised, hi=side==='original'?highlights.original:highlights.revised; stack.append(createVisualPane(slide,t(side),hi,side,true)); nodes.push(visualLegend(row),stack); }
@@ -2894,13 +2929,22 @@
 
       function renderSemanticSummary(matching) {
         const root=$('#semanticSummary'); root.replaceChildren();
-        [['text','semanticText','semanticTextNote'],['number','semanticNumber','semanticNumberNote'],['object','semanticObject','semanticObjectNote'],['image','semanticImage','semanticImageNote'],['layout','semanticLayout','semanticLayoutNote'],['formatting','semanticFormatting','semanticFormattingNote'],['notes','semanticNotes','semanticNotesNote']].forEach(([key,labelKey,noteKey])=>{ const item=document.createElement('div'); item.className='semantic-summary-item'; item.setAttribute('role','listitem'); item.dataset.zero=String(!matching.semanticSummary?.[key]); const copy=document.createElement('div'); copy.className='semantic-summary-copy'; const label=document.createElement('span'); label.className='semantic-summary-label'; label.textContent=t(labelKey); const note=document.createElement('span'); note.className='semantic-summary-note'; note.textContent=t(noteKey); copy.append(label,note); const value=document.createElement('strong'); value.className='semantic-summary-value'; value.textContent=formatNumber(matching.semanticSummary?.[key]||0); item.append(copy,value); root.append(item); });
+        [['text','semanticText','semanticTextNote'],['number','semanticNumber','semanticNumberNote'],['object','semanticObject','semanticObjectNote'],['image','semanticImage','semanticImageNote'],['layout','semanticLayout','semanticLayoutNote'],['formatting','semanticFormatting','semanticFormattingNote'],['notes','semanticNotes','semanticNotesNote']].forEach(([key,labelKey,noteKey])=>{ const item=document.createElement('div'); item.className='semantic-summary-item'; item.setAttribute('role','listitem'); item.dataset.zero=String(!matching.semanticSummary?.[key]); const copy=document.createElement('div'); copy.className='semantic-summary-copy'; const label=document.createElement('span'); label.className='semantic-summary-label'; label.textContent=t(labelKey); const note=document.createElement('span'); note.className='semantic-summary-note'; note.textContent=t(noteKey); copy.append(label,note); const value=document.createElement('strong'); value.className='semantic-summary-value'; value.textContent=formatNumber(matching.semanticSummary?.[key]||0); const unit=document.createElement('span'); unit.className='semantic-summary-unit'; unit.textContent=t('changeUnit'); value.append(unit); item.append(copy,value); root.append(item); });
       }
       function renderFilterCounts(matching) {
-        const counts={all:matching.rows.length,text:matching.rows.filter(r=>r.semantic?.textChanges.length).length,number:matching.rows.filter(r=>r.semantic?.numberChanges.length).length,object:matching.rows.filter(r=>r.semantic?.objectChanges.length).length,image:matching.rows.filter(r=>r.semantic?.imageChanges.length).length,layout:matching.rows.filter(r=>r.semantic?.layoutChanges.length).length,formatting:matching.rows.filter(r=>r.semantic?.formattingChanges.length).length,notes:matching.rows.filter(r=>r.semantic?.notesChanges?.length).length};
-        document.querySelectorAll('[data-filter-count]').forEach(el=>{ el.textContent=formatNumber(counts[el.dataset.filterCount]||0); });
-        document.querySelectorAll('[data-diff-filter]').forEach(btn=>{ const key=btn.dataset.diffFilter, count=counts[key]||0; btn.setAttribute('aria-pressed',String(key===state.diffFilter)); btn.disabled=key!=='all'&&count===0&&key!==state.diffFilter; });
+        const types=['all','text','number','object','image','layout','formatting','notes'];
+        const counts=Object.fromEntries(types.map(key=>[key,matching.rows.filter(row=>rowMatchesFilter(row,key)).length]));
+        document.querySelectorAll('[data-filter-count]').forEach(el=>{
+          el.textContent=`${formatNumber(counts[el.dataset.filterCount]||0)} ${t('slideUnit')}`;
+        });
+        document.querySelectorAll('[data-diff-filter]').forEach(btn=>{
+          const key=btn.dataset.diffFilter,count=counts[key]||0;
+          btn.setAttribute('aria-pressed',String(key===state.diffFilter));
+          btn.disabled=key!=='all'&&count===0&&key!==state.diffFilter;
+        });
         $('#changedOnlyButton').setAttribute('aria-pressed',String(state.changedOnly));
+        const found=matching.rows.filter(row=>rowMatchesFilter(row,state.diffFilter)).length;
+        $('#searchResultCount').textContent=state.searchTerms.length?t('searchResult').replace('{count}',formatNumber(found)):'';
       }
       function renderMatching(matching) {
         const summaryRoot=$('#matchSummary'); summaryRoot.replaceChildren();
@@ -2916,7 +2960,9 @@
           const confidence=document.createElement('span'); confidence.className='match-confidence'; const confLabel=row.original&&row.revised ? t(row.confidence==='high'?'confidenceHigh':row.confidence==='medium'?'confidenceMedium':'confidenceLow') : ''; confidence.textContent=[reasonFor(row),confLabel].filter(Boolean).join(' · ');
           relation.append(chip,confidence); item.append(slideCell(row.original),relation,slideCell(row.revised)); const details=semanticDetails(row,state.diffFilter); if(details) item.append(details); list.append(item);
         });
-        list.hidden=visible===0; $('#diffEmpty').hidden=visible!==0; renderVisualCompare(matching);
+        list.hidden=visible===0; $('#diffEmpty').hidden=visible!==0;
+        $('#diffEmpty').textContent=t(state.searchTerms.length?'searchEmpty':'filterEmpty');
+        renderVisualCompare(matching);
       }
       function renderResults(models) {
         if(!state.matching) state.matching=attachSemanticDiff(matchSlides(models.original,models.revised));
@@ -3108,7 +3154,16 @@
       });
       document.querySelectorAll('[data-diff-filter]').forEach(button=>button.addEventListener('click',()=>{ state.diffFilter=button.dataset.diffFilter; if(state.matching) renderMatching(state.matching); }));
       $('#changedOnlyButton').addEventListener('click',()=>{ state.changedOnly=!state.changedOnly; if(state.matching) renderMatching(state.matching); });
+      let searchDelay=0;
+      $('#slideSearch').addEventListener('input',event=>{
+        state.searchQuery=event.target.value;state.searchTerms=normalizeMatchText(state.searchQuery).split(/\s+/).filter(Boolean);
+        clearTimeout(searchDelay);
+        searchDelay=setTimeout(()=>{if(state.matching)renderMatching(state.matching);},100);
+      });
       document.querySelectorAll('[data-visual-mode]').forEach(button=>button.addEventListener('click',()=>{ state.visualMode=button.dataset.visualMode; if(state.matching) renderVisualCompare(state.matching); }));
+      $('#visualZoomOut').addEventListener('click',()=>moveVisualZoom(-1));
+      $('#visualZoomIn').addEventListener('click',()=>moveVisualZoom(1));
+      $('#visualZoomReset').addEventListener('click',()=>{state.visualZoom=100;applyVisualZoom();});
       $('#visualHighlightToggle').addEventListener('click',()=>{ state.visualHighlights=!state.visualHighlights; const section=$('#visualCompare'); section.dataset.highlights=state.visualHighlights?'on':'off'; const button=$('#visualHighlightToggle'); button.setAttribute('aria-pressed',String(state.visualHighlights)); $('#visualHighlightToggleLabel').textContent=t('showVisualHighlights'); });
       document.querySelectorAll('[data-overlay-top]').forEach(button=>button.addEventListener('click',()=>{ state.visualOverlayTop=button.dataset.overlayTop; if(state.matching) renderVisualCompare(state.matching); }));
       $('#visualFirstButton').addEventListener('click',()=>navigateVisualBoundary('first'));
