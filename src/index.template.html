@@ -1800,8 +1800,8 @@
         const addMatch=(o,r,basis,score,confidence)=>{ unmatchedO.delete(o.index); unmatchedR.delete(r.index); matches.push({pairId:++pairSeq,original:o,revised:r,basis,similarity:score,confidence,changed:o._canonical!==r._canonical,moved:false}); };
 
         const exactO=new Map(),exactR=new Map();
-        originals.forEach(s=>{ if(s._richness<8) return; const a=exactO.get(s._canonical)||[]; a.push(s); exactO.set(s._canonical,a); });
-        revised.forEach(s=>{ if(s._richness<8) return; const a=exactR.get(s._canonical)||[]; a.push(s); exactR.set(s._canonical,a); });
+        originals.forEach(s=>{ const a=exactO.get(s._canonical)||[]; a.push(s); exactO.set(s._canonical,a); });
+        revised.forEach(s=>{ const a=exactR.get(s._canonical)||[]; a.push(s); exactR.set(s._canonical,a); });
         exactO.forEach((left,key)=>{ const right=exactR.get(key); if(!right) return; pairByClosest(left,right).forEach(([o,r])=>{ if(unmatchedO.has(o.index)&&unmatchedR.has(r.index)) addMatch(o,r,'content',1,confidenceFor(1,'content',Math.min(o._richness,r._richness))); }); });
 
         const byIdO=new Map(originals.filter(s=>unmatchedO.has(s.index)&&s.id).map(s=>[s.id,s]));
@@ -1816,8 +1816,13 @@
           if(!unmatchedO.has(o.index)||!unmatchedR.has(r.index)) return;
           const shapeSim=multisetSimilarity(objectTokens(o),objectTokens(r));
           const smallDeckFallback=minSlides<=3 && o.index===r.index && shapeSim>=0.45 && (diceSimilarity(o.title,r.title)>=0.45 || diceSimilarity(o.text.join('\n'),r.text.join('\n'))>=0.45 || multisetSimilarity(resourceTokens(o),resourceTokens(r))>=0.5 && resourceTokens(o).length>0);
-          if(lineageStable || score>=0.48 || smallDeckFallback){
-            addMatch(o,r,'identity',score,confidenceFor(score,'identity',Math.min(o._richness,r._richness),lineageStable));
+          const structuralSupport=multisetSimilarity(geometryTokens(o),geometryTokens(r))>=0.5;
+          // Same-position ID in a small deck is tentative if the text is completely rewritten.
+          const tentativeId=minSlides<=3 && o.index===r.index &&
+            ((!o.objects.length&&!r.objects.length) || (shapeSim>=0.45&&structuralSupport));
+          if(lineageStable || score>=0.48 || smallDeckFallback || tentativeId){
+            const confidence=tentativeId&&score<0.48?'low':confidenceFor(score,'identity',Math.min(o._richness,r._richness),lineageStable);
+            addMatch(o,r,'identity',score,confidence);
           }
         });
 
@@ -1971,14 +1976,42 @@
             if(!b){ imageChanges.push({kind:'removed',original:a,revised:null}); return; }
             const oldSig=a.resource?.signature||'',newSig=b.resource?.signature||'';
             if(oldSig&&newSig&&oldSig!==newSig){ imageChanges.push({kind:'replaced',original:a,revised:b}); return; }
-            if(oldSig&&newSig&&oldSig===newSig) return;
+            if(oldSig&&newSig&&oldSig===newSig){
+              // Same image bytes may still have a different crop or appearance.
+              if(a.detailSignature!==b.detailSignature) {
+                const change={kind:'review',original:a,revised:b,review:true};
+                imageChanges.push(change);unsupportedChanges.push(change);
+              }
+              return;
+            }
             if((!oldSig||!newSig)&&a.detailSignature!==b.detailSignature){ const change={kind:'review',original:a,revised:b,review:true}; imageChanges.push(change); unsupportedChanges.push(change); }
             return;
           }
           if(!a){ objectChanges.push({kind:'added',original:null,revised:b}); return; }
           if(!b){ objectChanges.push({kind:'removed',original:a,revised:null}); return; }
-          if(unsupportedObjectChanged(a,b)){ const change={kind:'review',original:a,revised:b,review:true}; objectChanges.push(change); unsupportedChanges.push(change); }
+          if(unsupportedObjectChanged(a,b) || (a.type==='shape'&&a.shapePreset!==b.shapePreset)){
+            const change={kind:'review',original:a,revised:b,review:true};
+            objectChanges.push(change);unsupportedChanges.push(change);
+          }
         });
+        const pairs=matchSlideObjects(originalSlide,revisedSlide).filter(pair=>pair.original&&pair.revised);
+        const intersects=(a,b)=>[a.x,a.y,a.width,a.height,b.x,b.y,b.width,b.height].every(Number.isFinite)
+          && a.x<b.x+b.width && b.x<a.x+a.width && a.y<b.y+b.height && b.y<a.y+a.height;
+        const seen=new Set();
+        // Relative painting order matters only for objects whose original bounds overlap.
+        for(let i=0;i<pairs.length;i++)for(let j=i+1;j<pairs.length;j++){
+          const a=pairs[i],b=pairs[j];
+          const reversed=(a.original._objectIndex-b.original._objectIndex)*
+            (a.revised._objectIndex-b.revised._objectIndex)<0;
+          if(!reversed || !intersects(a.original,b.original)) continue;
+          for(const pair of [a,b]){
+            const key=pair.original._objectIndex;
+            if(seen.has(key))continue;
+            seen.add(key);
+            const change={kind:'review',original:pair.original,revised:pair.revised,review:true};
+            objectChanges.push(change);unsupportedChanges.push(change);
+          }
+        }
         return {objectChanges,imageChanges,unsupportedChanges};
       }
 
@@ -2058,7 +2091,7 @@
       }
       function notesDiffForRow(row) {
         const original=String(row.original?.notesText||''), revised=String(row.revised?.notesText||'');
-        if(normalizeMatchText(original)===normalizeMatchText(revised)) return [];
+        if(normalizeDiffText(original)===normalizeDiffText(revised)) return [];
         if(!row.original) return revised.trim()?[{kind:'added',original:'',revised,diff:textDiffSegments('',revised)}]:[];
         if(!row.revised) return original.trim()?[{kind:'removed',original,revised:'',diff:textDiffSegments(original,'')}]:[];
         return [{kind:'changed',original,revised,diff:textDiffSegments(original,revised)}];
@@ -2069,7 +2102,7 @@
         const textChanges=[];
         matchTextObjects(row.original,row.revised).forEach((pair,index)=>{
           const oldText=pair.original?.text||'', newText=pair.revised?.text||'';
-          if(normalizeMatchText(oldText)===normalizeMatchText(newText)) return;
+          if(normalizeDiffText(oldText)===normalizeDiffText(newText)) return;
           const kind=!pair.original?'added':!pair.revised?'removed':'changed', numbers=numberDiff(oldText,newText);
           textChanges.push({kind,index:index+1,original:oldText,revised:newText,numbers,diff:textDiffSegments(oldText,newText),originalObject:pair.original,revisedObject:pair.revised});
         });
@@ -2079,6 +2112,20 @@
       function attachSemanticDiff(matching) {
         matching.rows.forEach(row=>{
           row.semantic=semanticDiffForRow(row);
+          if(row.original&&row.revised){
+            const before=row.original, after=row.revised, sizeChanges=[];
+            for(const [key,labelKey] of [['slideWidth','sizeWidth'],['slideHeight','sizeHeight']]){
+              if(before[key]!==after[key])sizeChanges.push({key,labelKey,original:before[key],revised:after[key],kind:'emu'});
+            }
+            if(sizeChanges.length)row.semantic.layoutChanges.push({
+              original:{type:'shape',specialKey:'slideDimensions'},
+              revised:{type:'shape',specialKey:'slideDimensions'},changes:sizeChanges
+            });
+            if(before.backgroundSignature!==after.backgroundSignature){
+              const change={kind:'review',review:true,original:{type:'graphic-frame',specialKey:'slideBackground'},revised:{type:'graphic-frame',specialKey:'slideBackground'}};
+              row.semantic.objectChanges.push(change);row.semantic.unsupportedChanges.push(change);
+            }
+          }
           row.semanticChanged=Boolean(row.semantic.textChanges.length||row.semantic.numberChanges.length||row.semantic.objectChanges.length||row.semantic.imageChanges.length||row.semantic.layoutChanges.length||row.semantic.formattingChanges.length||row.semantic.notesChanges.length||row.semantic.unsupportedChanges.length);
           row.reviewRequired=row.confidence==='low'||Boolean(row.semantic.unsupportedChanges.length);
         });
@@ -2227,7 +2274,7 @@
         const source=change.revised||change.original, card=document.createElement('article'); card.className='object-change'; card.dataset.kind=change.kind; card.dataset.review=String(Boolean(change.review));
         const head=document.createElement('div'); head.className='object-change-head';
         const titleWrap=document.createElement('div'); titleWrap.className='object-change-title-wrap';
-        const title=document.createElement('p'); title.className='object-change-title'; title.textContent=source?.name||t(objectTypeKey(source?.type));
+        const title=document.createElement('p'); title.className='object-change-title'; title.textContent=source?.specialKey?t(source.specialKey):(source?.name||t(objectTypeKey(source?.type)));
         const type=document.createElement('span'); type.className='object-change-type'; type.textContent=t(objectTypeKey(source?.type)); titleWrap.append(title,type);
         const kind=document.createElement('span'); kind.className='object-change-kind';
         const kindKey=change.kind==='added'?'objectAdded':change.kind==='removed'?'objectRemoved':change.kind==='replaced'?'imageReplaced':change.kind==='layout'?'imageLayout':'objectReview';
@@ -2263,7 +2310,7 @@
       }
       function propertyChangeCard(change,category) {
         const source=change.revised||change.original, card=document.createElement('article'); card.className='property-change';
-        const head=document.createElement('div');head.className='property-change-head';const titleWrap=document.createElement('div');titleWrap.className='property-change-title-wrap';const title=document.createElement('p');title.className='property-change-title';title.textContent=source?.name||t(objectTypeKey(source?.type));const type=document.createElement('span');type.className='property-change-type';type.textContent=t(objectTypeKey(source?.type));titleWrap.append(title,type);const kind=document.createElement('span');kind.className='property-change-kind';kind.textContent=t(category==='layout'?'layoutChanged':'formattingChanged');head.append(titleWrap,kind);card.append(head);
+        const head=document.createElement('div');head.className='property-change-head';const titleWrap=document.createElement('div');titleWrap.className='property-change-title-wrap';const title=document.createElement('p');title.className='property-change-title';title.textContent=source?.specialKey?t(source.specialKey):(source?.name||t(objectTypeKey(source?.type)));const type=document.createElement('span');type.className='property-change-type';type.textContent=t(objectTypeKey(source?.type));titleWrap.append(title,type);const kind=document.createElement('span');kind.className='property-change-kind';kind.textContent=t(category==='layout'?'layoutChanged':'formattingChanged');head.append(titleWrap,kind);card.append(head);
         const list=document.createElement('div');list.className='property-list';change.changes.forEach(prop=>{const row=document.createElement('div');row.className='property-row';const name=document.createElement('span');name.className='property-name';name.textContent=t(prop.labelKey);const before=propertyValueNode(prop.original,prop.kind);const arrow=document.createElement('span');arrow.className='property-arrow';arrow.textContent='→';const after=propertyValueNode(prop.revised,prop.kind);row.append(name,before,arrow,after);list.append(row);});card.append(list);return card;
       }
 
@@ -2806,7 +2853,7 @@
         const {matching,models,language:lang,translate:t}=context, rows=matching.rows;
         const generated=new Intl.DateTimeFormat(lang,{dateStyle:'medium',timeStyle:'short'}).format(new Date());
         const summary=[['summaryUnchanged',matching.summary.unchanged],['summaryChanged',matching.summary.changed],['summaryAdded',matching.summary.added],['summaryRemoved',matching.summary.removed],['summaryMoved',matching.summary.moved]];
-        const semantic=[['semanticText',matching.semanticSummary.text],['semanticNumber',matching.semanticSummary.number],['semanticImage',matching.semanticSummary.image],['semanticLayout',matching.semanticSummary.layout],['semanticFormatting',matching.semanticSummary.formatting],['semanticNotes',matching.semanticSummary.notes]];
+        const semantic=[['semanticText',matching.semanticSummary.text],['semanticNumber',matching.semanticSummary.number],['semanticObject',matching.semanticSummary.object],['semanticImage',matching.semanticSummary.image],['semanticLayout',matching.semanticSummary.layout],['semanticFormatting',matching.semanticSummary.formatting],['semanticNotes',matching.semanticSummary.notes]];
         const rowHtml=rows.map((row,index)=>{ const title=row.revised?.title||row.original?.title||t('noTitle'); return `<details class="slide" open><summary><span class="slide-summary-main"><span class="slide-index">#${index+1}</span><strong>${reportEscape(title)}</strong></span><span class="slide-status">${reportEscape(reportStatus(row,t))}</span></summary><div class="slide-body"><div class="pair"><div class="preview-col"><div class="preview-label">${reportEscape(t('original'))}</div>${reportPreviewMarkup('original',row.original,snapshots,t)}</div><div class="preview-col"><div class="preview-label">${reportEscape(t('revised'))}</div>${reportPreviewMarkup('revised',row.revised,snapshots,t)}</div></div>${reportChangeBlocks(row,t)}</div></details>`; }).join('');
         return `<!doctype html><html lang="${lang}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src data:; style-src 'unsafe-inline'; script-src 'unsafe-inline'; base-uri 'none'; form-action 'none'"><title>${reportEscape(t('reportTitle'))}</title><link rel="icon" href="${reportEscape(reportFaviconHref())}"><style>:root{--a:#16624F;--bg:#f5f5f2;--line:#d9dbd5;--muted:#666963}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:#20211f;font:14px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans JP",Meiryo,sans-serif}.wrap{max-width:1180px;margin:auto;padding:28px 18px 60px}h1{margin:0 0 4px;font-size:26px}.meta{color:var(--muted);margin:0 0 18px}.privacy{padding:10px 12px;border:1px solid #e5c98f;border-radius:10px;background:#fff7e4}.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin:14px 0}.card{padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#fff}.card b{display:block;font-size:20px;color:var(--a)}.files{padding:12px;border:1px solid var(--line);border-radius:10px;background:#fff;margin:14px 0}.slide{margin:14px 0;border:1px solid var(--line);border-radius:12px;background:#fff;overflow:hidden}.slide>summary{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:12px 14px;cursor:pointer;list-style:none}.slide>summary::-webkit-details-marker{display:none}.slide>summary::before{content:'›';color:var(--a);font-size:22px;line-height:1;transform:rotate(90deg);transition:transform .15s}.slide:not([open])>summary::before{transform:rotate(0deg)}.slide-summary-main{display:flex;align-items:center;gap:9px;min-width:0;flex:1}.slide-summary-main strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.slide-index{color:var(--muted);font-size:12px}.slide-status{flex:0 0 auto;color:var(--a);font-size:12px;font-weight:750}.slide-body{padding:0 14px 14px;border-top:1px solid var(--line)}.pair{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}.preview-col{min-width:0}.preview-label{margin:0 0 5px;color:var(--muted);font-size:11px;font-weight:750}.report-preview{position:relative;width:100%;border:1px solid var(--line);border-radius:8px;background:#fff;overflow:hidden}.report-preview.hf{box-shadow:0 1px 8px rgba(25,28,24,.08)}.report-preview.empty{display:grid;place-items:center;min-height:180px;color:var(--muted)}.report-render-frame{position:absolute;left:0;top:0;transform-origin:0 0}.change{margin-top:10px;border:1px solid var(--line);border-radius:8px;overflow:hidden}.change h4{margin:0;padding:7px 9px;background:#f6f7f5;font-size:12px}.change p,.change ul{margin:0;padding:9px;white-space:pre-wrap}.two{display:grid;grid-template-columns:1fr 1fr}.two>div{padding:9px}.two>div+div{border-left:1px solid var(--line)}.two p{padding:5px 0}.del{background:#fde3df;color:#8f251f}.add{background:#dcefe8;color:#0f5d49}.chips{display:flex;flex-wrap:wrap;gap:6px;padding:9px}.chips span{padding:3px 7px;border-radius:999px;background:#e1f0ea;color:#0f5d49}.muted{color:var(--muted)}@media(max-width:650px){.pair,.two{grid-template-columns:1fr}.two>div+div{border-left:0;border-top:1px solid var(--line)}.slide>summary{align-items:flex-start}.slide-summary-main{align-items:flex-start}}</style></head><body><main class="wrap"><h1>${reportEscape(t('reportTitle'))}</h1><p class="meta">${reportEscape(t('reportGenerated'))}: ${reportEscape(generated)}</p><p class="privacy">${reportEscape(t('reportPrivacy'))}</p><section class="files"><b>${reportEscape(t('reportFiles'))}</b><div>${reportEscape(models.original.filename)} → ${reportEscape(models.revised.filename)}</div></section><div class="cards">${summary.map(([k,v])=>`<div class="card"><span>${reportEscape(t(k))}</span><b>${v}</b></div>`).join('')}</div><div class="cards">${semantic.map(([k,v])=>`<div class="card"><span>${reportEscape(t(k))}</span><b>${v||0}</b></div>`).join('')}</div>${rowHtml}</main><script>(()=>{const fit=()=>document.querySelectorAll('.report-render-frame[data-render-width]').forEach(frame=>{const shell=frame.parentElement,w=Number(frame.dataset.renderWidth)||960,h=Number(frame.dataset.renderHeight)||540,scale=Math.min(shell.clientWidth/w,shell.clientHeight/h);frame.style.width=w+'px';frame.style.height=h+'px';frame.style.transform='scale('+scale+')'});fit();addEventListener('resize',fit)})();<\/script></body></html>`;
       }
