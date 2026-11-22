@@ -575,6 +575,10 @@
     .semantic-details > summary::before { content:''; width:6px; height:6px; border-right:1.5px solid currentColor; border-bottom:1.5px solid currentColor; transform:rotate(-45deg); transition:transform .15s ease; }
     .semantic-details[open] > summary::before { transform:rotate(45deg); }
     .semantic-change-list { display:grid; gap:8px; margin-top:9px; }
+    .change-inspect-button { flex:0 0 auto; min-height:32px; padding:5px 9px; border:1px solid var(--accent); border-radius:8px; background:var(--surface); color:var(--accent); font:inherit; font-size:10px; font-weight:770; cursor:pointer; }
+    .change-inspect-button:hover,.change-inspect-button:focus-visible { background:var(--accent-soft); }
+    .text-change-head,.object-change-head,.property-change-head,.notes-change-head { flex-wrap:wrap; }
+    .change-inspect-button:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
     .text-change { border:1px solid var(--line); border-radius:10px; overflow:hidden; background:var(--surface-muted); }
     .text-change-head { display:flex; align-items:center; justify-content:space-between; gap:8px; padding:7px 9px; border-bottom:1px solid var(--line); background:var(--surface); }
     .text-change-title { min-width:0; margin:0; font-size:10px; font-weight:780; overflow-wrap:anywhere; }
@@ -2564,10 +2568,19 @@
 
       function decorateSemanticCard(card,label,entryId) {
         if(!card||!label) return card;
-        const head=card.querySelector('.text-change-head,.object-change-head,.property-change-head');
+        const head=card.querySelector('.text-change-head,.object-change-head,.property-change-head,.notes-change-head');
         if(!head) return card;
         if(entryId) card.dataset.visualEntryId=entryId;
         const badge=document.createElement('span'); badge.className='semantic-marker-badge'; badge.textContent=label; head.prepend(badge); return card;
+      }
+      function addInspectAction(card,pairId,entryId) {
+        const head=card.querySelector('.text-change-head,.object-change-head,.property-change-head,.notes-change-head');
+        if(!head)return;
+        const button=document.createElement('button');button.type='button';button.className='change-inspect-button';
+        button.textContent=t('inspectInPreview');button.setAttribute('aria-label',t('inspectInPreview'));
+        button.dataset.visualEntryId=entryId;
+        button.addEventListener('click',event=>{event.stopPropagation();inspectChangeInPreview(pairId,entryId);});
+        head.append(button);
       }
       function visualDiffEntries(row) {
         const semantic=row?.semantic||{}, entries=[];
@@ -2577,6 +2590,7 @@
         (semantic.imageChanges||[]).forEach(change=>push('image','semanticImage',change,change.original,change.revised,'image'));
         (semantic.layoutChanges||[]).forEach(change=>push('layout','semanticLayout',change,change.original,change.revised,'layout'));
         (semantic.formattingChanges||[]).forEach(change=>{ const textOnly=(change.changes||[]).every(item=>['fontFamily','fontSize','bold','italic','textColor'].includes(item.key)); push('formatting','semanticFormatting',change,change.original,change.revised,textOnly?'text':'formatting'); });
+        (semantic.notesChanges||[]).forEach(change=>push('notes','semanticNotes',change,null,null,'notes'));
         return entries;
       }
       function visualEntryLabels(row,category) { return visualDiffEntries(row).filter(item=>item.category===category).map(item=>item.label); }
@@ -2591,7 +2605,15 @@
         card.append(grid); return card;
       }
       function semanticDetails(row,filter='all',options={}) {
-        const semantic=row.semantic; if(!semantic) return null; const visualMarkers=Boolean(options.visualMarkers); const markerCounters={text:0,object:0,image:0,layout:0,formatting:0}; const markerMeta=category=>{ const index=++markerCounters[category]; return {id:`${category}-${index}`,label:`${t({text:'semanticText',object:'semanticObject',image:'semanticImage',layout:'semanticLayout',formatting:'semanticFormatting'}[category])} ${formatNumber(index)}`}; };
+        const semantic=row.semantic; if(!semantic) return null; const visualMarkers=Boolean(options.visualMarkers);
+        const entries=visualDiffEntries(row);
+        const entryFor=(category,change)=>entries.find(item=>item.category===category&&item.change===change);
+        const decorate=(card,category,change)=>{
+          const entry=entryFor(category,change);
+          if(!entry)return;
+          if(visualMarkers)decorateSemanticCard(card,entry.label,entry.id);
+          else addInspectAction(card,row.pairId,entry.id);
+        };
         const visibleText=filter==='all'||filter==='text'||filter==='number';
         const textChanges=visibleText ? (filter==='number'?semantic.textChanges.filter(change=>change.numbers.length):semantic.textChanges) : [];
         const objectChanges=(filter==='all'||filter==='object')?semantic.objectChanges:[];
@@ -2617,13 +2639,13 @@
           const grid=document.createElement('div'); grid.className='text-diff-grid';
           [['original','beforeLabel'],['revised','afterLabel']].forEach(([side,labelKey])=>{ const pane=document.createElement('div'); pane.className='text-diff-side'; const label=document.createElement('span'); label.className='text-diff-label'; label.textContent=t(labelKey); const value=document.createElement('p'); value.className='text-diff-value'; appendDiffSegments(value,change.diff[side],side); pane.append(label,value); grid.append(pane); }); card.append(grid);
           if(change.numbers.length){ const nums=document.createElement('div'); nums.className='number-changes'; nums.setAttribute('aria-label',t('numberChanged')); change.numbers.forEach(item=>nums.append(numberChangeChip(item))); card.append(nums); }
-          if(visualMarkers){ const marker=markerMeta('text'); decorateSemanticCard(card,marker.label,marker.id); } list.append(card);
+          decorate(card,'text',change); list.append(card);
         });
-        objectChanges.forEach(change=>{ const card=objectChangeCard(change,'object'); if(visualMarkers){ const marker=markerMeta('object'); decorateSemanticCard(card,marker.label,marker.id); } list.append(card); });
-        imageChanges.forEach(change=>{ const card=objectChangeCard(change,'image'); if(visualMarkers){ const marker=markerMeta('image'); decorateSemanticCard(card,marker.label,marker.id); } list.append(card); });
-        layoutChanges.forEach(change=>{ const card=propertyChangeCard(change,'layout'); if(visualMarkers){ const marker=markerMeta('layout'); decorateSemanticCard(card,marker.label,marker.id); } list.append(card); });
-        formattingChanges.forEach(change=>{ const card=propertyChangeCard(change,'formatting'); if(visualMarkers){ const marker=markerMeta('formatting'); decorateSemanticCard(card,marker.label,marker.id); } list.append(card); });
-        notesChanges.forEach(change=>list.append(notesChangeCard(change)));
+        objectChanges.forEach(change=>{ const card=objectChangeCard(change,'object'); decorate(card,'object',change); list.append(card); });
+        imageChanges.forEach(change=>{ const card=objectChangeCard(change,'image'); decorate(card,'image',change); list.append(card); });
+        layoutChanges.forEach(change=>{ const card=propertyChangeCard(change,'layout'); decorate(card,'layout',change); list.append(card); });
+        formattingChanges.forEach(change=>{ const card=propertyChangeCard(change,'formatting'); decorate(card,'formatting',change); list.append(card); });
+        notesChanges.forEach(change=>{const card=notesChangeCard(change);decorate(card,'notes',change);list.append(card);});
         details.append(list); return details;
       }
       function rowMatchesFilter(row,filter) {
@@ -2741,9 +2763,22 @@
           if(current) item.setAttribute('aria-current','true'); else item.removeAttribute('aria-current');
         });
       }
-      function selectVisualPair(pairId) {
-        if(!state.matching) return;
-        state.selectedPairId=pairId; syncMatchSelection(); renderVisualCompare(state.matching);
+      function selectVisualPair(pairId,entryId=null) {
+        if(!state.matching)return;
+        state.selectedPairId=pairId;state.focusedEntryId=entryId;
+        syncMatchSelection();renderVisualCompare(state.matching);
+      }
+      function inspectChangeInPreview(pairId,entryId) {
+        if(!state.matching)return;
+        const row=state.matching.rows.find(item=>item.pairId===pairId);
+        if(!row)return;
+        const entry=visualDiffEntries(row).find(item=>item.id===entryId);
+        state.visualHighlights=true;
+        selectVisualPair(pairId,entryId);
+        $('#visualCompare').scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth',block:'start'});
+        if(entry&&!['original','revised'].some(side=>{
+          const obj=entry[side];return obj&&[obj.x,obj.y,obj.width,obj.height].every(Number.isFinite);
+        })) AppToast.show({message:t('inspectNoPosition')});
       }
       function navigateVisual(delta) {
         if(!state.matching) return; const {rows,index}=visualRowIndex(state.matching,selectedVisualRow(state.matching)); if(!rows.length) return;
@@ -2848,11 +2883,18 @@
         document.querySelectorAll('#visualCompare .is-active[data-visual-entry-id],#visualCompare [data-visual-entry-id].is-active').forEach(el=>el.classList.remove('is-active'));
       }
       function focusVisualEntry(entryId) {
-        if(!entryId) return;
+        if(!entryId)return;
         clearVisualTargetFocus();
-        const selector=`[data-visual-entry-id="${CSS.escape(entryId)}"]`, matches=[...document.querySelectorAll(`#visualCompare ${selector}`)];
+        const selector=`[data-visual-entry-id="${CSS.escape(entryId)}"]`;
+        const matches=[...document.querySelectorAll(`#visualCompare ${selector}`)];
         matches.forEach(el=>el.classList.add('is-active'));
-        window.setTimeout(()=>{ document.querySelectorAll(`#visualCompare ${selector}`).forEach(el=>el.classList.remove('is-active')); },1800);
+        const box=matches.find(el=>el.classList.contains('hf-highlight-box')),viewport=$('#visualStageViewport');
+        if(box&&viewport){
+          const target=box.getBoundingClientRect(),rect=viewport.getBoundingClientRect();
+          viewport.scrollLeft+=(target.left+target.width/2)-(rect.left+rect.width/2);
+          viewport.scrollTop+=(target.top+target.height/2)-(rect.top+rect.height/2);
+        }
+        window.setTimeout(()=>{matches.forEach(el=>el.classList.remove('is-active'));},2400);
       }
       function createVisualMarkerBar(row) {
         const entries=visualDiffEntries(row), bar=document.createElement('div'); bar.className='visual-marker-bar'; bar.hidden=!entries.length;
@@ -2885,6 +2927,7 @@
           handle=module.renderSlide(presentation,rendererSlide,{mediaUrlCache,pdfjs:false,onNodeError:(nodeId,error)=>console.warn('PPTX node',nodeId,error)});
           frame=document.createElement('div'); frame.className='pptx-render-frame'; frame.append(handle.element);
           mount.replaceChildren(frame,createHighlightOverlay(slide,highlightRegions,side,mount)); state.visualRenderHandles.push(handle);
+          if(state.focusedEntryId)focusVisualEntry(state.focusedEntryId);
           requestAnimationFrame(()=>fitRenderFrame(mount,frame,handle.element));
           await handle.ready;
           if(generation!==state.visualRenderGeneration||!mount.isConnected){ handle.dispose?.(); frame.remove(); return; }
@@ -2909,9 +2952,12 @@
       }
       function hydrateVisualPanes(row,highlights,generation) {
         document.querySelectorAll('#visualCompareStage .slide-canvas[data-render-side]').forEach(mount=>{
-          const side=mount.dataset.renderSide, slide=side==='original'?row.original:row.revised;
-          hydrateHighFidelityPane(mount,side,slide,visualHighlightRegions(row,side),generation);
+          const side=mount.dataset.renderSide,slide=side==='original'?row.original:row.revised;
+          const regions=visualHighlightRegions(row,side);
+          mount.append(createHighlightOverlay(slide,regions,side,mount));
+          hydrateHighFidelityPane(mount,side,slide,regions,generation);
         });
+        if(state.focusedEntryId)focusVisualEntry(state.focusedEntryId);
       }
       function renderVisualDiffPanel(row) {
         const root=$('#visualCompareDiff'); root.replaceChildren();
