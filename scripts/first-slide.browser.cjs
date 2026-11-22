@@ -146,7 +146,9 @@ async function main(){
         assert.equal(await page.locator('#visualCompareStage').evaluate(el=>el.style.width),'125%');
         await page.locator('#visualZoomOut').click();
         assert.equal(await zoomValue.innerText(),'100%');
-        await page.locator('#visualZoomReset').click({force:true});
+        await page.locator('#visualZoomIn').click();
+        await page.locator('#visualZoomReset').click();
+        assert.equal(await zoomValue.innerText(),'100%');
         assert.equal(await page.locator('#visualZoomReset').isDisabled(),true);
 
         const modeControls=page.locator('[data-visual-mode]');
