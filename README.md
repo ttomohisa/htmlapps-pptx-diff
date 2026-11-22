@@ -18,6 +18,7 @@ GitHub Pages delivers the initial HTML. After it loads, PPTX parsing, slide matc
 
 ## Features
 
+- **Preview selected files** — See the first slide of each PPTX as soon as it is chosen, before running the comparison.
 - **Match slides across revisions** — Compare corresponding slides without relying only on slide numbers, including added, removed, and moved slides.
 - **Review semantic changes** — Detect text, numbers, objects, images, layout, formatting, and speaker-note changes slide by slide.
 - **Confirm changes visually** — Use high-fidelity Side by side, Overlay, Split, and Blink views with optional difference markers.
