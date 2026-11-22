@@ -9,6 +9,7 @@
 - Simplify the introduction and file-selection copy, remove the extra hero heading and framed comparison settings, hide the local-processing badge on phones, and move feature descriptions into Help.
 - Show the first slide of each selected PPTX before comparison. Use the local high-fidelity renderer when possible, fall back to a basic thumbnail, and discard stale previews when files change.
 - Replace the comparison result cards with a single slide-count strip and a two-column change breakdown; add SVG icons, clearer active states, and a separate differences toggle for visual compare modes.
+- Add jump-to-change actions, lazy thumbnails in the matched-slide list, slide title/text search combined with filters, explicit element/slide count units, per-mode descriptions, and 50–200% visual zoom.
 
 
 ## 1.0.4 - 2026-10-27
