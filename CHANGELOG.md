@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.0.5 - 2026-11-22
+
+- Match identical blank slides and keep low-confidence one-slide wholesale rewrites together for review.
+- Detect case/whitespace edits, picture crop/appearance edits, shape kind, slide background, slide size and overlapping shape order changes.
+- Bound PPTX input sizes and ZIP inflation to reduce memory exhaustion from malformed or oversized archives.
+- Include object-change totals in HTML reports and test the comparison engine across standalone distributions.
+
+
 ## 1.0.4 - 2026-10-27
 
 - Keep the header version badge visible at narrow widths by truncating only the app title.
