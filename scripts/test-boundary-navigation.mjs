@@ -176,8 +176,10 @@ test('navigation is directly below the preview and has large phone controls',()=
   const viewport=source.indexOf('id="visualStageViewport"');
   const controls=source.indexOf('class="visual-stage-controls"',viewport);
   const nav=source.indexOf('class="visual-nav"',controls);
-  const note=source.indexOf('id="visualCompareNote"',controls);
-  assert.ok(viewport>=0 && viewport<controls && controls<nav && nav<note,'navigation follows the actual slide');
+  const changes=source.indexOf('id="visualChangeControls"',controls);
+  const markers=source.indexOf('id="visualMarkerHost"',controls);
+  assert.ok(viewport>=0 && viewport<controls && controls<nav && nav<changes && changes<markers,'slide navigation stays above variable-length change controls and labels');
+  assert.match(source,/const height=state\.visualMode==='side'\?stableSideHeight:/,'side-by-side pager is independent of slide height');
 });
 test('report preserves comparison ownership and includes every semantic summary category',()=>{
   const start=source.indexOf('      function captureReportContext()');
