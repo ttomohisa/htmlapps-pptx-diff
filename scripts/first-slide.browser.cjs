@@ -238,8 +238,16 @@ async function main(){
         assert.equal(await page.locator('#visualOpacity').inputValue(),'80','opacity persists across modes');
         const changeControls=page.locator('#visualChangeControls');
         assert.equal(await changeControls.isVisible(),true,'change navigation is available');
-        assert.ok((await page.locator('#visualChangePosition').innerText()).includes(' / '),'change counter');
-        assert.equal(await page.locator('#visualChangeNext').count(),1);
+        const changePosition=page.locator('#visualChangePosition'),initialPosition=(await changePosition.innerText()).split(' / ').map(Number);
+        assert.ok(initialPosition.length===2&&initialPosition[1]>0,'change counter');
+        if(initialPosition[0]<initialPosition[1]){
+          await page.locator('#visualChangeNext').click();
+          assert.equal(await changePosition.innerText(),(initialPosition[0]+1)+' / '+initialPosition[1]);
+          await page.locator('#visualChangePrev').click();
+          assert.equal(await changePosition.innerText(),initialPosition.join(' / '));
+        }else assert.equal(await page.locator('#visualChangeNext').isDisabled(),true);
+        assert.equal(await page.locator('#visualCompare .visual-toolbar-main > .diff-toolbar-label').count(),0,'no redundant mode heading');
+        assert.equal(await page.locator('#visualCompare .visual-zoom-toolbar > .diff-toolbar-label').count(),0,'no redundant zoom heading');
         const toggle=page.locator('#visualHighlightToggle');
         const label=lang==='ja'?'差分を表示':'Show differences';
         assert.equal(await page.locator('#visualHighlightToggleLabel').innerText(),label);
