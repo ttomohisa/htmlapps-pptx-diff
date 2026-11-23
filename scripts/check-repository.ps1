@@ -240,6 +240,8 @@ if ($LASTEXITCODE -ne 0) { throw "Stable-release regression checks failed." }
 if ($LASTEXITCODE -ne 0) { throw "Header language regression checks failed." }
 & node (Join-Path $Root "scripts/test-release-parity.mjs")
 if ($LASTEXITCODE -ne 0) { throw "Generated-release parity checks failed." }
+& node (Join-Path $Root "scripts/test-release-automation.mjs")
+if ($LASTEXITCODE -ne 0) { throw "Automated release workflow contract checks failed." }
 & node (Join-Path $Root "scripts/test-semantic-audit.mjs")
 if ($LASTEXITCODE -ne 0) { throw "Semantic false-negative regression checks failed." }
 & node (Join-Path $Root "scripts/test-file-thumbnails.mjs")
