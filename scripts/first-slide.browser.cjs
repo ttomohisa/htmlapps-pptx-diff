@@ -187,13 +187,16 @@ async function main(){
         assert.equal(await zoomValue.innerText(),'200%');
         await assertFixedFrame('200%');
         assert.equal(await page.locator('#visualStageViewport').getAttribute('data-draggable'),'true');
-        const dragViewport=page.locator('#visualStageViewport'),dragRect=await dragViewport.boundingBox();
+        const dragViewport=page.locator('#visualStageViewport');
+        await dragViewport.scrollIntoViewIfNeeded();
+        const dragRect=await dragViewport.boundingBox();
         const initialX=await dragViewport.evaluate(el=>el.scrollLeft);
         await page.mouse.move(dragRect.x+dragRect.width/2,dragRect.y+Math.min(95,dragRect.height/2));
         await page.mouse.down();
         await page.mouse.move(dragRect.x+dragRect.width/2-55,dragRect.y+Math.min(95,dragRect.height/2),{steps:5});
         await page.mouse.up();
-        assert.ok((await dragViewport.evaluate(el=>el.scrollLeft))>initialX+10,'dragging pans enlarged slide');
+        const afterDragX=await dragViewport.evaluate(el=>el.scrollLeft);
+        assert.ok(afterDragX>initialX+10,'dragging pans enlarged slide: '+JSON.stringify({initialX,afterDragX,dragRect}));
         assert.ok((await visualFrame()).scrollWidth>(await visualFrame()).clientWidth,'200% overflows inside fixed frame');
         await zoomValue.click();
         assert.equal(await zoomValue.innerText(),'100%');
