@@ -166,6 +166,10 @@ PPTX ZIP parsing, slide matching, Semantic Diff, filtering, and report generatio
 
 **v1.0.5 is the stable release.**
 
+When a pull request is merged into `main` and `app.config.json` contains an unpublished stable Semantic Version, the `deploy-pages.yml` workflow builds and verifies the two standalone HTML files, then creates the matching `vX.Y.Z` Git tag and publishes a GitHub Release. Direct pushes and manual workflow runs do not publish releases. Existing tags and releases are never overwritten; a further release requires a version bump.
+
+Each release includes readable and self-extracting standalone HTML, a distribution ZIP with documentation and license notices, and `SHA256SUMS.txt`. Release downloads are made from the exact successful `main` build artifact; the Windows PR validation workflow also performs a dry-run of the release packaging. If publication fails, the Actions run can be retried. Merging PRs is always manual.
+
 ## Contributing
 
 Bug reports and feature proposals are welcome through GitHub Issues. See [CONTRIBUTING.md](CONTRIBUTING.md) for development guidance.
