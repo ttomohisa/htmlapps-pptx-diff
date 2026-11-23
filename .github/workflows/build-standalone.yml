@@ -18,6 +18,7 @@ on:
       - "scripts/build-self-extract.ps1"
       - "scripts/verify-self-extract.ps1"
       - ".github/workflows/build-standalone.yml"
+      - ".github/workflows/deploy-pages.yml"
 
 permissions:
   contents: read
@@ -35,6 +36,11 @@ jobs:
         with:
           node-version: "22"
 
+      - name: Set up Python for release package verification
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
       - name: Validate PowerShell syntax and encoding
         shell: powershell
         run: .\scripts\check-powershell-syntax.ps1
@@ -42,6 +48,17 @@ jobs:
       - name: Build and verify standalone HTML
         shell: pwsh
         run: ./scripts/check-repository.ps1
+
+      - name: Package a dry-run GitHub Release from the verified build
+        shell: pwsh
+        run: |
+          python scripts/package-release.py --output "$env:RUNNER_TEMP/release-packaging-smoke" --commit "${{ github.event.pull_request.head.sha || github.sha }}" --run-id "${{ github.run_id }}"
+          if ($LASTEXITCODE -ne 0) { throw "Release packaging validation failed." }
+          Push-Location "$env:RUNNER_TEMP/release-packaging-smoke"
+          try {
+            python -c "import hashlib,pathlib; paths=[x for x in pathlib.Path('.').iterdir() if x.suffix == '.html' or x.suffix == '.zip']; assert len(paths)==3; expected=dict((l.split('  ',1)[1],l.split('  ',1)[0]) for l in pathlib.Path('SHA256SUMS.txt').read_text().splitlines()); assert all(hashlib.sha256(x.read_bytes()).hexdigest()==expected[x.name] for x in paths)"
+            if ($LASTEXITCODE -ne 0) { throw "Release asset checksums failed." }
+          } finally { Pop-Location }
 
       - name: Upload standalone artifact
         uses: actions/upload-artifact@v7
