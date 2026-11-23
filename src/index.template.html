@@ -548,6 +548,40 @@
     .review-banner[hidden] { display:none; }
     .review-banner svg { width:17px; height:17px; flex:0 0 auto; margin-top:1px; }
     .match-list { border:1px solid var(--line); border-radius:14px; overflow:hidden; background:var(--surface); box-shadow:var(--shadow-sm); }
+    .review-layout { min-width:0; scroll-margin-top:76px; }
+    .review-tabs { display:none; }
+    .visual-change-controls { display:flex; align-items:center; justify-content:center; gap:8px; margin:2px 0 10px; }
+    .visual-change-controls[hidden] { display:none; }
+    .visual-change-controls .icon-button { width:40px; height:40px; flex:0 0 auto; }
+    .visual-change-position { min-width:54px; text-align:center; color:var(--muted); font-variant-numeric:tabular-nums; font-size:12px; font-weight:760; }
+    .visual-opacity-control { display:flex; align-items:center; gap:9px; min-width:0; margin:0 0 10px; color:var(--muted); font-size:11px; font-weight:720; }
+    .visual-opacity-control[hidden] { display:none; }
+    .visual-opacity-control input { width:min(180px,100%); flex:1 1 140px; min-width:60px; accent-color:var(--accent); cursor:pointer; }
+    .visual-opacity-control output { min-width:36px; text-align:right; font-variant-numeric:tabular-nums; }
+    .visual-stage-viewport[data-draggable="true"] { cursor:grab; }
+    .visual-stage-viewport.is-dragging { cursor:grabbing; user-select:none; }
+    .visual-stage-viewport .visual-splitter { cursor:ew-resize; }
+    @media (min-width:980px) {
+      .review-layout { display:grid; grid-template-columns:minmax(290px,340px) minmax(0,1fr); align-items:start; gap:14px; }
+      .review-layout > .visual-compare { grid-column:2; grid-row:1; min-width:0; margin:0; }
+      .review-layout > .match-list, .review-layout > .diff-empty { grid-column:1; grid-row:1; min-width:0; }
+      .review-layout > .match-list { max-height:min(75vh,860px); overflow-y:auto; overscroll-behavior:contain; }
+      .review-layout .match-row { grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; padding:10px; }
+      .review-layout .match-row > .match-slide { grid-template-columns:1fr; gap:4px; align-content:start; }
+      .review-layout .match-row > .match-slide:nth-child(3) { grid-column:2; grid-row:1; }
+      .review-layout .match-row > .match-relation { grid-column:1 / -1; grid-row:2; justify-items:start; text-align:left; }
+      .review-layout .match-row > .semantic-details { grid-column:1 / -1; margin-left:0; }
+      .review-layout > .visual-compare { position:sticky; top:74px; max-height:calc(100dvh - 86px); overflow-y:auto; overscroll-behavior:contain; }
+    }
+    @media (max-width:760px) {
+      .review-tabs { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:4px; margin:0 0 10px; padding:4px; background:var(--surface-muted); border:1px solid var(--line); border-radius:11px; }
+      .review-tab { min-height:44px; border:0; border-radius:8px; background:transparent; color:var(--muted); font:inherit; font-size:12px; font-weight:760; cursor:pointer; }
+      .review-tab[aria-selected="true"] { background:var(--surface); color:var(--accent); box-shadow:var(--shadow-sm); }
+      .review-tab:focus-visible { outline:2px solid var(--focus); outline-offset:-2px; }
+      .review-layout[data-pane="list"] > .visual-compare { display:none; }
+      .review-layout[data-pane="preview"] > .match-list, .review-layout[data-pane="preview"] > .diff-empty { display:none; }
+      .visual-change-controls .icon-button { width:44px; height:44px; }
+    }
     .match-row { display:grid; grid-template-columns:minmax(0,1fr) 156px minmax(0,1fr); gap:12px; align-items:center; min-height:76px; padding:11px 13px; border-bottom:1px solid var(--line); }
     .match-row:last-child { border-bottom:0; }
     .match-row[data-review="true"] { background:#fffdf7; }
@@ -653,7 +687,6 @@
     .visual-zoom-button:not(:disabled):hover, .visual-zoom-value:hover { background:var(--accent-soft); color:var(--accent); }
     .visual-zoom-button:disabled { opacity:.4; cursor:not-allowed; }
     .visual-zoom-button:focus-visible, .visual-zoom-value:focus-visible { position:relative; z-index:1; outline:3px solid var(--accent); outline-offset:-3px; }
-    .visual-mode-description { margin:4px 0 10px; color:var(--muted); font-size:11px; line-height:1.5; }
     .visual-stage-viewport { width:100%; max-height:75vh; overflow:auto; overscroll-behavior:contain; scrollbar-gutter:stable; border:1px solid var(--line); border-radius:12px; background:var(--surface-muted); }
     .visual-stage-viewport .visual-stack { border:0; border-radius:0; }
     .visual-stage { position:relative; width:100%; min-width:0; margin-inline:auto; }
@@ -1015,6 +1048,11 @@
           </select>
         </div>
       </details>
+      <div class="review-layout" id="reviewLayout" data-pane="list">
+        <div class="review-tabs" role="tablist" aria-label="Comparison views">
+          <button class="review-tab" type="button" id="reviewListTab" role="tab" aria-controls="matchList" aria-selected="true" tabindex="0" data-i18n="reviewListTab">スライド一覧</button>
+          <button class="review-tab" type="button" id="reviewPreviewTab" role="tab" aria-controls="visualCompare" aria-selected="false" tabindex="-1" data-i18n="reviewPreviewTab">プレビュー</button>
+        </div>
       <section class="visual-compare" id="visualCompare" hidden aria-labelledby="visualCompareTitle">
         <div class="visual-compare-head">
           <div class="visual-head-copy">
@@ -1025,7 +1063,6 @@
         </div>
         <div class="visual-toolbar">
           <div class="visual-toolbar-main">
-            <span class="diff-toolbar-label" data-i18n="visualModeLabel">表示モード</span>
             <div class="visual-modes" role="group" data-i18n-aria-label="visualModeLabel">
               <button class="visual-mode" type="button" data-visual-mode="side" aria-pressed="true" data-i18n-title="previewModeSideNote"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="4" width="8.5" height="16" rx="1.5"/><rect x="13" y="4" width="8.5" height="16" rx="1.5"/></svg><span data-i18n="visualModeSide">横並び</span></button>
               <button class="visual-mode" type="button" data-visual-mode="overlay" aria-pressed="false" data-i18n-title="previewModeOverlayNote"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="13.5" height="13.5" rx="2"/><rect x="7.5" y="7.5" width="13.5" height="13.5" rx="2"/></svg><span data-i18n="visualModeOverlay">重ね合わせ</span></button>
@@ -1042,7 +1079,16 @@
             <button class="overlay-order-button" type="button" data-overlay-top="revised" aria-pressed="true" data-i18n="revised">変更後のファイル</button>
           </div>
         </div>
-        <p class="visual-mode-description" id="visualModeDescription" role="status" aria-live="polite">元と変更後を横に並べて表示します。</p>
+        <div class="visual-opacity-control" id="visualOpacityControl" hidden>
+          <label for="visualOpacity" data-i18n="visualOpacityLabel">上のスライドの濃さ</label>
+          <input id="visualOpacity" type="range" min="0" max="100" step="5" value="50" aria-label="上のスライドの濃さ" data-i18n-aria-label="visualOpacityLabel">
+          <output id="visualOpacityValue" for="visualOpacity">50%</output>
+        </div>
+        <div class="visual-change-controls" id="visualChangeControls" role="group" data-i18n-aria-label="visualChangesLabel" aria-label="変更箇所の移動" hidden>
+          <button class="icon-button" id="visualChangePrev" type="button" data-i18n-title="visualChangePrev" data-i18n-aria-label="visualChangePrev" aria-label="前の変更箇所" title="前の変更箇所"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg></button>
+          <span class="visual-change-position" id="visualChangePosition" aria-live="polite">—</span>
+          <button class="icon-button" id="visualChangeNext" type="button" data-i18n-title="visualChangeNext" data-i18n-aria-label="visualChangeNext" aria-label="次の変更箇所" title="次の変更箇所"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button>
+        </div>
         <div class="visual-stage-viewport" id="visualStageViewport">
           <div class="visual-stage" id="visualCompareStage"></div>
         </div>
@@ -1055,7 +1101,6 @@
               <button class="icon-button" id="visualLastButton" type="button" data-i18n-title="visualLast" data-i18n-aria-label="visualLast" title="表示中の最後の比較結果" aria-label="表示中の最後の比較結果"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 5v14M6 6l6 6-6 6"/></svg></button>
             </div>
           <div class="visual-zoom-toolbar">
-            <span class="diff-toolbar-label" data-i18n="visualZoomLabel">拡大・縮小</span>
             <div class="visual-zoom-actions" role="group" data-i18n-aria-label="visualZoomLabel">
               <button class="visual-zoom-button" id="visualZoomOut" type="button" data-i18n-title="visualZoomOut" data-i18n-aria-label="visualZoomOut" aria-label="縮小" title="縮小">−</button>
               <button class="visual-zoom-value" id="visualZoomValue" type="button" data-i18n-title="visualZoomReset" data-i18n-aria-label="visualZoomReset" title="100%に戻す" aria-label="100%に戻す">100%</button>
@@ -1068,6 +1113,7 @@
       </section>
       <div class="match-list" id="matchList"></div>
       <p class="diff-empty" id="diffEmpty" hidden data-i18n="filterEmpty">この条件に該当する変更はありません。</p>
+      </div>
       <details class="structure-details">
         <summary data-i18n="structureDetails">解析したスライド構造を見る</summary>
         <div class="result-columns" id="resultColumns"></div>
