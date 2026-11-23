@@ -18,14 +18,14 @@ GitHub Pages delivers the initial HTML. After it loads, PPTX parsing, slide matc
 
 ## Features
 
-- **Preview selected files** — See the first slide of each PPTX as soon as it is chosen, before running the comparison.
+- **Preview selected files** — See the first slide of each PPTX as soon as it is chosen, before running the comparison. Selecting the first file hides the introduction and local-processing badge; Replace file is styled as a link.
 - **Jump to a change** — Use “Show in preview” in a change detail to select its slide and highlight the affected area when positional information exists. Notes and other non-positional changes cannot be outlined on a slide.
 - **Find slides faster** — Slide-list thumbnails render lazily as they become visible. Search slide titles and text, and combine the search with existing difference filters.
 - **Zoom a visual comparison** — Use the joined minus / percentage / plus controls beneath the slide at 50–200%. Select the percentage to return to 100%. The preview frame and slide pager remain fixed; drag with a mouse to pan enlarged content (swipe on phones). Neither action changes computed differences.
 - **Distinguish counts** — Breakdown numbers count changed elements, while filter numbers count slides. One change can be counted in more than one breakdown category.
 - **Match slides across revisions** — Compare corresponding slides without relying only on slide numbers, including added, removed, and moved slides.
 - **Review semantic changes** — Detect text, numbers, objects, images, layout, formatting, and speaker-note changes slide by slide.
-- **Confirm changes visually** — On desktop, the slide list and preview appear side by side; on phones, switch between list and preview tabs. Use high-fidelity Side by side, Overlay, Split, and Blink views, step through individual changes, and adjust the top slide opacity in Overlay mode.
+- **Confirm changes visually** — On desktop, Side by side uses the full result width with the slide list below, while other modes show the list beside the preview. On phones, switch between list and preview tabs. Step through individual changes and adjust the top slide opacity in Overlay mode.
 - **Keep chart previews visible** — Charts rendered by the embedded PPTX renderer are initialized after the slide DOM is mounted, so chart-heavy slides can be reviewed visually.
 - **Filter large comparisons** — Show only a change category or only slides that changed without altering the underlying comparison.
 - **Save a local comparison report** — Export a collapsible HTML report with high-fidelity slide previews. The report is gzip-compressed into a self-extracting single HTML file when supported.
@@ -68,7 +68,7 @@ The builder uses Windows PowerShell and `tar.exe`; Node.js, Python, and a local 
 
 ### Visual comparison
 
-Use **First / Previous / Next / Last** directly below the preview to move through the currently filtered comparison rows. First and Last jump to the visible boundaries, including added and removed slides. Navigation preserves expanded change details and scroll position; the current row is also identified for assistive technology.
+Use **First / Previous / Next / Last** directly below the preview to move through the currently filtered comparison rows. In Side by side mode the pager and viewport retain their positions when one slide is missing or the number of detected changes varies. First and Last jump to the visible boundaries, including added and removed slides. Navigation preserves expanded change details and scroll position; the current row is also identified for assistive technology.
 
 The separate previous/next change controls step through the currently selected slide's differences. Notes and changes without positional data cannot be outlined on a slide. On phones, switch between the **Slide list** and **Preview** tabs.
 
