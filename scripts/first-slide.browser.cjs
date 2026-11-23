@@ -146,6 +146,21 @@ async function main(){
         assert.ok(stageBox&&navBox&&navBox.y>=stageBox.y+stageBox.height-1&&navBox.y<=stageBox.y+stageBox.height+48,'slide navigation is immediately below the viewport');
 
         // Zoom is a single segmented control: minus / clickable percentage / plus.
+        // The surrounding viewport and slide navigation must not move at any zoom level.
+        const visualFrame=()=>page.evaluate(()=>{
+          const viewport=document.querySelector('#visualStageViewport');
+          const navigation=document.querySelector('#visualCompare .visual-nav');
+          const bounds=viewport.getBoundingClientRect(),nav=navigation.getBoundingClientRect();
+          return {width:bounds.width,height:bounds.height,navGap:nav.top-bounds.bottom,
+            scrollWidth:viewport.scrollWidth,clientWidth:viewport.clientWidth};
+        });
+        const baseFrame=await visualFrame();
+        const assertFixedFrame=async(label)=>{
+          const current=await visualFrame();
+          assert.ok(Math.abs(current.width-baseFrame.width)<=1,label+': viewport width stays fixed');
+          assert.ok(Math.abs(current.height-baseFrame.height)<=1,label+': viewport height stays fixed');
+          assert.ok(Math.abs(current.navGap-baseFrame.navGap)<=1,label+': slide pager does not shift');
+        };
         const zoomValue=page.locator('#visualZoomValue');
         assert.equal(await page.locator('.visual-zoom-actions > button').count(),3);
         assert.equal(await zoomValue.getAttribute('aria-label'),lang==='ja'?'100%に戻す':'Reset to 100%');
@@ -154,10 +169,24 @@ async function main(){
         await page.locator('#visualZoomIn').click();
         assert.equal(await zoomValue.innerText(),'125%');
         assert.equal(await page.locator('#visualCompareStage').evaluate(el=>el.style.width),'125%');
+        await assertFixedFrame('125%');
+        await page.locator('#visualZoomIn').click();
+        await assertFixedFrame('150%');
+        await page.locator('#visualZoomIn').click();
+        assert.equal(await zoomValue.innerText(),'200%');
+        await assertFixedFrame('200%');
+        assert.ok((await visualFrame()).scrollWidth>(await visualFrame()).clientWidth,'200% overflows inside fixed frame');
         await zoomValue.click();
         assert.equal(await zoomValue.innerText(),'100%');
+        await assertFixedFrame('reset to 100%');
         assert.equal(await page.locator('#visualCompareStage').evaluate(el=>el.style.width),'100%');
         await page.locator('#visualZoomOut').click();
+        assert.equal(await zoomValue.innerText(),'75%');
+        await assertFixedFrame('75%');
+        await page.locator('#visualZoomOut').click();
+        assert.equal(await zoomValue.innerText(),'50%');
+        await assertFixedFrame('50%');
+        await page.locator('#visualZoomIn').click();
         assert.equal(await zoomValue.innerText(),'75%');
         await page.locator('#visualZoomIn').click();
         assert.equal(await zoomValue.innerText(),'100%');
