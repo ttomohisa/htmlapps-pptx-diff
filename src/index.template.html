@@ -654,8 +654,8 @@
     .visual-zoom-button:disabled { opacity:.4; cursor:not-allowed; }
     .visual-zoom-button:focus-visible, .visual-zoom-value:focus-visible { position:relative; z-index:1; outline:3px solid var(--accent); outline-offset:-3px; }
     .visual-mode-description { margin:4px 0 10px; color:var(--muted); font-size:11px; line-height:1.5; }
-    .visual-stage-viewport { width:100%; overflow:auto; overscroll-behavior:contain; }
-    .visual-stage-viewport[data-zoomed="true"] { max-height:75vh; }
+    .visual-stage-viewport { width:100%; max-height:75vh; overflow:auto; overscroll-behavior:contain; scrollbar-gutter:stable; border:1px solid var(--line); border-radius:12px; background:var(--surface-muted); }
+    .visual-stage-viewport .visual-stack { border:0; border-radius:0; }
     .visual-stage { position:relative; width:100%; min-width:0; margin-inline:auto; }
     .visual-layer-legend { display:flex; align-items:center; justify-content:space-between; gap:10px; margin:0 0 7px; }
     .visual-layer-label { display:inline-flex; align-items:center; gap:6px; padding:4px 8px; border:1px solid var(--line); border-radius:999px; background:var(--surface); color:var(--muted); font-size:10px; font-weight:780; }
@@ -2979,13 +2979,27 @@
         splitter.addEventListener('keydown',event=>{ if(!['ArrowLeft','ArrowRight'].includes(event.key)) return; event.preventDefault(); state.visualSplit=Math.max(0,Math.min(100,state.visualSplit+(event.key==='ArrowRight'?2:-2))); splitter.style.left=`${state.visualSplit}%`; topLayer.style.clipPath=`inset(0 ${100-state.visualSplit}% 0 0)`; splitter.setAttribute('aria-valuenow',String(Math.round(state.visualSplit))); });
       }
       const VISUAL_ZOOMS=[50,75,100,125,150,200];
+      // Size the viewport from the unzoomed slide once per render/resize.
+      // Zoom changes only the scrollable content, never the outer frame or nearby navigation.
+      function lockVisualViewport() {
+        const stage=$('#visualCompareStage'),viewport=$('#visualStageViewport');
+        stage.style.width='100%';
+        viewport.style.height='auto';
+        const borders=parseFloat(getComputedStyle(viewport).borderTopWidth)||0;
+        const height=stage.getBoundingClientRect().height+2*borders;
+        viewport.style.height=`${Math.ceil(height)}px`;
+        viewport.scrollLeft=0;
+        viewport.scrollTop=0;
+      }
       function applyVisualZoom() {
         const stage=$('#visualCompareStage'),viewport=$('#visualStageViewport'),zoom=state.visualZoom;
-        const prevWidth=stage.getBoundingClientRect().width||viewport.clientWidth;
-        const prevScroll=viewport.scrollLeft+(viewport.clientWidth/2);
-        stage.style.width=zoom+'%';viewport.dataset.zoomed=String(zoom!==100);
-        const newWidth=stage.getBoundingClientRect().width||viewport.clientWidth;
-        viewport.scrollLeft=Math.max(0,prevScroll*(newWidth/Math.max(1,prevWidth))-viewport.clientWidth/2);
+        const oldRect=stage.getBoundingClientRect();
+        const previousCenterX=viewport.scrollLeft+viewport.clientWidth/2;
+        const previousCenterY=viewport.scrollTop+viewport.clientHeight/2;
+        stage.style.width=zoom+'%';
+        const newRect=stage.getBoundingClientRect();
+        viewport.scrollLeft=Math.max(0,previousCenterX*newRect.width/Math.max(1,oldRect.width)-viewport.clientWidth/2);
+        viewport.scrollTop=Math.max(0,previousCenterY*newRect.height/Math.max(1,oldRect.height)-viewport.clientHeight/2);
         $('#visualZoomValue').textContent=zoom+'%';
         $('#visualZoomOut').disabled=zoom<=VISUAL_ZOOMS[0];
         $('#visualZoomIn').disabled=zoom>=VISUAL_ZOOMS[VISUAL_ZOOMS.length-1];
@@ -3009,10 +3023,9 @@
         const section=$('#visualCompare'), stage=$('#visualCompareStage'), selection=$('#visualCompareSelection'), note=$('#visualCompareNote'), overlayOrder=$('#overlayOrder');
         const row=selectedVisualRow(matching), nav=visualRowIndex(matching,row);
         $('#visualModeDescription').textContent=compareModeNote(state.visualMode);
-        applyVisualZoom();
         section.dataset.highlights=state.visualHighlights?'on':'off'; document.querySelectorAll('[data-visual-mode]').forEach(btn=>btn.setAttribute('aria-pressed',String(btn.dataset.visualMode===state.visualMode))); document.querySelectorAll('[data-overlay-top]').forEach(btn=>btn.setAttribute('aria-pressed',String(btn.dataset.overlayTop===state.visualOverlayTop))); const highlightToggle=$('#visualHighlightToggle'); highlightToggle.setAttribute('aria-pressed',String(state.visualHighlights)); $('#visualHighlightToggleLabel').textContent=t('showVisualHighlights');
         $('#visualFirstButton').disabled=$('#visualPrevButton').disabled=!row||nav.index<=0; $('#visualLastButton').disabled=$('#visualNextButton').disabled=!row||nav.index>=nav.rows.length-1; $('#visualNavPosition').textContent=row?`${nav.index+1} / ${nav.rows.length}`:'—'; overlayOrder.hidden=state.visualMode!=='overlay'||!row?.original||!row?.revised;
-        if(!row){ section.hidden=false; stage.replaceChildren(); const empty=document.createElement('p'); empty.className='visual-empty'; empty.textContent=t('previewUnavailable'); stage.append(empty); selection.textContent=t('visualSelectionEmpty'); note.textContent=t('visualCompareNote'); $('#visualCompareDiff').replaceChildren(); return; }
+        if(!row){ section.hidden=false; stage.replaceChildren(); const empty=document.createElement('p'); empty.className='visual-empty'; empty.textContent=t('previewUnavailable'); stage.append(empty); lockVisualViewport(); applyVisualZoom(); selection.textContent=t('visualSelectionEmpty'); note.textContent=t('visualCompareNote'); $('#visualCompareDiff').replaceChildren(); return; }
         section.hidden=false; const leftTitle=row.original?formatPreviewSlideTitle(row.original):t('missingOriginal'), rightTitle=row.revised?formatPreviewSlideTitle(row.revised):t('missingRevised'); selection.textContent=`${leftTitle} → ${rightTitle}`; note.textContent=t(state.rendererPresentations.original||state.rendererPresentations.revised?'rendererPrimary':'rendererFallback');
         const highlights=changedObjectsForRow(row), stack=document.createElement('div'); stack.className='visual-stack'; stack.dataset.mode=state.visualMode; const sw=row.original?.slideWidth||row.revised?.slideWidth||12192000, sh=row.original?.slideHeight||row.revised?.slideHeight||6858000; const nodes=[createVisualMarkerBar(row)];
         if(state.visualMode==='side') { stack.append(createVisualPane(row.original,t('original'),highlights.original,'original'),createVisualPane(row.revised,t('revised'),highlights.revised,'revised')); nodes.push(stack); }
@@ -3027,7 +3040,7 @@
           if(state.visualMode==='split'){ top.classList.add('clip-layer'); top.style.clipPath=`inset(0 ${100-state.visualSplit}% 0 0)`; const splitter=document.createElement('div'); splitter.className='visual-splitter'; splitter.style.left=`${state.visualSplit}%`; splitter.tabIndex=0; splitter.setAttribute('role','slider'); splitter.setAttribute('aria-label',t('splitPosition')); splitter.setAttribute('aria-valuemin','0'); splitter.setAttribute('aria-valuemax','100'); splitter.setAttribute('aria-valuenow',String(Math.round(state.visualSplit))); const handle=document.createElement('span'); handle.className='visual-splitter-handle'; handle.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 7v10M15 7v10"/></svg>'; splitter.append(handle); stack.append(bottom,top,splitter); bindSplitDrag(splitter,stack,top); } else stack.append(bottom,top);
           nodes.push(visualLegend(row),stack);
         }
-        stage.replaceChildren(...nodes); renderVisualDiffPanel(row); requestAnimationFrame(()=>hydrateVisualPanes(row,highlights,generation));
+        stage.replaceChildren(...nodes); lockVisualViewport(); applyVisualZoom(); renderVisualDiffPanel(row); requestAnimationFrame(()=>hydrateVisualPanes(row,highlights,generation));
       }
 
       function renderSemanticSummary(matching) {
@@ -3269,6 +3282,12 @@
       $('#visualZoomOut').addEventListener('click',()=>moveVisualZoom(-1));
       $('#visualZoomIn').addEventListener('click',()=>moveVisualZoom(1));
       $('#visualZoomValue').addEventListener('click',()=>{state.visualZoom=100;applyVisualZoom();});
+      let visualViewportResizeRequest=0;
+      window.addEventListener('resize',()=>{
+        if($('#visualCompare').hidden)return;
+        cancelAnimationFrame(visualViewportResizeRequest);
+        visualViewportResizeRequest=requestAnimationFrame(()=>{lockVisualViewport();applyVisualZoom();});
+      });
       $('#visualHighlightToggle').addEventListener('click',()=>{ state.visualHighlights=!state.visualHighlights; const section=$('#visualCompare'); section.dataset.highlights=state.visualHighlights?'on':'off'; const button=$('#visualHighlightToggle'); button.setAttribute('aria-pressed',String(state.visualHighlights)); $('#visualHighlightToggleLabel').textContent=t('showVisualHighlights'); });
       document.querySelectorAll('[data-overlay-top]').forEach(button=>button.addEventListener('click',()=>{ state.visualOverlayTop=button.dataset.overlayTop; if(state.matching) renderVisualCompare(state.matching); }));
       $('#visualFirstButton').addEventListener('click',()=>navigateVisualBoundary('first'));
