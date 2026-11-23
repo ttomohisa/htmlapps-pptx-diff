@@ -556,11 +556,11 @@
     .visual-change-position { min-width:54px; text-align:center; color:var(--muted); font-variant-numeric:tabular-nums; font-size:12px; font-weight:760; }
     .visual-opacity-control { display:flex; align-items:center; gap:9px; min-width:0; margin:0 0 10px; color:var(--muted); font-size:11px; font-weight:720; }
     .visual-opacity-control[hidden] { display:none; }
-    .visual-opacity-control input { width:min(180px,100%); flex:1 1 140px; min-width:60px; accent-color:var(--accent); cursor:pointer; }
+    .visual-opacity-control input { width:min(180px,100%); flex:1 1 140px; min-width:60px; min-height:44px; accent-color:var(--accent); cursor:pointer; }
     .visual-opacity-control output { min-width:36px; text-align:right; font-variant-numeric:tabular-nums; }
     .visual-stage-viewport[data-draggable="true"] { cursor:grab; }
     .visual-stage-viewport.is-dragging { cursor:grabbing; user-select:none; }
-    .visual-stage-viewport[data-draggable="true"] img { -webkit-user-drag:none; user-select:none; }
+    .visual-stage-viewport[data-draggable="true"] .visual-stage, .visual-stage-viewport[data-draggable="true"] img { -webkit-user-drag:none; user-select:none; }
     .visual-stage-viewport .visual-splitter { cursor:ew-resize; }
     @media (min-width:980px) {
       .review-layout { display:grid; grid-template-columns:minmax(290px,340px) minmax(0,1fr); align-items:start; gap:14px; }
