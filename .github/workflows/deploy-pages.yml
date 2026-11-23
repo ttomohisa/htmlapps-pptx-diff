@@ -11,10 +11,6 @@ permissions:
   pages: write
   id-token: write
 
-concurrency:
-  group: github-pages
-  cancel-in-progress: true
-
 jobs:
   build:
     runs-on: windows-latest
@@ -92,6 +88,9 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    concurrency:
+      group: github-pages
+      cancel-in-progress: true
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -99,3 +98,100 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v5
+
+  release:
+    name: Publish versioned tag and GitHub Release
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    concurrency:
+      group: pptx-diff-release-main
+      cancel-in-progress: false
+    permissions:
+      contents: write
+      pull-requests: read
+      actions: read
+    steps:
+      - name: Check out the exact merged commit
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: true
+
+      - name: Check merge, version, and existing release
+        id: gate
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          VERSION="$(python3 -c 'import json; print(json.load(open("app.config.json", encoding="utf-8"))["version"])')"
+          if [[ ! "$VERSION" =~ ^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]; then
+            echo "::error::app.config.json must contain a stable Semantic Version."
+            exit 1
+          fi
+          TAG="v$VERSION"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+
+          # Only publish when the push is an actual merged PR to main.
+          MERGED_PR="$(gh api "repos/$GITHUB_REPOSITORY/commits/$GITHUB_SHA/pulls" --jq '[.[] | select(.merged_at != null and .base.ref == "main") | .number][0] // ""')"
+          if [[ -z "$MERGED_PR" ]]; then
+            echo "No merged PR belongs to this commit; no release is needed." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Release $TAG already exists; no duplicate will be published." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
+          # Never move or overwrite a tag that was published from another commit.
+          TAG_SHA="$(git ls-remote --tags origin "refs/tags/$TAG^{}" | cut -f1)"
+          if [[ -z "$TAG_SHA" ]]; then
+            TAG_SHA="$(git ls-remote --tags origin "refs/tags/$TAG" | cut -f1)"
+          fi
+          if [[ -n "$TAG_SHA" && "$TAG_SHA" != "$GITHUB_SHA" ]]; then
+            echo "::notice::Existing $TAG points to a different commit ($TAG_SHA). Bump the app version for a new release."
+            echo "Skipped $TAG: the tag belongs to another commit." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
+          echo "publish=true" >> "$GITHUB_OUTPUT"
+          echo "Merged PR #$MERGED_PR will publish $TAG from $GITHUB_SHA." >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Download the previously validated HTML build
+        if: steps.gate.outputs.publish == 'true'
+        uses: actions/download-artifact@v8
+        with:
+          name: standalone-html-${{ github.sha }}
+          path: dist
+
+      - name: Assemble GitHub Release downloads
+        if: steps.gate.outputs.publish == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/package-release.py --output release-assets --commit "$GITHUB_SHA" --run-id "$GITHUB_RUN_ID"
+          (cd release-assets && sha256sum --check SHA256SUMS.txt)
+
+      - name: Create tag and publish release
+        if: steps.gate.outputs.publish == 'true'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.gate.outputs.version }}
+          TAG: ${{ steps.gate.outputs.tag }}
+        run: |
+          set -euo pipefail
+          PREFIX="htmlapps-pptx-diff-v$VERSION"
+          gh release create "$TAG" \
+            "release-assets/$PREFIX.html" \
+            "release-assets/$PREFIX.self-extract.html" \
+            "release-assets/$PREFIX.zip" \
+            "release-assets/SHA256SUMS.txt" \
+            --target "$GITHUB_SHA" \
+            --title "PPTX Diff $TAG" \
+            --notes-file release-assets/release-notes.md
+          echo "Published $TAG from the validated $GITHUB_SHA build." >> "$GITHUB_STEP_SUMMARY"
+
