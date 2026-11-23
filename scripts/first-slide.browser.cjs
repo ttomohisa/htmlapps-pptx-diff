@@ -115,6 +115,22 @@ async function main(){
         // Compare actual local fixture PPTX files, then exercise the result UI.
         await page.locator('#analyzeButton').click();
         await page.locator('#resultSection').waitFor({state:'visible',timeout:30000});
+        if(width===1280){
+          // Before selecting a row or switching modes, the very first render
+          // must already have a measurable frame that contains both slides.
+          const first=await page.evaluate(()=>{
+            const section=document.querySelector('#visualCompare'),vp=document.querySelector('#visualStageViewport');
+            const canvases=[...section.querySelectorAll('#visualCompareStage .slide-canvas')];
+            const bounds=vp.getBoundingClientRect();
+            return {visible:!section.hidden,width:bounds.width,height:bounds.height,
+              clientHeight:vp.clientHeight,scrollHeight:vp.scrollHeight,
+              canvasBounds:canvases.map(el=>({top:el.getBoundingClientRect().top,bottom:el.getBoundingClientRect().bottom})),
+              viewportBottom:bounds.bottom};
+          });
+          assert.ok(first.visible&&first.width>500&&first.height>300,'first preview is laid out after becoming visible: '+JSON.stringify(first));
+          assert.ok(first.canvasBounds.length===2&&first.canvasBounds.every(x=>x.top>=0&&x.bottom<=first.viewportBottom+3),'both original and revised slides fit on first render: '+JSON.stringify(first));
+          assert.ok(first.scrollHeight<=first.clientHeight+3,'no 100% inner vertical scrolling on first render: '+JSON.stringify(first));
+        }
         assert.equal(await page.locator('#matchSummary .match-summary-item').count(),5);
         assert.equal(await page.locator('#semanticSummary .semantic-summary-item').count(),7);
         assert.equal(await page.locator('#changeBreakdownTitle').innerText(),lang==='ja'?'変更内訳':'Change breakdown');
@@ -161,6 +177,9 @@ async function main(){
           assert.ok(listBox&&previewBox&&previewBox.y+previewBox.height<=listBox.y+3,'side-by-side preview occupies the full top row above the list');
           const layoutBox=await page.locator('#reviewLayout').boundingBox();
           assert.ok(previewBox.width>layoutBox.width*.95,'side-by-side preview spans the result width');
+          const thumbWidth=await page.locator('#matchList .match-thumb').first().evaluate(el=>el.getBoundingClientRect().width);
+          assert.ok(thumbWidth>35&&thumbWidth<=108,'slide list thumbnails stay compact under the full-width preview: '+thumbWidth);
+          assert.equal(await page.locator('#matchList .match-row').first().evaluate(el=>getComputedStyle(el).gridTemplateColumns.split(' ').length),3,'desktop slide list uses compact three-column rows');
         }
         await page.waitForFunction(()=>document.querySelectorAll('#visualCompare [data-visual-entry-id].is-active').length>0,{timeout:5000});
         assert.equal(await page.locator('#visualHighlightToggle').getAttribute('aria-pressed'),'true');
@@ -184,6 +203,8 @@ async function main(){
 
         // Navigation stays beside the slide instead of at the distant section heading.
         const stageBox=await page.locator('#visualStageViewport').boundingBox();
+        const overflowAt100=await page.locator('#visualStageViewport').evaluate(el=>({scroll:el.scrollHeight,visible:el.clientHeight}));
+        assert.ok(overflowAt100.scroll<=overflowAt100.visible+3,'slide content is not clipped behind an internal scrollbar at 100%: '+JSON.stringify(overflowAt100));
         const navBox=await page.locator('#visualCompare .visual-nav').boundingBox();
         assert.ok(stageBox&&navBox&&navBox.y>=stageBox.y+stageBox.height-1&&navBox.y<=stageBox.y+stageBox.height+48,'slide navigation is immediately below the viewport');
 
