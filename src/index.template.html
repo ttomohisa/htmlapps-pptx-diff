@@ -1049,11 +1049,11 @@
         </div>
       </details>
       <div class="review-layout" id="reviewLayout" data-pane="list">
-        <div class="review-tabs" role="tablist" aria-label="Comparison views">
+        <div class="review-tabs" role="tablist" data-i18n-aria-label="reviewViewsLabel" aria-label="表示を切り替え">
           <button class="review-tab" type="button" id="reviewListTab" role="tab" aria-controls="matchList" aria-selected="true" tabindex="0" data-i18n="reviewListTab">スライド一覧</button>
           <button class="review-tab" type="button" id="reviewPreviewTab" role="tab" aria-controls="visualCompare" aria-selected="false" tabindex="-1" data-i18n="reviewPreviewTab">プレビュー</button>
         </div>
-      <section class="visual-compare" id="visualCompare" hidden aria-labelledby="visualCompareTitle">
+      <section class="visual-compare" id="visualCompare" hidden role="tabpanel" aria-labelledby="visualCompareTitle">
         <div class="visual-compare-head">
           <div class="visual-head-copy">
             <h3 id="visualCompareTitle" data-i18n="visualCompareTitle">見た目で比較</h3>
@@ -1111,7 +1111,7 @@
         <p class="visual-note" id="visualCompareNote" data-i18n="visualCompareNote">Semantic Diffで見つかった要素を強調表示します。</p>
         <div class="visual-diff-panel" id="visualCompareDiff"></div>
       </section>
-      <div class="match-list" id="matchList"></div>
+      <div class="match-list" id="matchList" role="tabpanel" aria-labelledby="reviewListTab"></div>
       <p class="diff-empty" id="diffEmpty" hidden data-i18n="filterEmpty">この条件に該当する変更はありません。</p>
       </div>
       <details class="structure-details">
@@ -1317,7 +1317,7 @@
           statusUnchanged:'変更なし', statusChanged:'変更あり', statusAdded:'追加', statusRemoved:'削除', statusMoved:'移動', statusMovedChanged:'移動 + 変更', statusReview:'要確認',
           confidenceHigh:'確度 高', confidenceMedium:'確度 中', confidenceLow:'要確認',
           reasonContent:'内容が一致', reasonIdentity:'スライドの識別情報から対応', reasonSimilarity:'内容の類似度 {score}%', reasonAdded:'変更後にのみ存在', reasonRemoved:'元のファイルにのみ存在',
-          reviewBanner:'対応付けまたは詳細比較を確認した方がよいスライドが {count} 件あります。', reasonUnsupported:'詳細比較できない変更を検出', visualCompareTitle:'見た目で比較', visualNavigation:'スライド移動', visualCompareLead:'選択した対応スライドを、横並び・重ね合わせ・分割・点滅で見比べます。', visualFirst:'表示中の最初の比較結果', visualPrev:'前のスライド', visualNext:'次のスライド', visualLast:'表示中の最後の比較結果', overlayTopLabel:'上に表示', visualDiffTitle:'このスライドの差分', visualNoChanges:'このスライドにSemantic Diffはありません。', visualAddedSlide:'変更後に追加されたスライドです。', visualRemovedSlide:'元のファイルから削除されたスライドです。', missingOriginal:'元のファイルにはこのスライドがありません。', missingRevised:'変更後のファイルにはこのスライドがありません。', rendererPrimary:'高精細プレビュー', rendererFallback:'簡易プレビュー', visualSelectionEmpty:'下の一覧からスライドを選択してください。', visualSelectionHint:'一覧から別のスライドを選ぶとプレビューが切り替わります。', reviewListTab:'スライド一覧', reviewPreviewTab:'プレビュー', visualChangesLabel:'変更箇所の移動', visualChangePrev:'前の変更箇所', visualChangeNext:'次の変更箇所', visualOpacityLabel:'上のスライドの濃さ', visualZoomLabel:'拡大・縮小', visualZoomOut:'縮小', visualZoomIn:'拡大', visualZoomReset:'100%に戻す', visualModeLabel:'表示モード', visualModeSide:'横並び', visualModeOverlay:'重ね合わせ', visualModeSplit:'分割', visualModeBlink:'点滅', splitPosition:'分割位置', visualCompareNote:'Semantic Diffで見つかった要素を強調表示します。', showVisualHighlights:'差分を表示', hideVisualHighlights:'差分を隠す', visualMarkerJoin:'・', visualMarkerCaption:'差分', visualMarkerFocus:'該当箇所を強調', inspectInPreview:'見た目で確認', inspectNoPosition:'この変更にはスライド上の位置情報がありません。', previewUnavailable:'表示できるスライドがありません。', previewModeOverlayNote:'元のスライドを下、変更後のスライドを上に重ねて表示します。', previewModeBlinkNote:'上のスライドが一定間隔で表示・非表示になります。', previewModeSplitNote:'スライド上のハンドルをドラッグして左右の境界位置を調整できます。', previewModeSideNote:'元と変更後を横に並べて表示します。', slideLabelWithTitle:'{index}. {title}', noPreviewTitle:'無題スライド', scopeTitle:'できること', scopeLead:'内容の変更と見た目の違いを確認し、必要なら比較結果を保存できます。', scope1Title:'内容の変更', scope1Body:'文章・数値・オブジェクト・画像・発表者ノートの変更をスライドごとに確認できます。', scope2Title:'見た目で比較', scope2Body:'配置・書式の差分を確認し、横並び・重ね合わせ・分割・点滅でスライドを見比べられます。', scope3Title:'比較結果を保存', scope3Body:'比較結果を高精細プレビュー付きの自己展開HTMLとして保存できます。レポートも実行時通信なしで開けます。',
+          reviewBanner:'対応付けまたは詳細比較を確認した方がよいスライドが {count} 件あります。', reasonUnsupported:'詳細比較できない変更を検出', visualCompareTitle:'見た目で比較', visualNavigation:'スライド移動', visualCompareLead:'選択した対応スライドを、横並び・重ね合わせ・分割・点滅で見比べます。', visualFirst:'表示中の最初の比較結果', visualPrev:'前のスライド', visualNext:'次のスライド', visualLast:'表示中の最後の比較結果', overlayTopLabel:'上に表示', visualDiffTitle:'このスライドの差分', visualNoChanges:'このスライドにSemantic Diffはありません。', visualAddedSlide:'変更後に追加されたスライドです。', visualRemovedSlide:'元のファイルから削除されたスライドです。', missingOriginal:'元のファイルにはこのスライドがありません。', missingRevised:'変更後のファイルにはこのスライドがありません。', rendererPrimary:'高精細プレビュー', rendererFallback:'簡易プレビュー', visualSelectionEmpty:'下の一覧からスライドを選択してください。', visualSelectionHint:'一覧から別のスライドを選ぶとプレビューが切り替わります。', reviewViewsLabel:'表示を切り替え', reviewListTab:'スライド一覧', reviewPreviewTab:'プレビュー', visualChangesLabel:'変更箇所の移動', visualChangePrev:'前の変更箇所', visualChangeNext:'次の変更箇所', visualOpacityLabel:'上のスライドの濃さ', visualZoomLabel:'拡大・縮小', visualZoomOut:'縮小', visualZoomIn:'拡大', visualZoomReset:'100%に戻す', visualModeLabel:'表示モード', visualModeSide:'横並び', visualModeOverlay:'重ね合わせ', visualModeSplit:'分割', visualModeBlink:'点滅', splitPosition:'分割位置', visualCompareNote:'Semantic Diffで見つかった要素を強調表示します。', showVisualHighlights:'差分を表示', hideVisualHighlights:'差分を隠す', visualMarkerJoin:'・', visualMarkerCaption:'差分', visualMarkerFocus:'該当箇所を強調', inspectInPreview:'見た目で確認', inspectNoPosition:'この変更にはスライド上の位置情報がありません。', previewUnavailable:'表示できるスライドがありません。', previewModeOverlayNote:'元のスライドを下、変更後のスライドを上に重ねて表示します。', previewModeBlinkNote:'上のスライドが一定間隔で表示・非表示になります。', previewModeSplitNote:'スライド上のハンドルをドラッグして左右の境界位置を調整できます。', previewModeSideNote:'元と変更後を横に並べて表示します。', slideLabelWithTitle:'{index}. {title}', noPreviewTitle:'無題スライド', scopeTitle:'できること', scopeLead:'内容の変更と見た目の違いを確認し、必要なら比較結果を保存できます。', scope1Title:'内容の変更', scope1Body:'文章・数値・オブジェクト・画像・発表者ノートの変更をスライドごとに確認できます。', scope2Title:'見た目で比較', scope2Body:'配置・書式の差分を確認し、横並び・重ね合わせ・分割・点滅でスライドを見比べられます。', scope3Title:'比較結果を保存', scope3Body:'比較結果を高精細プレビュー付きの自己展開HTMLとして保存できます。レポートも実行時通信なしで開けます。',
           buildInfo:'ビルド情報', appVersion:'アプリバージョン', builtAt:'生成日時', dependencies:'内包依存数', footer:'PPTXの比較はブラウザー内で完結',
           helpNavigation:'見た目で比較の先頭・末尾ボタンで、現在の絞り込み結果の最初・最後へ移動できます。前・次ボタンでは1件ずつ移動します。',  helpBasicsTitle:'基本操作', helpStep1:'「元のファイル」と「変更後のファイル」に、それぞれ .pptx を選択します。', helpStep2:'「スライドを比較」を押すと、2つの資料をブラウザ内で解析します。', helpStep3:'変更内容を開き、「見た目で確認」を押すと対応するスライドに移動します。', helpStep4:'タイトル・本文の検索や差分の絞り込みができます。「見た目で比較」では表示モードと倍率を変更できます。', helpPrivacyTitle:'プライバシー', helpPrivacyBody:'読み込んだPowerPointファイルはブラウザ内で処理し、外部サーバーへ送信しません。', helpNotesTitle:'表示について', helpNoteVersion:'高精細プレビューは文字色やグラフ表示にも対応しますが、PowerPoint完全互換ではありません。マスター・一部の高度なグラフ・SmartArt等は表示差が出る場合があります。', helpNoteMatch:'内容が大きく書き換えられたスライドや似たスライドが複数ある場合は、対応付けを「要確認」と表示することがあります。', helpNoteFormat:'対応形式は .pptx です。パスワード保護ファイル、ZIP64、特殊な圧縮方式には対応していません。', helpNoteBrowser:'圧縮されたPPTXの展開にはブラウザのDecompressionStream機能を使用します。非対応ブラウザでは解析できません。', helpOffline:'処理中もファイルは端末外へ送信されません。',
           slideBackground:'スライドの背景', slideDimensions:'スライドサイズ', pptxTooLarge:'このPPTXは大きすぎて安全に読み込めません（ファイル100MB、展開後合計256MBが上限です）。',
@@ -1336,7 +1336,7 @@
           statusUnchanged:'Unchanged', statusChanged:'Changed', statusAdded:'Added', statusRemoved:'Removed', statusMoved:'Moved', statusMovedChanged:'Moved + changed', statusReview:'Review',
           confidenceHigh:'High confidence', confidenceMedium:'Medium confidence', confidenceLow:'Review match',
           reasonContent:'Content matches', reasonIdentity:'Matched by slide identity', reasonSimilarity:'Content similarity {score}%', reasonAdded:'Only in revised file', reasonRemoved:'Only in original file',
-          reviewBanner:'There are {count} slides with a match or detailed change worth reviewing.', reasonUnsupported:'Unsupported detailed change detected', visualCompareTitle:'Visual compare', visualNavigation:'Slide navigation', visualCompareLead:'Inspect the selected matched slides in side-by-side, overlay, split, or blink mode.', visualFirst:'First visible result', visualPrev:'Previous slide', visualNext:'Next slide', visualLast:'Last visible result', overlayTopLabel:'Show on top', visualDiffTitle:'Changes on this slide', visualNoChanges:'No Semantic Diff was found on this slide.', visualAddedSlide:'This slide was added in the revised file.', visualRemovedSlide:'This slide was removed from the original file.', missingOriginal:'This slide does not exist in the original file.', missingRevised:'This slide does not exist in the revised file.', rendererPrimary:'High-fidelity preview', rendererFallback:'Basic preview', visualSelectionEmpty:'Select a slide from the list below.', visualSelectionHint:'Choose another row below to switch the preview.', reviewListTab:'Slide list', reviewPreviewTab:'Preview', visualChangesLabel:'Navigate changes', visualChangePrev:'Previous change', visualChangeNext:'Next change', visualOpacityLabel:'Top slide opacity', visualZoomLabel:'Zoom', visualZoomOut:'Zoom out', visualZoomIn:'Zoom in', visualZoomReset:'Reset to 100%', visualModeLabel:'View mode', visualModeSide:'Side by side', visualModeOverlay:'Overlay', visualModeSplit:'Split', visualModeBlink:'Blink', splitPosition:'Split position', visualCompareNote:'Elements detected by Semantic Diff are highlighted.', showVisualHighlights:'Show differences', hideVisualHighlights:'Hide differences', visualMarkerJoin:' · ', visualMarkerCaption:'Changes', visualMarkerFocus:'Highlight this change', inspectInPreview:'Show in preview', inspectNoPosition:'This change has no position on the slide.', previewUnavailable:'There is no slide to preview.', previewModeOverlayNote:'The original slide is shown underneath and the revised slide is layered on top.', previewModeBlinkNote:'The top slide appears and disappears at a steady interval.', previewModeSplitNote:'Drag the handle directly on the slide to adjust the left/right boundary.', previewModeSideNote:'The original and revised slides are shown next to each other.', slideLabelWithTitle:'{index}. {title}', noPreviewTitle:'Untitled slide', scopeTitle:'What you can compare', scopeLead:'Review content changes and visual differences, then save the comparison when needed.', scope1Title:'Content changes', scope1Body:'Review text, numbers, objects, images, and speaker-note changes slide by slide.', scope2Title:'Visual compare', scope2Body:'Inspect layout and formatting differences with side-by-side, overlay, split, and blink views.', scope3Title:'Save the comparison', scope3Body:'Save a self-extracting HTML report with high-fidelity previews. The report opens without runtime network access.',
+          reviewBanner:'There are {count} slides with a match or detailed change worth reviewing.', reasonUnsupported:'Unsupported detailed change detected', visualCompareTitle:'Visual compare', visualNavigation:'Slide navigation', visualCompareLead:'Inspect the selected matched slides in side-by-side, overlay, split, or blink mode.', visualFirst:'First visible result', visualPrev:'Previous slide', visualNext:'Next slide', visualLast:'Last visible result', overlayTopLabel:'Show on top', visualDiffTitle:'Changes on this slide', visualNoChanges:'No Semantic Diff was found on this slide.', visualAddedSlide:'This slide was added in the revised file.', visualRemovedSlide:'This slide was removed from the original file.', missingOriginal:'This slide does not exist in the original file.', missingRevised:'This slide does not exist in the revised file.', rendererPrimary:'High-fidelity preview', rendererFallback:'Basic preview', visualSelectionEmpty:'Select a slide from the list below.', visualSelectionHint:'Choose another row below to switch the preview.', reviewViewsLabel:'Switch views', reviewListTab:'Slide list', reviewPreviewTab:'Preview', visualChangesLabel:'Navigate changes', visualChangePrev:'Previous change', visualChangeNext:'Next change', visualOpacityLabel:'Top slide opacity', visualZoomLabel:'Zoom', visualZoomOut:'Zoom out', visualZoomIn:'Zoom in', visualZoomReset:'Reset to 100%', visualModeLabel:'View mode', visualModeSide:'Side by side', visualModeOverlay:'Overlay', visualModeSplit:'Split', visualModeBlink:'Blink', splitPosition:'Split position', visualCompareNote:'Elements detected by Semantic Diff are highlighted.', showVisualHighlights:'Show differences', hideVisualHighlights:'Hide differences', visualMarkerJoin:' · ', visualMarkerCaption:'Changes', visualMarkerFocus:'Highlight this change', inspectInPreview:'Show in preview', inspectNoPosition:'This change has no position on the slide.', previewUnavailable:'There is no slide to preview.', previewModeOverlayNote:'The original slide is shown underneath and the revised slide is layered on top.', previewModeBlinkNote:'The top slide appears and disappears at a steady interval.', previewModeSplitNote:'Drag the handle directly on the slide to adjust the left/right boundary.', previewModeSideNote:'The original and revised slides are shown next to each other.', slideLabelWithTitle:'{index}. {title}', noPreviewTitle:'Untitled slide', scopeTitle:'What you can compare', scopeLead:'Review content changes and visual differences, then save the comparison when needed.', scope1Title:'Content changes', scope1Body:'Review text, numbers, objects, images, and speaker-note changes slide by slide.', scope2Title:'Visual compare', scope2Body:'Inspect layout and formatting differences with side-by-side, overlay, split, and blink views.', scope3Title:'Save the comparison', scope3Body:'Save a self-extracting HTML report with high-fidelity previews. The report opens without runtime network access.',
           buildInfo:'Build information', appVersion:'App version', builtAt:'Built at', dependencies:'Embedded dependencies', footer:'PPTX comparison stays in the browser',
           helpNavigation:'Use First / Last in Visual compare to jump to the first / last result in the current filters. Previous / Next move one result at a time.',  helpBasicsTitle:'Basics', helpStep1:'Choose a .pptx for Original and another for Revised.', helpStep2:'Press Compare slides to analyze both presentations locally in your browser.', helpStep3:'Open a change detail and choose Show in preview to jump to that slide.', helpStep4:'Search titles or slide text, filter differences, and change the visual mode or zoom level.', helpPrivacyTitle:'Privacy', helpPrivacyBody:'PowerPoint files are processed in your browser and are not sent to an external server.', helpNotesTitle:'About rendering', helpNoteVersion:'High-fidelity previews support text colors and chart rendering, but they are not fully PowerPoint-compatible. Masters, some advanced charts, SmartArt, and similar structures may still render differently.', helpNoteMatch:'Slides that were heavily rewritten or have several near-duplicates may be marked Review.', helpNoteFormat:'Supported input is .pptx. Password-protected files, ZIP64, and unusual compression methods are not supported.', helpNoteBrowser:'Compressed PPTX entries use the browser DecompressionStream feature. Browsers without it cannot analyze typical compressed PPTX files.', helpOffline:'Files remain on this device during processing.',
           slideBackground:'Slide background', slideDimensions:'Slide dimensions', pptxTooLarge:'This PPTX exceeds the safety limits (100 MB input or 256 MB total expanded data).',
@@ -3087,6 +3087,7 @@
         const newRect=stage.getBoundingClientRect();
         viewport.scrollLeft=Math.max(0,previousCenterX*newRect.width/Math.max(1,oldRect.width)-viewport.clientWidth/2);
         viewport.scrollTop=Math.max(0,previousCenterY*newRect.height/Math.max(1,oldRect.height)-viewport.clientHeight/2);
+        viewport.dataset.draggable=String(zoom>100&&(stage.scrollWidth>viewport.clientWidth+1||stage.scrollHeight>viewport.clientHeight+1));
         $('#visualZoomValue').textContent=zoom+'%';
         $('#visualZoomOut').disabled=zoom<=VISUAL_ZOOMS[0];
         $('#visualZoomIn').disabled=zoom>=VISUAL_ZOOMS[VISUAL_ZOOMS.length-1];
@@ -3095,6 +3096,34 @@
             const mount=frame.parentElement,element=frame.firstElementChild;
             if(mount&&element)fitRenderFrame(mount,frame,element);
           });
+        });
+      }
+      function bindVisualPan() {
+        const viewport=$('#visualStageViewport');
+        let drag=null;
+        viewport.addEventListener('pointerdown',event=>{
+          if(state.visualZoom<=100||event.button!==0||event.pointerType==='touch'||viewport.dataset.draggable!=='true')return;
+          if(event.target.closest('button,input,select,textarea,a,[role="slider"],.visual-splitter'))return;
+          drag={id:event.pointerId,x:event.clientX,y:event.clientY,left:viewport.scrollLeft,top:viewport.scrollTop};
+          viewport.setPointerCapture(event.pointerId);
+          event.preventDefault();
+        });
+        viewport.addEventListener('pointermove',event=>{
+          if(!drag||drag.id!==event.pointerId)return;
+          viewport.scrollLeft=drag.left+drag.x-event.clientX;
+          viewport.scrollTop=drag.top+drag.y-event.clientY;
+          viewport.classList.add('is-dragging');
+        });
+        const finish=event=>{
+          if(!drag||drag.id!==event.pointerId)return;
+          if(viewport.hasPointerCapture(event.pointerId))viewport.releasePointerCapture(event.pointerId);
+          drag=null;
+          viewport.classList.remove('is-dragging');
+        };
+        viewport.addEventListener('pointerup',finish);
+        viewport.addEventListener('pointercancel',finish);
+        viewport.addEventListener('lostpointercapture',event=>{
+          if(drag?.id===event.pointerId){drag=null;viewport.classList.remove('is-dragging');}
         });
       }
       function setVisualZoom(step) {
@@ -3369,6 +3398,7 @@
         searchDelay=setTimeout(()=>{if(state.matching)renderMatching(state.matching);},100);
       });
       document.querySelectorAll('[data-visual-mode]').forEach(button=>button.addEventListener('click',()=>{ state.visualMode=button.dataset.visualMode; if(state.matching) renderVisualCompare(state.matching); }));
+      bindVisualPan();
       $('#visualZoomOut').addEventListener('click',()=>moveVisualZoom(-1));
       $('#visualZoomIn').addEventListener('click',()=>moveVisualZoom(1));
       $('#visualZoomValue').addEventListener('click',()=>{state.visualZoom=100;applyVisualZoom();});
