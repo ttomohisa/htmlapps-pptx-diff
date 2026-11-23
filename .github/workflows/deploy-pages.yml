@@ -204,6 +204,7 @@ jobs:
               "release-assets/$PREFIX.zip" \
               "release-assets/SHA256SUMS.txt" --clobber
             gh release edit "$TAG" \
+              --target "$GITHUB_SHA" \
               --title "PPTX Diff $TAG" \
               --notes-file release-assets/release-notes.md \
               --draft=false
