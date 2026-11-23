@@ -21,7 +21,8 @@ function fn(name) {
   return first.trimEnd().endsWith('}') ? first : source.slice(start, source.indexOf('\n      }', end) + 8);
 }
 const translationCode = source.slice(source.indexOf('      const translations ='), source.indexOf('      // Template repository contract marker:'));
-const navMarkup = source.slice(source.indexOf('<div class="visual-nav"'), source.indexOf('<div class="visual-selection"'));
+const navStart = source.indexOf('<div class="visual-nav"');
+const navMarkup = source.slice(navStart, source.indexOf('<div class="visual-zoom-toolbar"',navStart));
 const buttonIds = ['visualFirstButton', 'visualPrevButton', 'visualNextButton', 'visualLastButton'];
 function row(pairId, overrides = {}) {
   const slide = index => ({index, title:`Fictitious slide ${index}`});
@@ -165,13 +166,18 @@ test('native boundary buttons are ordered first/previous/position/next/last and 
     assert.equal(h.get('#visualLastButton').title,last);assert.equal(h.get('#visualLastButton').getAttribute('aria-label'),last);
   }
 });
-test('responsive navigation owns a separate narrow-screen row with nonshrinking 44px buttons',()=>{
+test('navigation is directly below the preview and has large phone controls',()=>{
   const css=source.slice(source.indexOf('<style>'),source.indexOf('</style>'));
   const mobile=css.slice(css.indexOf('@media (max-width:760px)',css.indexOf('.visual-nav')));
-  assert.match(mobile,/\.visual-nav\s*\{[^}]*grid-column:\s*1\s*\/\s*-1/);
-  assert.match(mobile,/\.visual-compare-head\s*\{[^}]*grid-template-columns:\s*minmax\(0,1fr\)\s*;/);
+  assert.match(mobile,/\.visual-stage-controls\s*\{[^}]*grid-template-columns:\s*minmax\(0,1fr\)/);
+  assert.match(mobile,/\.visual-nav\s*\{[^}]*grid-column:\s*1\s*;/);
   assert.match(mobile,/\.visual-nav \.icon-button\s*\{[^}]*width:44px;[^}]*height:44px;/);
   assert.match(css,/\.visual-nav \.icon-button\s*\{[^}]*flex:\s*0 0 auto;/);
+  const viewport=source.indexOf('id="visualStageViewport"');
+  const controls=source.indexOf('class="visual-stage-controls"',viewport);
+  const nav=source.indexOf('class="visual-nav"',controls);
+  const note=source.indexOf('id="visualCompareNote"',controls);
+  assert.ok(viewport>=0 && viewport<controls && controls<nav && nav<note,'navigation follows the actual slide');
 });
 test('report preserves comparison ownership and includes every semantic summary category',()=>{
   const start=source.indexOf('      function captureReportContext()');
