@@ -140,17 +140,28 @@ async function main(){
         await page.waitForFunction(()=>document.querySelectorAll('#visualCompare [data-visual-entry-id].is-active').length>0,{timeout:5000});
         assert.equal(await page.locator('#visualHighlightToggle').getAttribute('aria-pressed'),'true');
 
+        // Navigation stays beside the slide instead of at the distant section heading.
+        const stageBox=await page.locator('#visualStageViewport').boundingBox();
+        const navBox=await page.locator('#visualCompare .visual-nav').boundingBox();
+        assert.ok(stageBox&&navBox&&navBox.y>=stageBox.y+stageBox.height-1&&navBox.y<=stageBox.y+stageBox.height+48,'slide navigation is immediately below the viewport');
+
+        // Zoom is a single segmented control: minus / clickable percentage / plus.
         const zoomValue=page.locator('#visualZoomValue');
+        assert.equal(await page.locator('.visual-zoom-actions > button').count(),3);
+        assert.equal(await zoomValue.getAttribute('aria-label'),lang==='ja'?'100%に戻す':'Reset to 100%');
         assert.equal(await zoomValue.innerText(),'100%');
+        assert.equal(await page.locator('.visual-zoom-actions').evaluate(el=>getComputedStyle(el).gap),'0px');
         await page.locator('#visualZoomIn').click();
         assert.equal(await zoomValue.innerText(),'125%');
         assert.equal(await page.locator('#visualCompareStage').evaluate(el=>el.style.width),'125%');
+        await zoomValue.click();
+        assert.equal(await zoomValue.innerText(),'100%');
+        assert.equal(await page.locator('#visualCompareStage').evaluate(el=>el.style.width),'100%');
         await page.locator('#visualZoomOut').click();
-        assert.equal(await zoomValue.innerText(),'100%');
+        assert.equal(await zoomValue.innerText(),'75%');
         await page.locator('#visualZoomIn').click();
-        await page.locator('#visualZoomReset').click();
         assert.equal(await zoomValue.innerText(),'100%');
-        assert.equal(await page.locator('#visualZoomReset').isDisabled(),true);
+        assert.equal(await page.locator('#visualZoomReset').count(),0);
 
         const modeControls=page.locator('[data-visual-mode]');
         assert.equal(await modeControls.count(),4);
