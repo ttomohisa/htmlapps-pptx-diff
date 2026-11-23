@@ -165,6 +165,7 @@ async function main(){
         await page.waitForFunction(()=>document.querySelectorAll('#visualCompare [data-visual-entry-id].is-active').length>0,{timeout:5000});
         assert.equal(await page.locator('#visualHighlightToggle').getAttribute('aria-pressed'),'true');
         assert.equal(await page.locator('#visualCompareNote').count(),0,'renderer detail is not exposed as a preview note');
+        const originalSideScroll=await page.evaluate(()=>window.scrollY);
         const originalSidePager=await page.locator('#visualNavPosition').boundingBox();
         const originalSideViewport=await page.locator('#visualStageViewport').boundingBox();
         const originalSideLabelCount=await page.locator('#visualMarkerHost .visual-marker-button').count();
@@ -174,7 +175,10 @@ async function main(){
         assert.equal(await page.locator('#visualChangeControls').isVisible(),false,'unchanged slide has no change navigation');
         const unchangedPager=await page.locator('#visualNavPosition').boundingBox();
         const unchangedViewport=await page.locator('#visualStageViewport').boundingBox();
-        assert.ok(Math.abs(unchangedPager.y-originalSidePager.y)<=1,'pager stays fixed when the next slide has no changes');
+        const unchangedScroll=await page.evaluate(()=>window.scrollY);
+        const pagerDiagnostic=JSON.stringify({originalSidePager,unchangedPager,originalSideViewport,unchangedViewport,originalSideScroll,unchangedScroll});
+        assert.ok(Math.abs(unchangedPager.y+unchangedScroll-originalSidePager.y-originalSideScroll)<=1,'pager stays at same document position after unchanged slide: '+pagerDiagnostic);
+        assert.ok(Math.abs((unchangedPager.y-unchangedViewport.y)-(originalSidePager.y-originalSideViewport.y))<=1,'pager stays directly under fixed viewport: '+pagerDiagnostic);
         assert.ok(Math.abs(unchangedViewport.height-originalSideViewport.height)<=1,'preview frame height stays fixed across slides');
         await page.locator('#visualPrevButton').click();
 
