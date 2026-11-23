@@ -173,6 +173,7 @@
       padding: 0 2px 14px;
     }
     .page-intro p { margin: 0; max-width: 760px; color: var(--muted); font-size: 13px; line-height:1.6; }
+    .page-intro[hidden] { display:none; }
     .local-badge {
       display: inline-flex;
       align-items: center;
@@ -480,7 +481,10 @@
     .file-thumbnail-message { padding:7px; color:var(--muted); font-size:10px; line-height:1.5; text-align:center; overflow-wrap:anywhere; }
     .file-name { margin:0; font-weight:780; overflow-wrap:anywhere; }
     .file-meta { margin:4px 0 0; color:var(--muted); font-size:12px; }
-    .file-actions { display:flex; flex-wrap:wrap; gap:8px; margin-top:13px; }
+    .file-actions { display:flex; flex-wrap:wrap; gap:8px; margin-top:7px; }
+    .file-replace-link { display:inline-flex; align-items:center; justify-content:flex-start; min-height:36px; padding:4px 0; border:0; border-radius:0; background:transparent; color:var(--accent); font:inherit; font-size:12px; font-weight:750; text-decoration:underline; text-underline-offset:3px; text-decoration-thickness:1px; cursor:pointer; }
+    .file-replace-link:hover { color:var(--accent-hover); text-decoration-thickness:2px; }
+    .file-replace-link:focus-visible { outline:2px solid var(--focus); outline-offset:3px; }
     .swap-column { display:grid; place-items:center; }
     .swap-button { width:42px; height:42px; padding:0; border-radius:12px; }
     .swap-button svg { width:19px; height:19px; }
@@ -550,7 +554,7 @@
     .match-list { border:1px solid var(--line); border-radius:14px; overflow:hidden; background:var(--surface); box-shadow:var(--shadow-sm); }
     .review-layout { min-width:0; scroll-margin-top:76px; }
     .review-tabs { display:none; }
-    .visual-change-controls { display:flex; align-items:center; justify-content:center; gap:8px; margin:2px 0 10px; }
+    .visual-change-controls { display:flex; align-items:center; justify-content:center; gap:8px; margin:4px 0 8px; }
     .visual-change-controls[hidden] { display:none; }
     .visual-change-controls .icon-button { width:40px; height:40px; flex:0 0 auto; }
     .visual-change-position { min-width:54px; text-align:center; color:var(--muted); font-variant-numeric:tabular-nums; font-size:12px; font-weight:760; }
@@ -573,6 +577,12 @@
       .review-layout .match-row > .match-relation { grid-column:1 / -1; grid-row:2; justify-items:start; text-align:left; }
       .review-layout .match-row > .semantic-details { grid-column:1 / -1; margin-left:0; }
       .review-layout > .visual-compare { position:sticky; top:74px; max-height:calc(100dvh - 86px); overflow-y:auto; overscroll-behavior:contain; }
+      /* Side-by-side needs two readable slides: prioritize canvas width over the sidebar. */
+      .review-layout[data-visual-mode="side"] { grid-template-columns:minmax(0,1fr); }
+      .review-layout[data-visual-mode="side"] > .visual-compare { grid-column:1; grid-row:1; position:static; max-height:none; overflow:visible; }
+      .review-layout[data-visual-mode="side"] > .match-list,
+      .review-layout[data-visual-mode="side"] > .diff-empty { grid-column:1; grid-row:2; }
+      .review-layout[data-visual-mode="side"] > .match-list { max-height:380px; }
     }
     @media (max-width:760px) {
       .review-tabs { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:4px; margin:0 0 10px; padding:4px; background:var(--surface-muted); border:1px solid var(--line); border-radius:11px; }
@@ -671,7 +681,7 @@
     .visual-compare-head { display:grid; grid-template-columns:minmax(0,1fr); align-items:start; gap:8px; margin-bottom:10px; }
     .visual-compare-head h3 { margin:0; font-size:15px; }
     .visual-compare-head p { margin:4px 0 0; color:var(--muted); font-size:12px; }
-    .visual-selection { grid-column:1 / -1; min-width:0; color:var(--muted); font-size:11px; font-weight:720; overflow-wrap:anywhere; }
+    .visual-selection { grid-column:1 / -1; min-width:0; color:var(--muted); font-size:11px; font-weight:720; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
     .visual-toolbar { display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; margin-bottom:10px; }
     .visual-modes { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); width:min(100%,460px); min-width:0; overflow:hidden; border:1px solid var(--line-strong); border-radius:11px; background:var(--surface); }
     .visual-mode { min-width:0; min-height:44px; display:inline-flex; align-items:center; justify-content:center; gap:7px; padding:9px 11px; border:0; border-right:1px solid var(--line); border-radius:0; background:transparent; color:var(--text); font:inherit; font-size:11px; font-weight:760; white-space:nowrap; cursor:pointer; }
@@ -757,11 +767,13 @@
     .visual-status-card svg { width:17px; height:17px; flex:0 0 auto; margin-top:1px; }
     .visual-missing-pane { min-height:0; color:var(--muted); background:repeating-linear-gradient(135deg,#f7f7f4,#f7f7f4 10px,#efefeb 10px,#efefeb 20px); }
     .visual-missing-pane.layered { display:grid; place-items:center; }
+    .visual-placeholder-canvas { display:grid; place-items:center; background:repeating-linear-gradient(135deg,#f7f7f4,#f7f7f4 10px,#efefeb 10px,#efefeb 20px); }
+    .visual-placeholder-canvas .visual-missing-message { min-height:0; }
     .visual-missing-message { min-height:140px; display:grid; place-items:center; max-width:260px; margin:0 auto; padding:18px; text-align:center; font-size:11px; font-weight:720; }
     .visual-missing-pane.layered .visual-missing-message { min-height:0; }
     .hf-render-mount { position:relative; width:100%; height:100%; overflow:hidden; background:#fff; }
     .pptx-render-frame { position:absolute; left:50%; top:50%; transform-origin:center center; }
-    .visual-marker-bar { display:flex; align-items:center; gap:6px; min-width:0; margin:0 0 8px; padding:7px 8px; border:1px solid var(--line); border-radius:10px; background:var(--surface-muted); overflow-x:auto; scrollbar-width:thin; }
+    .visual-marker-bar { display:flex; align-items:center; gap:6px; min-width:0; margin:4px 0 8px; padding:7px 8px; border:1px solid var(--line); border-radius:10px; background:var(--surface-muted); overflow-x:auto; scrollbar-width:thin; }
     .visual-marker-bar[hidden] { display:none; }
     .visual-marker-caption { flex:0 0 auto; color:var(--muted); font-size:9px; font-weight:780; }
     .visual-marker-button { flex:0 0 auto; min-height:27px; padding:4px 8px; border:1px solid color-mix(in srgb,var(--accent) 22%,var(--line)); border-radius:999px; background:var(--surface); color:var(--accent); font:inherit; font-size:9px; font-weight:800; cursor:pointer; white-space:nowrap; }
@@ -851,7 +863,7 @@
       .file-panel-head { padding:12px 12px 8px; }
       .drop-zone { margin:0 11px 11px; min-height:150px; padding:15px; }
       .selected-file { grid-template-columns:minmax(0,112px) minmax(0,1fr); gap:10px; }
-      .file-actions .button { min-height:44px; }
+      .file-replace-link { min-height:44px; }
       .match-summary { grid-template-columns:repeat(5,minmax(0,1fr)); }
       .match-summary-item { min-height:66px; padding:10px 2px; }
       .match-summary-value { font-size:20px; }
@@ -951,7 +963,7 @@
                 <div class="file-details">
                   <p class="file-name" id="originalName"></p>
                   <p class="file-meta" id="originalMeta"></p>
-                  <div class="file-actions"><button class="button" type="button" data-pick="original" data-i18n="replaceFile">ファイルを変更</button></div>
+                  <div class="file-actions"><button class="file-replace-link" type="button" data-pick="original" data-i18n="replaceFile">ファイルを変更</button></div>
                 </div>
               </div>
             </div>
@@ -982,7 +994,7 @@
                 <div class="file-details">
                   <p class="file-name" id="revisedName"></p>
                   <p class="file-meta" id="revisedMeta"></p>
-                  <div class="file-actions"><button class="button" type="button" data-pick="revised" data-i18n="replaceFile">ファイルを変更</button></div>
+                  <div class="file-actions"><button class="file-replace-link" type="button" data-pick="revised" data-i18n="replaceFile">ファイルを変更</button></div>
                 </div>
               </div>
             </div>
@@ -1085,11 +1097,6 @@
           <input id="visualOpacity" type="range" min="0" max="100" step="5" value="50" aria-label="上のスライドの濃さ" data-i18n-aria-label="visualOpacityLabel">
           <output id="visualOpacityValue" for="visualOpacity">50%</output>
         </div>
-        <div class="visual-change-controls" id="visualChangeControls" role="group" data-i18n-aria-label="visualChangesLabel" aria-label="変更箇所の移動" hidden>
-          <button class="icon-button" id="visualChangePrev" type="button" data-i18n-title="visualChangePrev" data-i18n-aria-label="visualChangePrev" aria-label="前の変更箇所" title="前の変更箇所"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg></button>
-          <span class="visual-change-position" id="visualChangePosition" aria-live="polite">—</span>
-          <button class="icon-button" id="visualChangeNext" type="button" data-i18n-title="visualChangeNext" data-i18n-aria-label="visualChangeNext" aria-label="次の変更箇所" title="次の変更箇所"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button>
-        </div>
         <div class="visual-stage-viewport" id="visualStageViewport">
           <div class="visual-stage" id="visualCompareStage"></div>
         </div>
@@ -1109,7 +1116,12 @@
             </div>
           </div>
         </div>
-        <p class="visual-note" id="visualCompareNote" data-i18n="visualCompareNote">Semantic Diffで見つかった要素を強調表示します。</p>
+        <div class="visual-change-controls" id="visualChangeControls" role="group" data-i18n-aria-label="visualChangesLabel" aria-label="変更箇所の移動" hidden>
+          <button class="icon-button" id="visualChangePrev" type="button" data-i18n-title="visualChangePrev" data-i18n-aria-label="visualChangePrev" aria-label="前の変更箇所" title="前の変更箇所"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg></button>
+          <span class="visual-change-position" id="visualChangePosition" aria-live="polite">—</span>
+          <button class="icon-button" id="visualChangeNext" type="button" data-i18n-title="visualChangeNext" data-i18n-aria-label="visualChangeNext" aria-label="次の変更箇所" title="次の変更箇所"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button>
+        </div>
+        <div id="visualMarkerHost"></div>
         <div class="visual-diff-panel" id="visualCompareDiff"></div>
       </section>
       <div class="match-list" id="matchList" role="tabpanel" aria-labelledby="reviewListTab"></div>
@@ -1435,6 +1447,7 @@
       function updateReadyState() {
         updateReportState();
         const ready=Boolean(state.slots.original.file && state.slots.revised.file);
+        document.querySelector('.page-intro').hidden=Boolean(state.slots.original.file || state.slots.revised.file);
         $('#analyzeButton').disabled=!ready || state.phase==='processing';
         $('#swapButton').disabled=state.phase==='processing' || (!state.slots.original.file && !state.slots.revised.file);
         if (state.phase==='processing' || state.phase==='error' || state.phase==='result') return;
@@ -3037,13 +3050,21 @@
           if(mediaUrlCache!==state.rendererMediaCaches[side]) releaseRendererCache(mediaUrlCache);
         }
       }
-      function createMissingPane(label,message,layered=false) {
+      function createMissingPane(label,message,layered=false,referenceSlide=null) {
         const pane=document.createElement('section'); pane.className='visual-pane visual-missing-pane'+(layered?' layered':'');
         if(!layered){ const head=document.createElement('div'); head.className='visual-pane-header'; const title=document.createElement('p'); title.className='visual-pane-title'; title.textContent=label; head.append(title); pane.append(head); }
-        const msg=document.createElement('div'); msg.className='visual-missing-message'; msg.textContent=message; pane.append(msg); return pane;
+        const msg=document.createElement('div'); msg.className='visual-missing-message'; msg.textContent=message;
+        if(layered) pane.append(msg);
+        else {
+          const wrap=document.createElement('div'); wrap.className='visual-pane-canvas-wrap';
+          const placeholder=document.createElement('div'); placeholder.className='slide-canvas visual-placeholder-canvas';
+          placeholder.style.aspectRatio=`${referenceSlide?.slideWidth||12192000} / ${referenceSlide?.slideHeight||6858000}`;
+          placeholder.append(msg); wrap.append(placeholder); pane.append(wrap);
+        }
+        return pane;
       }
-      function createVisualPane(slide,label,highlightSet,side,layered=false) {
-        if(!slide) return createMissingPane(label,t(side==='original'?'missingOriginal':'missingRevised'),layered);
+      function createVisualPane(slide,label,highlightSet,side,layered=false,referenceSlide=null) {
+        if(!slide) return createMissingPane(label,t(side==='original'?'missingOriginal':'missingRevised'),layered,referenceSlide);
         const pane=createPreviewPane(slide,label,highlightSet,layered); const canvas=pane.querySelector('.slide-canvas'); if(canvas){ canvas.dataset.renderSide=side; canvas.dataset.slideIndex=String(slide.index); } return pane;
       }
       function hydrateVisualPanes(row,highlights,generation) {
@@ -3075,8 +3096,14 @@
         stage.style.width='100%';
         viewport.style.height='auto';
         const borders=parseFloat(getComputedStyle(viewport).borderTopWidth)||0;
-        const height=stage.getBoundingClientRect().height+2*borders;
-        viewport.style.height=`${Math.ceil(height)}px`;
+        const width=viewport.clientWidth;
+        // Do not size the Side-by-side frame from the chosen slide: missing
+        // slides and differing page ratios must not move the pager.
+        const stableSideHeight=matchMedia('(max-width:760px)').matches
+          ? Math.max(420,Math.min(620,width*1.55))
+          : Math.max(220,Math.min(520,width*.42));
+        const height=state.visualMode==='side'?stableSideHeight:stage.getBoundingClientRect().height;
+        viewport.style.height=`${Math.ceil(height+2*borders)}px`;
         viewport.scrollLeft=0;
         viewport.scrollTop=0;
       }
@@ -3139,7 +3166,8 @@
       }
       function renderVisualCompare(matching) {
         disposeVisualRenderHandles(); const generation=state.visualRenderGeneration;
-        const section=$('#visualCompare'), stage=$('#visualCompareStage'), selection=$('#visualCompareSelection'), note=$('#visualCompareNote'), overlayOrder=$('#overlayOrder');
+        const section=$('#visualCompare'), stage=$('#visualCompareStage'), selection=$('#visualCompareSelection'), overlayOrder=$('#overlayOrder');
+        $('#reviewLayout').dataset.visualMode=state.visualMode;
         const row=selectedVisualRow(matching), nav=visualRowIndex(matching,row);
         section.dataset.highlights=state.visualHighlights?'on':'off'; document.querySelectorAll('[data-visual-mode]').forEach(btn=>btn.setAttribute('aria-pressed',String(btn.dataset.visualMode===state.visualMode))); document.querySelectorAll('[data-overlay-top]').forEach(btn=>btn.setAttribute('aria-pressed',String(btn.dataset.overlayTop===state.visualOverlayTop))); const highlightToggle=$('#visualHighlightToggle'); highlightToggle.setAttribute('aria-pressed',String(state.visualHighlights)); $('#visualHighlightToggleLabel').textContent=t('showVisualHighlights');
         $('#visualFirstButton').disabled=$('#visualPrevButton').disabled=!row||nav.index<=0; $('#visualLastButton').disabled=$('#visualNextButton').disabled=!row||nav.index>=nav.rows.length-1; $('#visualNavPosition').textContent=row?`${nav.index+1} / ${nav.rows.length}`:'—'; overlayOrder.hidden=state.visualMode!=='overlay'||!row?.original||!row?.revised;
@@ -3147,10 +3175,10 @@
         $('#visualOpacity').value=String(state.visualOverlayOpacity);
         $('#visualOpacityValue').textContent=state.visualOverlayOpacity+'%';
         syncVisualChangeNavigation(row);
-        if(!row){ section.hidden=false; stage.replaceChildren(); const empty=document.createElement('p'); empty.className='visual-empty'; empty.textContent=t('previewUnavailable'); stage.append(empty); lockVisualViewport(); applyVisualZoom(); selection.textContent=t('visualSelectionEmpty'); note.textContent=t('visualCompareNote'); $('#visualCompareDiff').replaceChildren(); return; }
-        section.hidden=false; const leftTitle=row.original?formatPreviewSlideTitle(row.original):t('missingOriginal'), rightTitle=row.revised?formatPreviewSlideTitle(row.revised):t('missingRevised'); selection.textContent=`${leftTitle} → ${rightTitle}`; note.textContent=t(state.rendererPresentations.original||state.rendererPresentations.revised?'rendererPrimary':'rendererFallback');
-        const highlights=changedObjectsForRow(row), stack=document.createElement('div'); stack.className='visual-stack'; stack.dataset.mode=state.visualMode; const sw=row.original?.slideWidth||row.revised?.slideWidth||12192000, sh=row.original?.slideHeight||row.revised?.slideHeight||6858000; const nodes=[createVisualMarkerBar(row)];
-        if(state.visualMode==='side') { stack.append(createVisualPane(row.original,t('original'),highlights.original,'original'),createVisualPane(row.revised,t('revised'),highlights.revised,'revised')); nodes.push(stack); }
+        if(!row){ section.hidden=false; stage.replaceChildren(); const empty=document.createElement('p'); empty.className='visual-empty'; empty.textContent=t('previewUnavailable'); stage.append(empty); $('#visualMarkerHost').replaceChildren(); lockVisualViewport(); applyVisualZoom(); selection.textContent=t('visualSelectionEmpty'); $('#visualCompareDiff').replaceChildren(); return; }
+        section.hidden=false; const leftTitle=row.original?formatPreviewSlideTitle(row.original):t('missingOriginal'), rightTitle=row.revised?formatPreviewSlideTitle(row.revised):t('missingRevised'); selection.textContent=`${leftTitle} → ${rightTitle}`; selection.title=selection.textContent;
+        const highlights=changedObjectsForRow(row), stack=document.createElement('div'); stack.className='visual-stack'; stack.dataset.mode=state.visualMode; const sw=row.original?.slideWidth||row.revised?.slideWidth||12192000, sh=row.original?.slideHeight||row.revised?.slideHeight||6858000; const nodes=[]; $('#visualMarkerHost').replaceChildren(createVisualMarkerBar(row));
+        if(state.visualMode==='side') { stack.append(createVisualPane(row.original,t('original'),highlights.original,'original',false,row.revised),createVisualPane(row.revised,t('revised'),highlights.revised,'revised',false,row.original)); nodes.push(stack); }
         else if(!row.original||!row.revised){ stack.style.aspectRatio=`${sw} / ${sh}`; const side=row.original?'original':'revised', slide=row.original||row.revised, hi=side==='original'?highlights.original:highlights.revised; stack.append(createVisualPane(slide,t(side),hi,side,true)); nodes.push(visualLegend(row),stack); }
         else {
           stack.style.aspectRatio=`${sw} / ${sh}`;
