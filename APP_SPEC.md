@@ -10,7 +10,9 @@
 - Allow local visual-only zoom steps of 50%, 75%, 100%, 125%, 150% and 200%; keep overflow within the preview viewport and retain split dragging and highlighting.
 - Use one bordered minus / clickable percentage / plus control for zoom, not a separate reset button. Clicking the percentage resets to 100%, including when zoom is already 100%. Keep the preview frame dimensions fixed across zoom steps, and support mouse/pen drag-to-pan inside a zoomed frame while retaining natural touch scrolling. Place slide navigation directly below the frame without any duplicate controls or text labels.
 
-- On wide screens, put a compact scrollable list to the left of the sticky preview; on phones, use accessible list / preview tabs. Selecting a slide or a change opens its preview without rebuilding the comparison list.
+- On wide screens, put a compact scrollable list to the left of the sticky preview for overlay/split/blink. In side-by-side mode let both slide previews use the full result width with the scrollable list below. On phones, use accessible list / preview tabs. Selecting a slide or a change opens its preview without rebuilding the comparison list.
+- Position the slide pager directly after the fixed-height side-by-side frame. Put variable-length change markers and their previous/next controls *below* the pager; missing slides use same-as-slide placeholders and do not change the frame height. Avoid on-screen high-fidelity/basic renderer status text.
+- Hide the intro sentence and local processing badge after either source PPTX is chosen, and style each Replace file button as an accessible text link without changing its picker action.
 - Provide previous/next controls for changes within the selected slide, preserving the existing change markers and giving a clear position indicator. Positionless entries still appear in the list but must not create invented coordinates.
 - In Overlay mode, allow 0–100% opacity of the top selected slide and preserve it across mode changes without recomputing the Semantic Diff.
 
