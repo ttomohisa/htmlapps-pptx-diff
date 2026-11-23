@@ -50,6 +50,6 @@ test('PR validation performs a full offline release package dry-run',()=>{
   assert.match(packageScript,/changelog_section\(version\)/);
   assert.match(packageScript,/SHA256SUMS\.txt/);
   assert.match(packageScript,/release-notes\.md/);
-  assert.equal(config.version,'1.0.5');
-  assert.match(read('CHANGELOG.md'),/^## 1\.0\.5 - /m);
+  assert.match(config.version,/^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$/);
+  assert.ok(read('CHANGELOG.md').includes('## '+config.version),'the configured version has changelog notes');
 });
