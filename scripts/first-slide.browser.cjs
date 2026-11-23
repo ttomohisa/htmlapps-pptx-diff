@@ -274,8 +274,17 @@ async function main(){
         if(initialPosition[0]<initialPosition[1]){
           await page.locator('#visualChangeNext').click();
           assert.equal(await changePosition.innerText(),(initialPosition[0]+1)+' / '+initialPosition[1]);
-          await page.locator('#visualChangePrev').click();
-          assert.equal(await changePosition.innerText(),initialPosition.join(' / '));
+          if(initialPosition[0]>0){
+            await page.locator('#visualChangePrev').click();
+            assert.equal(await changePosition.innerText(),initialPosition.join(' / '));
+          }else{
+            assert.equal(await page.locator('#visualChangePrev').isDisabled(),true,'first change has no previous item');
+            if(initialPosition[1]>1){
+              await page.locator('#visualChangeNext').click();
+              await page.locator('#visualChangePrev').click();
+              assert.equal(await changePosition.innerText(),'1 / '+initialPosition[1]);
+            }
+          }
         }else assert.equal(await page.locator('#visualChangeNext').isDisabled(),true);
         assert.equal(await page.locator('#visualCompare .visual-toolbar-main > .diff-toolbar-label').count(),0,'no redundant mode heading');
         assert.equal(await page.locator('#visualCompare .visual-zoom-toolbar > .diff-toolbar-label').count(),0,'no redundant zoom heading');
