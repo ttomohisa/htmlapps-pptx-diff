@@ -170,6 +170,10 @@ PPTX ZIP解析、スライド対応付け、Semantic Diff、フィルター、�
 
 **v1.0.5 は正式版です。**
 
+Pull Requestを `main` にマージし、`app.config.json` のバージョンが未公開の正式なSemantic Versioning形式であれば、`deploy-pages.yml` が単一HTMLをビルド・検証した後、`vX.Y.Z` のGitタグとGitHub Releaseを自動作成します。直接pushした場合や手動ワークフロー実行ではリリースしません。公開済みのタグ・Releaseは上書きしないため、次のリリースにはバージョン更新が必要です。
+
+Releaseには通常版HTML・自己展開版HTML・READMEやライセンス情報を含むZIP・`SHA256SUMS.txt` を添付します。配布物は `main` の検証済みビルド成果物から作成し、PRのビルドでもリリース用ZIPとチェックサムを事前検証します。公開時に失敗した場合はActionsから再実行できます。PRのマージは手動のままです。
+
 ## コントリビューション
 
 バグ報告や機能提案はGitHub Issuesからお願いします。開発への参加方法は [CONTRIBUTING.md](CONTRIBUTING.md) を確認してください。
