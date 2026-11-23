@@ -8,6 +8,7 @@
 - Provide an explicit action on each change detail to navigate to the corresponding selected slide and highlight geometric changes. Explain when a change has no slide coordinates, such as speaker notes.
 - Show one short description for the selected side-by-side / overlay / split / blink mode near the controls.
 - Allow local visual-only zoom steps of 50%, 75%, 100%, 125%, 150% and 200%; keep overflow within the preview viewport and retain split dragging and highlighting.
+- Use one bordered minus / clickable percentage / plus control for zoom, not a separate reset button. Clicking the percentage resets to 100%, including when zoom is already 100%. Place the first/previous/position/next/last navigation directly below the slide viewport beside zoom on desktop and above zoom on phones. Do not leave a duplicate pager in the section heading.
 
 ## Selected-file thumbnails and compact introduction
 
