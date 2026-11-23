@@ -1016,13 +1016,6 @@
             <h3 id="visualCompareTitle" data-i18n="visualCompareTitle">見た目で比較</h3>
             <p data-i18n="visualCompareLead">選択した対応スライドを、横並び・重ね合わせ・分割・点滅で見比べます。</p>
           </div>
-          <div class="visual-nav" role="group" data-i18n-aria-label="visualNavigation" aria-label="スライド移動">
-            <button class="icon-button" id="visualFirstButton" type="button" data-i18n-title="visualFirst" data-i18n-aria-label="visualFirst" title="表示中の最初の比較結果" aria-label="表示中の最初の比較結果"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 5v14m12-1-6-6 6-6"/></svg></button>
-            <button class="icon-button" id="visualPrevButton" type="button" data-i18n-title="visualPrev" data-i18n-aria-label="visualPrev" title="前のスライド" aria-label="前のスライド"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg></button>
-            <span class="visual-nav-position" id="visualNavPosition">—</span>
-            <button class="icon-button" id="visualNextButton" type="button" data-i18n-title="visualNext" data-i18n-aria-label="visualNext" title="次のスライド" aria-label="次のスライド"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button>
-            <button class="icon-button" id="visualLastButton" type="button" data-i18n-title="visualLast" data-i18n-aria-label="visualLast" title="表示中の最後の比較結果" aria-label="表示中の最後の比較結果"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 5v14M6 6l6 6-6 6"/></svg></button>
-          </div>
           <div class="visual-selection" id="visualCompareSelection" data-i18n="visualSelectionEmpty">下の一覧からスライドを選択してください。</div>
         </div>
         <div class="visual-toolbar">
@@ -1044,18 +1037,26 @@
             <button class="overlay-order-button" type="button" data-overlay-top="revised" aria-pressed="true" data-i18n="revised">変更後のファイル</button>
           </div>
         </div>
-        <div class="visual-zoom-toolbar">
-          <span class="diff-toolbar-label" data-i18n="visualZoomLabel">拡大・縮小</span>
-          <div class="visual-zoom-actions" role="group" data-i18n-aria-label="visualZoomLabel">
-            <button class="visual-zoom-button" id="visualZoomOut" type="button" data-i18n-title="visualZoomOut" data-i18n-aria-label="visualZoomOut" aria-label="縮小" title="縮小">−</button>
-            <output id="visualZoomValue" class="visual-zoom-value" aria-live="polite">100%</output>
-            <button class="visual-zoom-button" id="visualZoomIn" type="button" data-i18n-title="visualZoomIn" data-i18n-aria-label="visualZoomIn" aria-label="拡大" title="拡大">+</button>
-            <button class="visual-zoom-reset" id="visualZoomReset" type="button" data-i18n="visualZoomReset">100%に戻す</button>
-          </div>
-        </div>
         <p class="visual-mode-description" id="visualModeDescription" role="status" aria-live="polite">元と変更後を横に並べて表示します。</p>
         <div class="visual-stage-viewport" id="visualStageViewport">
           <div class="visual-stage" id="visualCompareStage"></div>
+        </div>
+        <div class="visual-stage-controls">
+            <div class="visual-nav" role="group" data-i18n-aria-label="visualNavigation" aria-label="スライド移動">
+              <button class="icon-button" id="visualFirstButton" type="button" data-i18n-title="visualFirst" data-i18n-aria-label="visualFirst" title="表示中の最初の比較結果" aria-label="表示中の最初の比較結果"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 5v14m12-1-6-6 6-6"/></svg></button>
+              <button class="icon-button" id="visualPrevButton" type="button" data-i18n-title="visualPrev" data-i18n-aria-label="visualPrev" title="前のスライド" aria-label="前のスライド"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg></button>
+              <span class="visual-nav-position" id="visualNavPosition">—</span>
+              <button class="icon-button" id="visualNextButton" type="button" data-i18n-title="visualNext" data-i18n-aria-label="visualNext" title="次のスライド" aria-label="次のスライド"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button>
+              <button class="icon-button" id="visualLastButton" type="button" data-i18n-title="visualLast" data-i18n-aria-label="visualLast" title="表示中の最後の比較結果" aria-label="表示中の最後の比較結果"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 5v14M6 6l6 6-6 6"/></svg></button>
+            </div>
+          <div class="visual-zoom-toolbar">
+            <span class="diff-toolbar-label" data-i18n="visualZoomLabel">拡大・縮小</span>
+            <div class="visual-zoom-actions" role="group" data-i18n-aria-label="visualZoomLabel">
+              <button class="visual-zoom-button" id="visualZoomOut" type="button" data-i18n-title="visualZoomOut" data-i18n-aria-label="visualZoomOut" aria-label="縮小" title="縮小">−</button>
+              <button class="visual-zoom-value" id="visualZoomValue" type="button" data-i18n-title="visualZoomReset" data-i18n-aria-label="visualZoomReset" title="100%に戻す" aria-label="100%に戻す">100%</button>
+              <button class="visual-zoom-button" id="visualZoomIn" type="button" data-i18n-title="visualZoomIn" data-i18n-aria-label="visualZoomIn" aria-label="拡大" title="拡大">+</button>
+            </div>
+          </div>
         </div>
         <p class="visual-note" id="visualCompareNote" data-i18n="visualCompareNote">Semantic Diffで見つかった要素を強調表示します。</p>
         <div class="visual-diff-panel" id="visualCompareDiff"></div>
@@ -2983,7 +2984,7 @@
         $('#visualZoomValue').textContent=zoom+'%';
         $('#visualZoomOut').disabled=zoom<=VISUAL_ZOOMS[0];
         $('#visualZoomIn').disabled=zoom>=VISUAL_ZOOMS[VISUAL_ZOOMS.length-1];
-        $('#visualZoomReset').disabled=zoom===100;
+        $('#visualZoomValue').setAttribute('aria-description',zoom===100?t('visualZoomReset'):t('visualZoomReset'));
         requestAnimationFrame(()=>{
           stage.querySelectorAll('.slide-canvas .pptx-render-frame').forEach(frame=>{
             const mount=frame.parentElement,element=frame.firstElementChild;
@@ -3263,7 +3264,7 @@
       document.querySelectorAll('[data-visual-mode]').forEach(button=>button.addEventListener('click',()=>{ state.visualMode=button.dataset.visualMode; if(state.matching) renderVisualCompare(state.matching); }));
       $('#visualZoomOut').addEventListener('click',()=>moveVisualZoom(-1));
       $('#visualZoomIn').addEventListener('click',()=>moveVisualZoom(1));
-      $('#visualZoomReset').addEventListener('click',()=>{state.visualZoom=100;applyVisualZoom();});
+      $('#visualZoomValue').addEventListener('click',()=>{state.visualZoom=100;applyVisualZoom();});
       $('#visualHighlightToggle').addEventListener('click',()=>{ state.visualHighlights=!state.visualHighlights; const section=$('#visualCompare'); section.dataset.highlights=state.visualHighlights?'on':'off'; const button=$('#visualHighlightToggle'); button.setAttribute('aria-pressed',String(state.visualHighlights)); $('#visualHighlightToggleLabel').textContent=t('showVisualHighlights'); });
       document.querySelectorAll('[data-overlay-top]').forEach(button=>button.addEventListener('click',()=>{ state.visualOverlayTop=button.dataset.overlayTop; if(state.matching) renderVisualCompare(state.matching); }));
       $('#visualFirstButton').addEventListener('click',()=>navigateVisualBoundary('first'));
