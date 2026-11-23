@@ -1,0 +1,40 @@
+name: Temporary PR root standalone sync
+
+on:
+  push:
+    branches:
+      - fix/pptx-diff-semantic-audit-20261122
+
+permissions:
+  contents: write
+
+jobs:
+  sync-root:
+    if: github.repository == 'ttomohisa/htmlapps-pptx-diff' && github.ref == 'refs/heads/fix/pptx-diff-semantic-audit-20261122'
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out PR branch
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: true
+      - name: Install Node.js for validations
+        uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+      - name: Build and validate standalone files
+        shell: pwsh
+        run: ./scripts/check-repository.ps1
+      - name: Commit refreshed root HTML only if changed
+        shell: bash
+        run: |
+          set -euo pipefail
+          git add -- pptx-diff.html
+          if git diff --cached --quiet; then
+            echo "Root HTML is already synchronized."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "build: synchronize updated PPTX Diff UI in standalone HTML"
+          git push origin HEAD:refs/heads/fix/pptx-diff-semantic-audit-20261122
