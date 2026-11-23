@@ -227,7 +227,9 @@ async function main(){
           if(mode==='overlay'){
             const opacity=page.locator('#visualOpacity');
             assert.equal(await page.locator('#visualOpacityControl').isVisible(),true);
-            await opacity.fill('80');
+            await opacity.focus();
+            await opacity.press('End');
+            for(let step=0;step<4;step++) await opacity.press('ArrowLeft');
             assert.equal(await page.locator('#visualOpacityValue').innerText(),'80%');
             assert.equal(await page.locator('#visualCompareStage [data-overlay-top-layer="true"]').evaluate(el=>el.style.opacity),'0.8');
           }else assert.equal(await page.locator('#visualOpacityControl').isVisible(),false);
