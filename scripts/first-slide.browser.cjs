@@ -85,10 +85,15 @@ async function main(){
         await page.goto(pathToFileURL(path.resolve('dist/index.html')).href);
         await page.locator('#languageButton').waitFor();
         if(await page.locator('html').getAttribute('lang')!==lang)await page.locator('#languageButton').click();
+        assert.equal(await page.locator('.page-intro').isVisible(),true,'initial intro is visible before selecting files');
         const preview=async(slot,name,label)=>page.locator('#'+slot+'Input').setInputFiles({
           name,mimeType:'application/vnd.openxmlformats-officedocument.presentationml.presentation',buffer:pptx(label)
         });
         await preview('original','first.pptx','FIRST_SLIDE_ALPHA');
+        assert.equal(await page.locator('.page-intro').isVisible(),false,'intro and local badge disappear after first PPTX');
+        const replaceLink=page.locator('#originalInfo .file-replace-link');
+        assert.equal(await replaceLink.count(),1,'replace file stays a button');
+        assert.ok((await replaceLink.evaluate(el=>getComputedStyle(el).textDecorationLine)).includes('underline'),'replace button looks like a link');
         await expectThumbnail(page,'original');
         await preview('revised','second.pptx','FIRST_SLIDE_BETA');
         await expectThumbnail(page,'revised');
@@ -146,10 +151,25 @@ async function main(){
         }else{
           const listBox=await page.locator('#matchList').boundingBox();
           const previewBox=await page.locator('#visualCompare').boundingBox();
-          assert.ok(listBox&&previewBox&&listBox.x+listBox.width<previewBox.x+2,'desktop list sits beside preview');
+          assert.ok(listBox&&previewBox&&previewBox.y+previewBox.height<=listBox.y+3,'side-by-side preview occupies the full top row above the list');
+          const layoutBox=await page.locator('#reviewLayout').boundingBox();
+          assert.ok(previewBox.width>layoutBox.width*.95,'side-by-side preview spans the result width');
         }
         await page.waitForFunction(()=>document.querySelectorAll('#visualCompare [data-visual-entry-id].is-active').length>0,{timeout:5000});
         assert.equal(await page.locator('#visualHighlightToggle').getAttribute('aria-pressed'),'true');
+        assert.equal(await page.locator('#visualCompareNote').count(),0,'renderer detail is not exposed as a preview note');
+        const originalSidePager=await page.locator('#visualNavPosition').boundingBox();
+        const originalSideViewport=await page.locator('#visualStageViewport').boundingBox();
+        const originalSideLabelCount=await page.locator('#visualMarkerHost .visual-marker-button').count();
+        assert.ok(originalSideLabelCount>0,'changed slide has change markers');
+        await page.locator('#visualNextButton').click();
+        assert.equal(await page.locator('#visualMarkerHost .visual-marker-button').count(),0,'unchanged slide has no change markers');
+        assert.equal(await page.locator('#visualChangeControls').isVisible(),false,'unchanged slide has no change navigation');
+        const unchangedPager=await page.locator('#visualNavPosition').boundingBox();
+        const unchangedViewport=await page.locator('#visualStageViewport').boundingBox();
+        assert.ok(Math.abs(unchangedPager.y-originalSidePager.y)<=1,'pager stays fixed when the next slide has no changes');
+        assert.ok(Math.abs(unchangedViewport.height-originalSideViewport.height)<=1,'preview frame height stays fixed across slides');
+        await page.locator('#visualPrevButton').click();
 
         // Navigation stays beside the slide instead of at the distant section heading.
         const stageBox=await page.locator('#visualStageViewport').boundingBox();
