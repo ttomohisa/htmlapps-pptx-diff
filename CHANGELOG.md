@@ -13,6 +13,7 @@
 - Group zoom into a compact − / clickable percentage / + control and move slide pagination directly below the preview, including the phone layout.
 - Keep the preview frame and adjacent slide navigation stationary across 50–200% zoom; pan the enlarged slide inside the frame, and recompute the frame only when its content or screen size changes.
 - Arrange the slide list next to the preview on desktop and add list/preview tabs on phones. Remove redundant zoom and mode labels and the view-mode explanatory sentence. Add change-by-change navigation, mouse drag-to-pan when zoomed, and an adjustable top-layer opacity in overlay mode.
+- Hide the introduction/local-processing badge once a PPTX is selected, display file-replacement buttons as text links, and remove the preview-renderer quality label. Give side-by-side slides the full comparison width and place the slide list below, with a consistent preview height and pager location even when one slide or its changes are absent.
 - Automatically package and publish a versioned Git tag and GitHub Release after a merged PR passes the main-branch build, with release asset checksums, duplicate protection, and draft recovery.
 
 
