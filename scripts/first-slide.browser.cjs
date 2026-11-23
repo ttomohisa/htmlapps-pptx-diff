@@ -53,14 +53,21 @@ function slideXml(text) {
 function pptx(firstLabel,secondLabel='NOT_THE_FIRST_SLIDE') {
   const relNamespace='http://schemas.openxmlformats.org/package/2006/relationships';
   const slideType='http://schemas.openxmlformats.org/officeDocument/2006/relationships/slide';
-  return makeZip({
+  const parts={
     '[Content_Types].xml':'<?xml version="1.0"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/ppt/presentation.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.presentation.main+xml"/><Override PartName="/ppt/slides/slide1.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.slide+xml"/><Override PartName="/ppt/slides/slide2.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.slide+xml"/></Types>',
     '_rels/.rels':'<Relationships xmlns="'+relNamespace+'"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="ppt/presentation.xml"/></Relationships>',
     'ppt/presentation.xml':'<p:presentation xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><p:sldIdLst><p:sldId id="256" r:id="rId1"/><p:sldId id="257" r:id="rId2"/></p:sldIdLst><p:sldSz cx="9144000" cy="6858000"/></p:presentation>',
     'ppt/_rels/presentation.xml.rels':'<Relationships xmlns="'+relNamespace+'"><Relationship Id="rId1" Type="'+slideType+'" Target="slides/slide1.xml"/><Relationship Id="rId2" Type="'+slideType+'" Target="slides/slide2.xml"/></Relationships>',
     'ppt/slides/slide1.xml':slideXml(firstLabel),
     'ppt/slides/slide2.xml':slideXml(secondLabel)
-  });
+  };
+  if(secondLabel===null){
+    delete parts['ppt/slides/slide2.xml'];
+    parts['[Content_Types].xml']=parts['[Content_Types].xml'].replace(/<Override PartName="\/ppt\/slides\/slide2\.xml"[^>]*\/>/,'');
+    parts['ppt/presentation.xml']=parts['ppt/presentation.xml'].replace('<p:sldId id="257" r:id="rId2"/>','');
+    parts['ppt/_rels/presentation.xml.rels']=parts['ppt/_rels/presentation.xml.rels'].replace('<Relationship Id="rId2" Type="'+slideType+'" Target="slides/slide2.xml"/>','');
+  }
+  return makeZip(parts);
 }
 async function expectThumbnail(page,slot) {
   const host=page.locator('#'+slot+'Thumbnail');
@@ -282,6 +289,29 @@ async function main(){
         }
         await page.screenshot({path:path.resolve('test-results/mobile-layout','comparison-'+lang+'-'+width+'.png')});
         assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'no horizontal scroll');
+        // A single-slide original and two-slide revised presentation force
+        // an added slide with a missing counterpart after an unchanged row.
+        await page.locator('#originalInput').setInputFiles({
+          name:'one-slide.pptx',mimeType:'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+          buffer:pptx('SHARED_FIRST_SLIDE',null)
+        });
+        await page.locator('#revisedInput').setInputFiles({
+          name:'two-slides.pptx',mimeType:'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+          buffer:pptx('SHARED_FIRST_SLIDE','ADDED_SECOND_SLIDE')
+        });
+        await page.locator('#analyzeButton').click();
+        await page.locator('#resultSection').waitFor({state:'visible',timeout:30000});
+        await page.locator('[data-visual-mode="side"]').click();
+        if(width===360) await page.locator('#reviewPreviewTab').click();
+        const beforeMissing=await visualFrame();
+        const pagerBeforeMissing=await page.locator('#visualNavPosition').boundingBox();
+        assert.equal(await page.locator('#visualChangeControls').isVisible(),false,'unchanged first slide has no changes');
+        await page.locator('#visualNextButton').click();
+        assert.equal(await page.locator('#visualCompareStage .visual-placeholder-canvas').count(),1,'missing slide has full-size visual placeholder');
+        const afterMissing=await visualFrame(),pagerAfterMissing=await page.locator('#visualNavPosition').boundingBox();
+        assert.ok(Math.abs(pagerAfterMissing.y-pagerBeforeMissing.y)<=1,'pager stays fixed for added slide');
+        assert.ok(Math.abs(afterMissing.height-beforeMissing.height)<=1,'missing slide keeps preview height');
+        assert.ok(!await page.locator('#visualNextButton').isEnabled(),'last added slide disables next');
         await page.locator('#originalInput').setInputFiles({name:'broken.pptx',mimeType:'application/vnd.openxmlformats-officedocument.presentationml.presentation',buffer:Buffer.from('bad pptx')});
         await page.waitForFunction(side=>document.querySelector('#'+side+'Thumbnail')?.textContent?.includes(
           document.documentElement.lang==='ja'?'プレビューを表示できません':'Preview unavailable'),'original',{timeout:15000});
