@@ -314,8 +314,8 @@ async function main(){
         });
         await page.locator('#analyzeButton').click();
         await page.locator('#resultSection').waitFor({state:'visible',timeout:30000});
-        await page.locator('[data-visual-mode="side"]').click();
         if(width===360) await page.locator('#reviewPreviewTab').click();
+        await page.locator('[data-visual-mode="side"]').click();
         const beforeMissing=await visualFrame();
         const pagerBeforeMissing=await page.locator('#visualNavPosition').boundingBox();
         assert.equal(await page.locator('#visualChangeControls').isVisible(),false,'unchanged first slide has no changes');
