@@ -166,6 +166,15 @@ test('native boundary buttons are ordered first/previous/position/next/last and 
     assert.equal(h.get('#visualLastButton').title,last);assert.equal(h.get('#visualLastButton').getAttribute('aria-label'),last);
   }
 });
+test('the first preview is measured only after the result section is visible',()=>{
+  const ready=source.indexOf("state.models=models; committed=true; state.matching=matching; state.phase='result';");
+  const reveal=source.indexOf("$('#resultSection').hidden=false;",ready);
+  const render=source.indexOf("renderResults(state.models);",ready);
+  assert.ok(ready>=0&&reveal>ready&&render>reveal,'first result must be visible before rendering and locking the preview viewport');
+  assert.match(source,/\.review-layout\[data-review-mode="side"\] \.visual-stage-viewport\s*\{\s*max-height:none;/);
+  assert.match(source,/for\(const row of state\.matching\?\.rows\|\|\[\]\)/);
+  assert.match(source,/\.review-layout\[data-review-mode="side"\] \.match-row > \.match-slide\s*\{[^}]*94px/);
+});
 test('navigation is directly below the preview and has large phone controls',()=>{
   const css=source.slice(source.indexOf('<style>'),source.indexOf('</style>'));
   const mobile=css.slice(css.indexOf('@media (max-width:760px)',css.indexOf('.visual-nav')));
