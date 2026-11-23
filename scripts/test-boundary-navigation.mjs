@@ -65,7 +65,7 @@ function setup(rows = [row(10), row(30), row(70)]) {
     semanticDetails(){const n=makeNode('details');n.open=true;return n;},
     disposeVisualRenderHandles(){state.visualRenderGeneration++;previewRenders++;}, changedObjectsForRow:()=>({original:[],revised:[]}),
     createVisualMarkerBar:()=>makeNode(), createVisualPane:()=>makeNode(), renderVisualDiffPanel(){}, requestAnimationFrame(){},
-    clearMatchThumbnails(){}, observeMatchThumbnails(){}, applyVisualZoom(){}, lockVisualViewport(){},
+    clearMatchThumbnails(){}, observeMatchThumbnails(){}, applyVisualZoom(){}, lockVisualViewport(){}, setReviewPane(){}, syncVisualChangeNavigation(){},
   });
   const names=['t','applyLanguage','rowMatchesFilter','selectedVisualRow','visibleVisualRows','visualRowIndex','syncMatchSelection','selectVisualPair','navigateVisual','navigateVisualBoundary','renderMatching','renderVisualCompare','compareModeNote'];
   const navigationListeners=source.split('\n').filter(line=>/^      \$\('#visual(?:First|Prev|Next|Last)Button'\)\.addEventListener\('click'/.test(line)).join('\n');
