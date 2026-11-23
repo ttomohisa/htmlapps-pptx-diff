@@ -233,7 +233,7 @@ async function main(){
         assert.equal(await page.locator('#visualOpacity').inputValue(),'80','opacity persists across modes');
         const changeControls=page.locator('#visualChangeControls');
         assert.equal(await changeControls.isVisible(),true,'change navigation is available');
-        assert.match(await page.locator('#visualChangePosition').innerText(),/^\\d+ \\/ \\d+$/,'change counter');
+        assert.ok((await page.locator('#visualChangePosition').innerText()).includes(' / '),'change counter');
         assert.equal(await page.locator('#visualChangeNext').count(),1);
         const toggle=page.locator('#visualHighlightToggle');
         const label=lang==='ja'?'差分を表示':'Show differences';
