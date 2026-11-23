@@ -400,6 +400,10 @@ Visual Compare deliberately avoids estimating the exact changed word position in
 
 ## 21. Release status
 
+Release automation: After an approved PR is manually merged into `main`, the existing Windows standalone build must pass before the versioned `vX.Y.Z` tag and GitHub Release are published. Publication is triggered by a `main` push only if its commit is associated with a merged PR and its stable `app.config.json` version has not been released. The artifact contains both validated HTML variants, a ZIP distribution, and SHA-256 checksums; tag/release names match the existing v1.0.4 convention. Duplicate releases and attempts to retag other commits are skipped. The owner still merges PRs manually.
+
+## 21.1. Historical release notes
+
 - **v1.0.1** — Stable release with normalized header language controls
 
 ## 22. Comparison and report ownership
