@@ -135,14 +135,14 @@ jobs:
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
 
           # Only publish when the push is an actual merged PR to main.
-          MERGED_PR="$(gh api "repos/$GITHUB_REPOSITORY/commits/$GITHUB_SHA/pulls" --jq '[.[] | select(.merged_at != null and .base.ref == "main") | .number][0] // ""')"
+          MERGED_PR=""
+          for attempt in 1 2 3 4; do
+            MERGED_PR="$(gh api "repos/$GITHUB_REPOSITORY/commits/$GITHUB_SHA/pulls" --jq '[.[] | select(.merged_at != null and .base.ref == "main") | .number][0] // ""')"
+            if [[ -n "$MERGED_PR" ]]; then break; fi
+            if [[ "$attempt" -lt 4 ]]; then sleep 4; fi
+          done
           if [[ -z "$MERGED_PR" ]]; then
             echo "No merged PR belongs to this commit; no release is needed." >> "$GITHUB_STEP_SUMMARY"
-            exit 0
-          fi
-
-          if gh release view "$TAG" >/dev/null 2>&1; then
-            echo "Release $TAG already exists; no duplicate will be published." >> "$GITHUB_STEP_SUMMARY"
             exit 0
           fi
 
@@ -155,6 +155,17 @@ jobs:
             echo "::notice::Existing $TAG points to a different commit ($TAG_SHA). Bump the app version for a new release."
             echo "Skipped $TAG: the tag belongs to another commit." >> "$GITHUB_STEP_SUMMARY"
             exit 0
+          fi
+
+          # Recover an interrupted draft publication, but never edit a published release.
+          EXISTING_DRAFT="$(gh release view "$TAG" --json isDraft --jq '.isDraft' 2>/dev/null || true)"
+          if [[ "$EXISTING_DRAFT" == "false" ]]; then
+            echo "Release $TAG already exists; no duplicate will be published." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          if [[ "$EXISTING_DRAFT" == "true" ]]; then
+            echo "recover_draft=true" >> "$GITHUB_OUTPUT"
+            echo "Resuming interrupted $TAG draft publication." >> "$GITHUB_STEP_SUMMARY"
           fi
 
           echo "publish=true" >> "$GITHUB_OUTPUT"
@@ -182,16 +193,29 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           VERSION: ${{ steps.gate.outputs.version }}
           TAG: ${{ steps.gate.outputs.tag }}
+          RECOVER_DRAFT: ${{ steps.gate.outputs.recover_draft }}
         run: |
           set -euo pipefail
           PREFIX="htmlapps-pptx-diff-v$VERSION"
-          gh release create "$TAG" \
-            "release-assets/$PREFIX.html" \
-            "release-assets/$PREFIX.self-extract.html" \
-            "release-assets/$PREFIX.zip" \
-            "release-assets/SHA256SUMS.txt" \
-            --target "$GITHUB_SHA" \
-            --title "PPTX Diff $TAG" \
-            --notes-file release-assets/release-notes.md
+          if [[ "$RECOVER_DRAFT" == "true" ]]; then
+            gh release upload "$TAG" \
+              "release-assets/$PREFIX.html" \
+              "release-assets/$PREFIX.self-extract.html" \
+              "release-assets/$PREFIX.zip" \
+              "release-assets/SHA256SUMS.txt" --clobber
+            gh release edit "$TAG" \
+              --title "PPTX Diff $TAG" \
+              --notes-file release-assets/release-notes.md \
+              --draft=false
+          else
+            gh release create "$TAG" \
+              "release-assets/$PREFIX.html" \
+              "release-assets/$PREFIX.self-extract.html" \
+              "release-assets/$PREFIX.zip" \
+              "release-assets/SHA256SUMS.txt" \
+              --target "$GITHUB_SHA" \
+              --title "PPTX Diff $TAG" \
+              --notes-file release-assets/release-notes.md
+          fi
           echo "Published $TAG from the validated $GITHUB_SHA build." >> "$GITHUB_STEP_SUMMARY"
 
