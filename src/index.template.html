@@ -1559,6 +1559,7 @@
         state.runGeneration+=1;
         clearMatchThumbnails();
         state.focusedEntryId=null;
+        setReviewPane('list',false,false);
         releaseModelUrls(state.models); disposeVisualRenderHandles();
         state.rendererPresentations={original:null,revised:null};
         clearRendererCache('original'); clearRendererCache('revised');
