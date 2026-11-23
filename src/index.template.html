@@ -560,6 +560,7 @@
     .visual-opacity-control output { min-width:36px; text-align:right; font-variant-numeric:tabular-nums; }
     .visual-stage-viewport[data-draggable="true"] { cursor:grab; }
     .visual-stage-viewport.is-dragging { cursor:grabbing; user-select:none; }
+    .visual-stage-viewport[data-draggable="true"] img { -webkit-user-drag:none; user-select:none; }
     .visual-stage-viewport .visual-splitter { cursor:ew-resize; }
     @media (min-width:980px) {
       .review-layout { display:grid; grid-template-columns:minmax(290px,340px) minmax(0,1fr); align-items:start; gap:14px; }
@@ -3101,6 +3102,7 @@
       function bindVisualPan() {
         const viewport=$('#visualStageViewport');
         let drag=null;
+        viewport.addEventListener('dragstart',event=>{if(state.visualZoom>100)event.preventDefault();});
         viewport.addEventListener('pointerdown',event=>{
           if(state.visualZoom<=100||event.button!==0||event.pointerType==='touch'||viewport.dataset.draggable!=='true')return;
           if(event.target.closest('button,input,select,textarea,a,[role="slider"],.visual-splitter'))return;
