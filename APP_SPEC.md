@@ -6,9 +6,13 @@
 - Search both presentations' slide titles and text without any network call; combine query with existing category/changed-only filters and preserve the query across language changes.
 - Render small matched-slide thumbnails only when they approach the visible area; disconnect observers and discard pending draws when results are replaced.
 - Provide an explicit action on each change detail to navigate to the corresponding selected slide and highlight geometric changes. Explain when a change has no slide coordinates, such as speaker notes.
-- Show one short description for the selected side-by-side / overlay / split / blink mode near the controls.
+- Keep side-by-side / overlay / split / blink accessible through their labeled buttons without redundant on-screen headings or mode-description text.
 - Allow local visual-only zoom steps of 50%, 75%, 100%, 125%, 150% and 200%; keep overflow within the preview viewport and retain split dragging and highlighting.
-- Use one bordered minus / clickable percentage / plus control for zoom, not a separate reset button. Clicking the percentage resets to 100%, including when zoom is already 100%. Place the first/previous/position/next/last navigation directly below the slide viewport beside zoom on desktop and above zoom on phones. Do not leave a duplicate pager in the section heading.
+- Use one bordered minus / clickable percentage / plus control for zoom, not a separate reset button. Clicking the percentage resets to 100%, including when zoom is already 100%. Keep the preview frame dimensions fixed across zoom steps, and support mouse/pen drag-to-pan inside a zoomed frame while retaining natural touch scrolling. Place slide navigation directly below the frame without any duplicate controls or text labels.
+
+- On wide screens, put a compact scrollable list to the left of the sticky preview; on phones, use accessible list / preview tabs. Selecting a slide or a change opens its preview without rebuilding the comparison list.
+- Provide previous/next controls for changes within the selected slide, preserving the existing change markers and giving a clear position indicator. Positionless entries still appear in the list but must not create invented coordinates.
+- In Overlay mode, allow 0–100% opacity of the top selected slide and preserve it across mode changes without recomputing the Semantic Diff.
 
 ## Selected-file thumbnails and compact introduction
 
