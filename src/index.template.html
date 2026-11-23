@@ -578,11 +578,11 @@
       .review-layout .match-row > .semantic-details { grid-column:1 / -1; margin-left:0; }
       .review-layout > .visual-compare { position:sticky; top:74px; max-height:calc(100dvh - 86px); overflow-y:auto; overscroll-behavior:contain; }
       /* Side-by-side needs two readable slides: prioritize canvas width over the sidebar. */
-      .review-layout[data-visual-mode="side"] { grid-template-columns:minmax(0,1fr); }
-      .review-layout[data-visual-mode="side"] > .visual-compare { grid-column:1; grid-row:1; position:static; max-height:none; overflow:visible; }
-      .review-layout[data-visual-mode="side"] > .match-list,
-      .review-layout[data-visual-mode="side"] > .diff-empty { grid-column:1; grid-row:2; }
-      .review-layout[data-visual-mode="side"] > .match-list { max-height:380px; }
+      .review-layout[data-review-mode="side"] { grid-template-columns:minmax(0,1fr); }
+      .review-layout[data-review-mode="side"] > .visual-compare { grid-column:1; grid-row:1; position:static; max-height:none; overflow:visible; }
+      .review-layout[data-review-mode="side"] > .match-list,
+      .review-layout[data-review-mode="side"] > .diff-empty { grid-column:1; grid-row:2; }
+      .review-layout[data-review-mode="side"] > .match-list { max-height:380px; }
     }
     @media (max-width:760px) {
       .review-tabs { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:4px; margin:0 0 10px; padding:4px; background:var(--surface-muted); border:1px solid var(--line); border-radius:11px; }
@@ -3177,7 +3177,7 @@
       function renderVisualCompare(matching) {
         disposeVisualRenderHandles(); const generation=state.visualRenderGeneration;
         const section=$('#visualCompare'), stage=$('#visualCompareStage'), selection=$('#visualCompareSelection'), overlayOrder=$('#overlayOrder');
-        $('#reviewLayout').dataset.visualMode=state.visualMode;
+        $('#reviewLayout').dataset.reviewMode=state.visualMode;
         const row=selectedVisualRow(matching), nav=visualRowIndex(matching,row);
         section.dataset.highlights=state.visualHighlights?'on':'off'; document.querySelectorAll('[data-visual-mode]').forEach(btn=>btn.setAttribute('aria-pressed',String(btn.dataset.visualMode===state.visualMode))); document.querySelectorAll('[data-overlay-top]').forEach(btn=>btn.setAttribute('aria-pressed',String(btn.dataset.overlayTop===state.visualOverlayTop))); const highlightToggle=$('#visualHighlightToggle'); highlightToggle.setAttribute('aria-pressed',String(state.visualHighlights)); $('#visualHighlightToggleLabel').textContent=t('showVisualHighlights');
         $('#visualFirstButton').disabled=$('#visualPrevButton').disabled=!row||nav.index<=0; $('#visualLastButton').disabled=$('#visualNextButton').disabled=!row||nav.index>=nav.rows.length-1; $('#visualNavPosition').textContent=row?`${nav.index+1} / ${nav.rows.length}`:'—'; overlayOrder.hidden=state.visualMode!=='overlay'||!row?.original||!row?.revised;
