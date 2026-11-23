@@ -583,6 +583,13 @@
       .review-layout[data-review-mode="side"] > .match-list,
       .review-layout[data-review-mode="side"] > .diff-empty { grid-column:1; grid-row:2; }
       .review-layout[data-review-mode="side"] > .match-list { max-height:380px; }
+      /* Below the full-width comparison, keep a compact list rather than
+         expanding every slide thumbnail into another large two-page preview. */
+      .review-layout[data-review-mode="side"] .match-row { grid-template-columns:minmax(0,1fr) 142px minmax(0,1fr); gap:12px; padding:10px 12px; }
+      .review-layout[data-review-mode="side"] .match-row > .match-slide { grid-template-columns:minmax(0,94px) minmax(0,1fr); gap:10px; align-items:center; }
+      .review-layout[data-review-mode="side"] .match-row > .match-slide:nth-child(3) { grid-column:3; grid-row:1; }
+      .review-layout[data-review-mode="side"] .match-row > .match-relation { grid-column:2; grid-row:1; justify-items:center; text-align:center; }
+      .review-layout[data-review-mode="side"] .match-row > .semantic-details { grid-column:1 / -1; grid-row:2; }
     }
     @media (max-width:760px) {
       .review-tabs { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:4px; margin:0 0 10px; padding:4px; background:var(--surface-muted); border:1px solid var(--line); border-radius:11px; }
@@ -700,6 +707,8 @@
     .visual-zoom-button:focus-visible, .visual-zoom-value:focus-visible { position:relative; z-index:1; outline:3px solid var(--accent); outline-offset:-3px; }
     .visual-stage-viewport { width:100%; max-height:75vh; overflow:auto; overscroll-behavior:contain; scrollbar-gutter:stable; border:1px solid var(--line); border-radius:12px; background:var(--surface-muted); }
     .visual-stage-viewport .visual-stack { border:0; border-radius:0; }
+    /* At 100% both slides must fit: let the page scroll instead of clipping the preview. */
+    .review-layout[data-review-mode="side"] .visual-stage-viewport { max-height:none; }
     .visual-stage { position:relative; width:100%; min-width:0; margin-inline:auto; }
     .visual-layer-legend { display:flex; align-items:center; justify-content:space-between; gap:10px; margin:0 0 7px; }
     .visual-layer-label { display:inline-flex; align-items:center; gap:6px; padding:4px 8px; border:1px solid var(--line); border-radius:999px; background:var(--surface); color:var(--muted); font-size:10px; font-weight:780; }
@@ -2447,7 +2456,10 @@
           setStatus(t('statusSemantic'),'processing');
           await new Promise(resolve=>setTimeout(resolve,0)); guard();
           attachSemanticDiff(matching); guard();
-          state.models=models; committed=true; state.matching=matching; state.phase='result'; renderResults(state.models); $('#resultSection').hidden=false; setStatus(t('statusDone'),'success');
+          // Reveal the result before measuring its preview. A hidden ancestor
+          // reports zero width, causing the first comparison to be clipped
+          // until a later mode change or resize forces another measurement.
+          state.models=models; committed=true; state.matching=matching; state.phase='result'; $('#resultSection').hidden=false; renderResults(state.models); setStatus(t('statusDone'),'success');
           $('#resultSection').scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'});
           $('#resultTitle').focus({preventScroll:true});
         } catch(error) {
@@ -3106,14 +3118,31 @@
         stage.style.width='100%';
         viewport.style.height='auto';
         const borders=parseFloat(getComputedStyle(viewport).borderTopWidth)||0;
-        const width=viewport.clientWidth;
-        // Do not size the Side-by-side frame from the chosen slide: missing
-        // slides and differing page ratios must not move the pager.
-        const stableSideHeight=matchMedia('(max-width:760px)').matches
-          ? Math.max(420,Math.min(620,width*1.55))
-          : Math.max(220,Math.min(520,width*.42));
-        const height=state.visualMode==='side'?stableSideHeight:stage.getBoundingClientRect().height;
-        viewport.style.height=`${Math.ceil(height+2*borders)}px`;
+        let height=stage.getBoundingClientRect().height;
+        if(state.visualMode==='side'){
+          // Use the tallest slide ratio across both decks, not the current
+          // row's dimensions. Missing slides or aspect-ratio differences must
+          // never move the pager, but no 100% slide may be cut off.
+          let maxRatio=6858000/12192000;
+          for(const row of state.matching?.rows||[]){
+            for(const slide of [row.original,row.revised]){
+              const sw=Number(slide?.slideWidth),sh=Number(slide?.slideHeight);
+              if(sw>0&&sh>0&&Number.isFinite(sw)&&Number.isFinite(sh)) maxRatio=Math.max(maxRatio,sh/sw);
+            }
+          }
+          const stack=stage.querySelector('.visual-stack');
+          const columnCount=matchMedia('(max-width:760px)').matches?1:2;
+          const paneWidth=Math.max(1,(stage.clientWidth-(columnCount===2?1:0))/columnCount);
+          const headerHeight=Math.max(0,...[...stage.querySelectorAll('.visual-pane-header')].map(node=>node.getBoundingClientRect().height));
+          const wrap=stage.querySelector('.visual-pane-canvas-wrap');
+          const wrapStyle=wrap?getComputedStyle(wrap):null;
+          const padding=wrapStyle?(parseFloat(wrapStyle.paddingLeft)||0)+(parseFloat(wrapStyle.paddingRight)||0):20;
+          const paddingY=wrapStyle?(parseFloat(wrapStyle.paddingTop)||0)+(parseFloat(wrapStyle.paddingBottom)||0):20;
+          const slidesPerColumn=columnCount===1?2:1;
+          const expected=slidesPerColumn*(headerHeight+paddingY+Math.max(1,paneWidth-padding)*maxRatio)+2;
+          height=Math.max(height,expected);
+        }
+        viewport.style.height=`${Math.ceil(height+2*borders+2)}px`;
         viewport.scrollLeft=0;
         viewport.scrollTop=0;
       }
