@@ -2831,7 +2831,17 @@
         document.querySelectorAll('#matchList .match-row[data-pair-id]').forEach(item=>{
           const current=item.dataset.pairId===selected; item.classList.toggle('is-selected',current);
           if(current) item.setAttribute('aria-current','true'); else item.removeAttribute('aria-current');
-          if(current&&typeof matchMedia==='function'&&matchMedia('(min-width:980px)').matches) item.scrollIntoView({block:'nearest'});
+          // Scroll only the list: scrollIntoView also scrolls the page and
+          // makes the preview pager jump when the list sits below the canvas.
+          if(current&&typeof matchMedia==='function'&&matchMedia('(min-width:980px)').matches){
+            const list=$('#matchList');
+            if(typeof item.getBoundingClientRect==='function'&&typeof list.getBoundingClientRect==='function'){
+              const rowRect=item.getBoundingClientRect(),listRect=list.getBoundingClientRect();
+              const top=rowRect.top-listRect.top+list.scrollTop;
+              if(top<list.scrollTop)list.scrollTop=top;
+              else if(top+rowRect.height>list.scrollTop+list.clientHeight)list.scrollTop=top+rowRect.height-list.clientHeight;
+            }
+          }
         });
       }
       function setReviewPane(pane,focus=false,refresh=true) {
