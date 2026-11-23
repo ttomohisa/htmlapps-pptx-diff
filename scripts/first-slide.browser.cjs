@@ -137,6 +137,17 @@ async function main(){
         assert.ok(await inspect.count(),'changes have a preview action');
         await inspect.click();
         await page.locator('#visualCompare').waitFor({state:'visible'});
+        if(width===360){
+          assert.equal(await page.locator('#reviewPreviewTab').getAttribute('aria-selected'),'true','inspect opens preview tab');
+          await page.locator('#reviewListTab').click();
+          assert.equal(await page.locator('#visualCompare').isVisible(),false,'list tab hides preview on phone');
+          await page.locator('#reviewPreviewTab').click();
+          await page.locator('#visualCompare').waitFor({state:'visible'});
+        }else{
+          const listBox=await page.locator('#matchList').boundingBox();
+          const previewBox=await page.locator('#visualCompare').boundingBox();
+          assert.ok(listBox&&previewBox&&listBox.x+listBox.width<previewBox.x+2,'desktop list sits beside preview');
+        }
         await page.waitForFunction(()=>document.querySelectorAll('#visualCompare [data-visual-entry-id].is-active').length>0,{timeout:5000});
         assert.equal(await page.locator('#visualHighlightToggle').getAttribute('aria-pressed'),'true');
 
@@ -175,6 +186,14 @@ async function main(){
         await page.locator('#visualZoomIn').click();
         assert.equal(await zoomValue.innerText(),'200%');
         await assertFixedFrame('200%');
+        assert.equal(await page.locator('#visualStageViewport').getAttribute('data-draggable'),'true');
+        const dragViewport=page.locator('#visualStageViewport'),dragRect=await dragViewport.boundingBox();
+        const initialX=await dragViewport.evaluate(el=>el.scrollLeft);
+        await page.mouse.move(dragRect.x+dragRect.width/2,dragRect.y+Math.min(95,dragRect.height/2));
+        await page.mouse.down();
+        await page.mouse.move(dragRect.x+dragRect.width/2-55,dragRect.y+Math.min(95,dragRect.height/2),{steps:5});
+        await page.mouse.up();
+        assert.ok((await dragViewport.evaluate(el=>el.scrollLeft))>initialX+10,'dragging pans enlarged slide');
         assert.ok((await visualFrame()).scrollWidth>(await visualFrame()).clientWidth,'200% overflows inside fixed frame');
         await zoomValue.click();
         assert.equal(await zoomValue.innerText(),'100%');
@@ -199,10 +218,23 @@ async function main(){
           const button=page.locator('[data-visual-mode="'+mode+'"]');
           await button.click();
           assert.equal(await button.getAttribute('aria-pressed'),'true',mode+' selected');
-          assert.ok((await page.locator('#visualModeDescription').innerText()).length>15,'mode explains its behavior');
+          assert.equal(await page.locator('#visualModeDescription').count(),0,'redundant mode text is removed');
           assert.equal(await page.locator('[data-visual-mode][aria-pressed="true"]').count(),1,'only one active mode');
           await page.locator('#visualCompareStage .visual-stack[data-mode="'+mode+'"]').waitFor({state:'attached'});
+          if(mode==='overlay'){
+            const opacity=page.locator('#visualOpacity');
+            assert.equal(await page.locator('#visualOpacityControl').isVisible(),true);
+            await opacity.fill('80');
+            assert.equal(await page.locator('#visualOpacityValue').innerText(),'80%');
+            assert.equal(await page.locator('#visualCompareStage [data-overlay-top-layer="true"]').evaluate(el=>el.style.opacity),'0.8');
+          }else assert.equal(await page.locator('#visualOpacityControl').isVisible(),false);
         }
+        await page.locator('[data-visual-mode="overlay"]').click();
+        assert.equal(await page.locator('#visualOpacity').inputValue(),'80','opacity persists across modes');
+        const changeControls=page.locator('#visualChangeControls');
+        assert.equal(await changeControls.isVisible(),true,'change navigation is available');
+        assert.match(await page.locator('#visualChangePosition').innerText(),/^\\d+ \\/ \\d+$/,'change counter');
+        assert.equal(await page.locator('#visualChangeNext').count(),1);
         const toggle=page.locator('#visualHighlightToggle');
         const label=lang==='ja'?'差分を表示':'Show differences';
         assert.equal(await page.locator('#visualHighlightToggleLabel').innerText(),label);
