@@ -324,8 +324,12 @@ async function main(){
         await page.locator('#visualNextButton').click();
         assert.equal(await page.locator('#visualCompareStage .visual-placeholder-canvas').count(),1,'missing slide has full-size visual placeholder');
         const afterMissing=await visualFrame(),pagerAfterMissing=await page.locator('#visualNavPosition').boundingBox();
-        assert.ok(Math.abs(pagerAfterMissing.y-pagerBeforeMissing.y)<=1,'pager stays fixed for added slide');
-        assert.ok(Math.abs(afterMissing.height-beforeMissing.height)<=1,'missing slide keeps preview height');
+        const scrollAfterMissing=await page.evaluate(()=>window.scrollY);
+        const frameAfterMissing=await page.locator('#visualStageViewport').boundingBox();
+        const addedDiagnostic=JSON.stringify({beforeMissing,afterMissing,pagerBeforeMissing,pagerAfterMissing,frameBeforeMissing,frameAfterMissing,scrollBeforeMissing,scrollAfterMissing});
+        assert.ok(Math.abs(afterMissing.navGap-beforeMissing.navGap)<=1,'pager gap remains fixed for added slide: '+addedDiagnostic);
+        assert.ok(Math.abs((pagerAfterMissing.y+scrollAfterMissing)-(pagerBeforeMissing.y+scrollBeforeMissing))<=1,'pager document position stays fixed for added slide: '+addedDiagnostic);
+        assert.ok(Math.abs(afterMissing.height-beforeMissing.height)<=1,'missing slide keeps preview height: '+addedDiagnostic);
         assert.ok(!await page.locator('#visualNextButton').isEnabled(),'last added slide disables next');
         await page.locator('#originalInput').setInputFiles({name:'broken.pptx',mimeType:'application/vnd.openxmlformats-officedocument.presentationml.presentation',buffer:Buffer.from('bad pptx')});
         await page.waitForFunction(side=>document.querySelector('#'+side+'Thumbnail')?.textContent?.includes(
