@@ -21,6 +21,17 @@
 - Prioritize the visual comparison on all screen sizes; place the summary and change breakdown below it, group the search/filter controls, and use subtle unframed file groups without redundant slot numbers.
 - Automatically package and publish a versioned Git tag and GitHub Release after a merged PR passes the main-branch build, with release asset checksums, duplicate protection, and draft recovery.
 
+- Allow an editable, sanitized report filename and correct export success messages and input-limit descriptions.
+- Standardize the phone informational footer, final Help build metadata, and equivalent local-processing badge wording.
+
+
+- Add localized First / Last controls for the currently filtered comparison rows, with disabled boundary/empty states and a separate navigation row on narrow screens.
+- Expose the current comparison row with `aria-current`, retaining expanded details, focus, and scroll position when navigating.
+- Cover navigation and current-row state with synthetic regression checks across source, root, readable, and self-extract releases; preserve the report implementation byte-for-byte.
+
+- Keep asynchronous parsing and renderer results owned by their current comparison; stale completion cannot replace a new result or clear its busy indicator.
+- Capture one comparison and language for report export, cancel stale reports after source/recomparison/tolerance changes, and isolate temporary report media cleanup.
+- Add source-level lifecycle regressions and source/root/readable/self-extract parity checks, and regenerate the root download during default builds.
 
 ## 1.0.4 - 2026-10-27
 
@@ -39,20 +50,6 @@
 
 - Normalize icon background green and exact 25% corner geometry, retaining all foreground and cutout paths.
 - Rebuild matching header/favicon and standalone aliases without changing runtime assets.
-
-## Unreleased
-
-- Standardize the phone informational footer, final Help build metadata, and equivalent local-processing badge wording.
-
-
-- Add localized First / Last controls for the currently filtered comparison rows, with disabled boundary/empty states and a separate navigation row on narrow screens.
-- Expose the current comparison row with `aria-current`, retaining expanded details, focus, and scroll position when navigating.
-- Cover navigation and current-row state with synthetic regression checks across source, root, readable, and self-extract releases; preserve the report implementation byte-for-byte.
-
-- Keep asynchronous parsing and renderer results owned by their current comparison; stale completion cannot replace a new result or clear its busy indicator.
-- Capture one comparison and language for report export, cancel stale reports after source/recomparison/tolerance changes, and isolate temporary report media cleanup.
-- Add source-level lifecycle regressions and source/root/readable/self-extract parity checks, and regenerate the root download during default builds.
-- Validation uses synthetic boundary doubles; real browser PPTX rendering and download flows remain unverified for this change.
 
 ## 1.0.1
 
