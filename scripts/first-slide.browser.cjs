@@ -131,6 +131,8 @@ async function main(){
         await page.locator('#languageButton').waitFor();
         if(await page.locator('html').getAttribute('lang')!==lang)await page.locator('#languageButton').click();
         assert.equal(await page.locator('.page-intro').isVisible(),true,'initial intro is visible before selecting files');
+        assert.equal(await page.locator('.drop-zone-note,[data-i18n="dropNote"]').count(),0,'redundant file choice hint is removed');
+        assert.equal(await page.locator('.drop-empty [data-pick]').count(),2,'both file chooser buttons remain');
         const preview=async(slot,name,label)=>page.locator('#'+slot+'Input').setInputFiles({
           name,mimeType:'application/vnd.openxmlformats-officedocument.presentationml.presentation',buffer:pptx(label)
         });
@@ -211,8 +213,43 @@ async function main(){
           }
           assert.ok(rgb[0]<100&&rgb[1]<160&&rgb[2]<165,side+' thumbnail preserves the slide background, not a white fallback: '+rgb.join(','));
         }
+        // Existing thumbnails are drawn at the narrow 94px list size first.
+        // Switching to overlay enlarges their hosts without a window resize.
+        // Check the already rendered first pair, not newly mounted thumbnails.
+        if(width>760){
+          const firstPair=page.locator('#matchList .match-row').first().locator('.match-thumb[data-thumb-side]');
+          const narrow=await firstPair.first().evaluate(el=>el.clientWidth);
+          await page.locator('[data-visual-mode="overlay"]').click();
+          await page.waitForFunction(()=>{
+            const thumbs=[...document.querySelectorAll('#matchList .match-row:first-child .match-thumb[data-thumb-side]')];
+            return thumbs.length===2&&thumbs.every(thumb=>{
+              const frame=thumb.querySelector('.pptx-render-frame');
+              if(!frame)return false;
+              const r=frame.getBoundingClientRect();
+              return Math.abs(r.width-thumb.clientWidth)<=3&&Math.abs(r.height-thumb.clientHeight)<=3;
+            });
+          },null,{timeout:10000});
+          assert.ok(await firstPair.first().evaluate(el=>el.clientWidth)>narrow+15,'overlay expands first pair thumbnails');
+          for(const thumb of await firstPair.all()){
+            const png=await thumb.screenshot();
+            for(const [x,y] of [[.08,.87],[.92,.87]]){
+              const rgb=screenshotPixel(png,x,y);
+              assert.ok(rgb[0]<100&&rgb[1]<160&&rgb[2]<165,'expanded first thumbnail has no white margins: '+rgb.join(','));
+            }
+          }
+          await page.locator('[data-visual-mode="side"]').click();
+        }
         const firstDetails=page.locator('#matchList .semantic-details').first();
         assert.ok(await firstDetails.count(),'at least one slide has a change');
+        const disclosure=await firstDetails.evaluate(el=>{
+          const style=getComputedStyle(el),summary=getComputedStyle(el.querySelector('summary'));
+          return {border:style.borderTopWidth,shadow:style.boxShadow,padding:style.paddingTop,summaryPadding:summary.paddingTop,background:style.backgroundColor};
+        });
+        assert.equal(disclosure.border,'0px','change disclosure has no surrounding border');
+        assert.equal(disclosure.shadow,'none','change disclosure has no card shadow');
+        assert.equal(disclosure.padding,'0px','change disclosure has no extra top spacing');
+        assert.equal(disclosure.background,'rgba(0, 0, 0, 0)','change disclosure inherits row background');
+        assert.ok(parseFloat(disclosure.summaryPadding)<=4,'compact disclosure header');
         await firstDetails.evaluate(el=>{el.open=true;});
         const inspect=firstDetails.locator('.change-inspect-button').first();
         assert.ok(await inspect.count(),'changes have a preview action');
