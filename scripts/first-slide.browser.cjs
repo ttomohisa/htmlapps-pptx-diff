@@ -492,6 +492,29 @@ async function main(){
         assert.ok(Math.abs((pagerAfterMissing.y+scrollAfterMissing)-(pagerBeforeMissing.y+scrollBeforeMissing))<=1,'pager document position stays fixed for added slide: '+addedDiagnostic);
         assert.ok(Math.abs(afterMissing.height-beforeMissing.height)<=1,'missing slide keeps preview height: '+addedDiagnostic);
         assert.ok(!await page.locator('#visualNextButton').isEnabled(),'last added slide disables next');
+        // Exercise actual save/cancel, customized filename, and offline report restoration.
+        await page.locator('#saveReportButton').click();
+        await page.locator('#appConfirmDialog').waitFor({state:'visible'});
+        await page.locator('#appConfirmCancel').click();
+        await page.locator('#appConfirmDialog').waitFor({state:'hidden'});
+        await page.locator('#saveReportButton').click();
+        await page.locator('#reportFilename').fill('review-'+lang);
+        const downloadPromise=page.waitForEvent('download',{timeout:60000});
+        await page.locator('#appConfirmOk').click();
+        const download=await downloadPromise;
+        assert.equal(download.suggestedFilename(),'review-'+lang+'.html');
+        const reportPath=path.resolve('test-results/mobile-layout','review-'+lang+'.html');
+        await download.saveAs(reportPath);
+        const report=await context.newPage();
+        report.on('pageerror',e=>issues.push(e.message));
+        report.on('request',r=>{if(/^https?:/.test(r.url()))requests.push(r.url());});
+        await report.goto(pathToFileURL(reportPath).href);
+        await report.locator('details.slide').first().waitFor({state:'visible',timeout:30000});
+        assert.equal(await report.locator('details.slide').count(),2,'report includes both comparison rows');
+        assert.equal(await report.locator('html').getAttribute('lang'),lang);
+        const reportText=await report.locator('body').innerText();
+        assert.ok(reportText.includes('one-slide.pptx')&&reportText.includes('two-slides.pptx'),'report retains both filenames');
+        await report.close();
         await page.locator('#originalInput').setInputFiles({name:'broken.pptx',mimeType:'application/vnd.openxmlformats-officedocument.presentationml.presentation',buffer:Buffer.from('bad pptx')});
         await page.waitForFunction(side=>document.querySelector('#'+side+'Thumbnail')?.textContent?.includes(
           document.documentElement.lang==='ja'?'プレビューを表示できません':'Preview unavailable'),'original',{timeout:15000});
