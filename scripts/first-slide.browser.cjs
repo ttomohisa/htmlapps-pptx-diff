@@ -153,10 +153,18 @@ async function main(){
         const unit=await page.locator('#semanticSummary .semantic-summary-unit').first().innerText();
         assert.equal(unit,lang==='ja'?'件':'items','semantic counters represent changed elements');
 
-        const firstThumb=page.locator('#matchList .match-thumb[data-thumb-pending]').first();
-        if(await firstThumb.count()){
-          await firstThumb.scrollIntoViewIfNeeded();
-          await page.waitForFunction(()=>document.querySelectorAll('#matchList .match-thumb .slide-canvas').length>0,{timeout:15000});
+        // The list must use the same full renderer as the main slide preview.
+        // Structural-only .slide-canvas thumbnails omit slide backgrounds.
+        for(const side of ['original','revised']){
+          const thumb=page.locator('#matchList .match-thumb[data-thumb-side="'+side+'"]').first();
+          assert.ok(await thumb.count(),side+' has a comparison thumbnail');
+          await thumb.scrollIntoViewIfNeeded();
+          await page.waitForFunction(side=>{
+            const thumb=document.querySelector('#matchList .match-thumb[data-thumb-side="'+side+'"]');
+            return Boolean(thumb?.querySelector('.pptx-render-frame'));
+          },side,{timeout:15000});
+          assert.equal(await thumb.locator('.slide-canvas').count(),0,side+' uses a rendered slide rather than the white structural fallback');
+          assert.ok(await thumb.locator('.pptx-render-frame').evaluate(frame=>frame.getBoundingClientRect().width>0&&frame.getBoundingClientRect().height>0),side+' preview fits inside the slide list thumbnail');
         }
         const firstDetails=page.locator('#matchList .semantic-details').first();
         assert.ok(await firstDetails.count(),'at least one slide has a change');
