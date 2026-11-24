@@ -133,6 +133,7 @@ async function main(){
         assert.equal(await page.locator('.page-intro').isVisible(),true,'initial intro is visible before selecting files');
         assert.equal(await page.locator('.drop-zone-note,[data-i18n="dropNote"]').count(),0,'redundant file choice hint is removed');
         assert.equal(await page.locator('.drop-empty [data-pick]').count(),2,'both file chooser buttons remain');
+        assert.equal(await page.locator('.file-panel-index').count(),0,'file slot numbers are removed');
         const emptyDrop=await page.locator('#originalDrop').evaluate(el=>getComputedStyle(el).borderTopStyle);
         assert.equal(emptyDrop,'dashed','empty drop area retains a visible drop target');
         const panelStyle=await page.locator('.file-panel').first().evaluate(el=>{const s=getComputedStyle(el);return [s.borderTopWidth,s.boxShadow,s.backgroundColor];});
@@ -154,6 +155,12 @@ async function main(){
           const style=await page.locator('#'+slot+'Drop').evaluate(el=>{const s=getComputedStyle(el);return [s.borderTopWidth,s.minHeight,s.backgroundColor];});
           assert.deepEqual(style,['0px','0px','rgba(0, 0, 0, 0)'],'selected file is not framed or forced to empty-drop height');
         }
+        for(const panel of await page.locator('.file-panel').all()){
+          const group=await panel.evaluate(el=>{const s=getComputedStyle(el);return {border:s.borderTopWidth,shadow:s.boxShadow,background:s.backgroundColor};});
+          assert.equal(group.border,'0px','selected file group has no card border');
+          assert.equal(group.shadow,'none','selected file group has no card shadow');
+          assert.notEqual(group.background,'rgba(0, 0, 0, 0)','selected files form a subtle visual group');
+        }
         assert.equal(await page.locator('#analyzeButton').isEnabled(),true);
         await page.locator('#swapButton').click();
         assert.equal(await page.locator('#originalName').innerText(),'second.pptx');
@@ -165,6 +172,10 @@ async function main(){
         // Compare actual local fixture PPTX files, then exercise the result UI.
         await page.locator('#analyzeButton').click();
         await page.locator('#resultSection').waitFor({state:'visible',timeout:30000});
+        assert.ok(await page.locator('#visualCompare').isVisible(),'visual comparison is the first result even on mobile');
+        assert.equal(await page.locator('#reviewPreviewTab').getAttribute('aria-selected'),'true');
+        assert.ok(await page.evaluate(()=>Boolean(document.querySelector('#reviewLayout').compareDocumentPosition(document.querySelector('#matchSummary'))&Node.DOCUMENT_POSITION_FOLLOWING)),'slide summary follows visual comparison');
+        assert.ok(await page.evaluate(()=>Boolean(document.querySelector('#reviewLayout').compareDocumentPosition(document.querySelector('#semanticSummary'))&Node.DOCUMENT_POSITION_FOLLOWING)),'change breakdown follows visual comparison');
         if(width===1280){
           // Before selecting a row or switching modes, the very first render
           // must already have a measurable frame that contains both slides.
@@ -201,6 +212,7 @@ async function main(){
         assert.equal(await structure.evaluate(el=>el.open),false,'structure can still collapse');
         assert.equal(await page.locator('#semanticSummary [role="listitem"]').count(),7);
         assert.equal(await page.locator('#matchSummary').getAttribute('aria-label'),lang==='ja'?'スライドの集計':'Slide summary');
+        if(width===360)await page.locator('#reviewListTab').click();
         // Search combines with the current slide filters, without sending data to a server.
         const search=page.locator('#slideSearch');
         await search.fill('NEVER_PRESENT_IN_SLIDES');
