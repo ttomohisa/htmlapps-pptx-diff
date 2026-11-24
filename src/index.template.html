@@ -3543,6 +3543,9 @@
       }
       let visualViewportResizeRequest=0;
       window.addEventListener('resize',()=>{
+        for(const [thumb,record] of matchThumbs.handles){
+          if(thumb.isConnected)fitRenderFrame(thumb,record.frame,record.handle.element);
+        }
         if($('#visualCompare').hidden)return;
         cancelAnimationFrame(visualViewportResizeRequest);
         visualViewportResizeRequest=requestAnimationFrame(()=>{
@@ -3563,6 +3566,7 @@
       helpDialog.addEventListener('click',event=>{ if(event.target!==event.currentTarget)return; const r=helpDialog.getBoundingClientRect(); if(event.clientX<r.left||event.clientX>r.right||event.clientY<r.top||event.clientY>r.bottom) helpDialog.close(); });
       $('#versionBadge').textContent=`v${APP_CONFIG.version}`; $('#buildVersion').textContent=APP_CONFIG.version; $('#builtAt').textContent=BUILD_MANIFEST.generatedAtUtc||'—'; $('#dependencyCount').textContent=String(BUILD_MANIFEST.dependencies?.length||0);
       window.addEventListener('pagehide',()=>{
+        clearMatchThumbnails();
         for(const slot of ['original','revised'])releaseSlotThumbnail(state.slots[slot]);
       });
       applyLanguage();
