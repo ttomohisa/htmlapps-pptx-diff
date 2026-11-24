@@ -10,7 +10,7 @@
 - Allow local visual-only zoom steps of 50%, 75%, 100%, 125%, 150% and 200%; keep overflow within the preview viewport and retain split dragging and highlighting.
 - Use one bordered minus / clickable percentage / plus control for zoom, not a separate reset button. Clicking the percentage resets to 100%, including when zoom is already 100%. Keep the preview frame dimensions fixed across zoom steps, and support mouse/pen drag-to-pan inside a zoomed frame while retaining natural touch scrolling. Place slide navigation directly below the frame without any duplicate controls or text labels.
 
-- On wide screens, put a compact scrollable list to the left of the sticky preview for overlay/split/blink. In side-by-side mode let both slide previews use the full result width with the scrollable list below. On phones, use accessible list / preview tabs. Selecting a slide or a change opens its preview without rebuilding the comparison list.
+- On wide screens, put a compact scrollable list to the left of the sticky preview for overlay/split/blink. In side-by-side mode let both slide previews use the full result width with the scrollable list below. On phones, use accessible list / preview tabs, with preview selected initially. Place the slide summary and change breakdown below the comparison view. Selecting a slide or a change opens its preview without rebuilding the comparison list.
 - Position the slide pager directly after the fixed-height side-by-side frame. Put variable-length change markers and their previous/next controls *below* the pager; missing slides use same-as-slide placeholders and do not change the frame height. Avoid on-screen high-fidelity/basic renderer status text.
 - Hide the intro sentence and local processing badge after either source PPTX is chosen, and style each Replace file button as an accessible text link without changing its picker action.
 - Provide previous/next controls for changes within the selected slide, preserving the existing change markers and giving a clear position indicator. Positionless entries still appear in the list but must not create invented coordinates.
@@ -19,7 +19,7 @@
 ## Selected-file thumbnails and compact introduction
 
 - Keep the app name in the header; omit the redundant hero title and use a short, practical introduction.
-- Hide the existing local-processing badge at phone widths (760px or narrower); keep it visible on desktop.
+- Hide the existing local-processing badge at phone widths (760px or narrower); keep it visible on desktop until a file is selected.
 - Use a PowerPoint slide-diff description rather than another local-processing claim in the header subtitle.
 - Keep the feature explanations in How to use & Notes, not in a separate feature-card section; do not mention the host site in Help privacy copy.
 - Present first-slide thumbnails when PPTX files are chosen (before Compare), using embedded resources only, preserving the local-only runtime contract.
@@ -84,7 +84,7 @@ Semantic Diff
 6. Filter changes by Text, Number, Object, Image, Layout, Formatting, or Speaker notes, optionally limiting the list to changed slides.
 7. Select a slide and use high-fidelity Visual Compare with Side by side, Overlay, Split, or Blink.
 8. Expand **View changes** to inspect property-level differences without losing the current Visual Compare selection.
-9. Save a self-extracting HTML report when the comparison needs to be shared or archived.
+9. Save an HTML report with a user-editable filename; use self-extracting HTML when compression is available.
 10. Adjust tiny position / size tolerance when strict geometry comparison is needed.
 11. Expand parsed slide structure only when lower-level inspection is useful.
 
@@ -417,7 +417,7 @@ Release automation: After an approved PR is manually merged into `main`, the exi
 
 - Source replacement, swapping, and repeated comparison invalidate prior parsing, renderer preparation, results, and report work. Only the current analysis may publish renderer/model state, errors, progress, or busy-control cleanup.
 - Invalid/empty file-picker input does not replace a valid source. No new Cancel control is introduced.
-- A report captures one comparison's filenames, semantic rows, language, and renderer presentations before confirmation. Duplicate save clicks do not open overlapping confirmations.
+- A report captures one comparison's filenames, semantic rows, language, and renderer presentations before confirmation. Duplicate save clicks do not open overlapping confirmations. The confirmation dialog includes an editable filename; sanitize unsafe characters and append the .html extension before downloading.
 - Replacing/swapping files, comparing again, or changing geometry tolerance cancels a pending report. Stale snapshot/compression completions do not download or show saved/failed notifications for the new comparison.
 - Report media caches and transient render handles belong to the report that created them; obsolete cleanup cannot clear a successor report's busy state or media.
 - Reports still include all comparison rows regardless of category or changed-only view filters. Renderer failure retains structural comparison and report preview fallbacks.
