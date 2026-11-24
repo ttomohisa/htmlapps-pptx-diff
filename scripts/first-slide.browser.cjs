@@ -3,6 +3,44 @@ const assert=require('node:assert/strict');
 const path=require('node:path');
 const {pathToFileURL}=require('node:url');
 const {chromium}=require('playwright');
+const {inflateSync}=require('node:zlib');
+
+// Sample actual Chromium pixels. Checking only .pptx-render-frame presence
+// does not catch a white structural fallback or a wrongly scaled render.
+function screenshotPixel(png,xFraction=.78,yFraction=.76){
+  let offset=8,width=0,height=0,colorType=0,bitDepth=0;const compressed=[];
+  while(offset+12<=png.length){
+    const length=png.readUInt32BE(offset),type=png.toString('ascii',offset+4,offset+8);
+    const data=png.subarray(offset+8,offset+8+length);offset+=12+length;
+    if(type==='IHDR'){width=data.readUInt32BE(0);height=data.readUInt32BE(4);bitDepth=data[8];colorType=data[9];}
+    if(type==='IDAT')compressed.push(data);
+    if(type==='IEND')break;
+  }
+  assert.equal(bitDepth,8,'screenshot uses 8-bit PNG');
+  assert.ok(colorType===2||colorType===6,'screenshot uses RGB(A) PNG');
+  const channels=colorType===6?4:3,stride=width*channels;
+  const source=inflateSync(Buffer.concat(compressed));
+  const x=Math.floor(width*xFraction),y=Math.floor(height*yFraction);
+  let pos=0,previous=Buffer.alloc(stride),current=Buffer.alloc(stride);
+  for(let line=0;line<=y;line++){
+    const filter=source[pos++];
+    for(let i=0;i<stride;i++){
+      const raw=source[pos++],left=i>=channels?current[i-channels]:0,up=previous[i],ul=i>=channels?previous[i-channels]:0;
+      let predictor=0;
+      if(filter===1)predictor=left;
+      else if(filter===2)predictor=up;
+      else if(filter===3)predictor=Math.floor((left+up)/2);
+      else if(filter===4){
+        const p=left+up-ul,dl=Math.abs(p-left),du=Math.abs(p-up),dul=Math.abs(p-ul);
+        predictor=dl<=du&&dl<=dul?left:du<=dul?up:ul;
+      }else assert.equal(filter,0,'supported PNG scanline filter');
+      current[i]=(raw+predictor)&255;
+    }
+    if(line!==y){[current,previous]=[previous,current];}
+  }
+  return [...current.subarray(x*channels,x*channels+3)];
+}
+
 
 function crc32(data) {
   let value=0xffffffff;
@@ -39,7 +77,7 @@ function slideXml(text) {
   return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <p:sld xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"
  xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">
- <p:cSld><p:spTree>
+ <p:cSld><p:bg><p:bgPr><a:solidFill><a:srgbClr val="15595C"/></a:solidFill><a:effectLst/></p:bgPr></p:bg><p:spTree>
   <p:nvGrpSpPr><p:cNvPr id="1" name="Group"/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr><p:grpSpPr/>
   <p:sp><p:nvSpPr><p:cNvPr id="2" name="Title"/><p:cNvSpPr txBox="1"/><p:nvPr/></p:nvSpPr>
    <p:spPr><a:xfrm><a:off x="600000" y="600000"/><a:ext cx="7900000" cy="1100000"/></a:xfrm>
@@ -165,6 +203,13 @@ async function main(){
           },side,{timeout:15000});
           assert.equal(await thumb.locator('.slide-canvas').count(),0,side+' uses a rendered slide rather than the white structural fallback');
           assert.ok(await thumb.locator('.pptx-render-frame').evaluate(frame=>frame.getBoundingClientRect().width>0&&frame.getBoundingClientRect().height>0),side+' preview fits inside the slide list thumbnail');
+          let rgb=[255,255,255];
+          for(let attempt=0;attempt<12;attempt++){
+            rgb=screenshotPixel(await thumb.screenshot());
+            if(rgb[0]<100&&rgb[1]<160&&rgb[2]<165)break;
+            await page.waitForTimeout(90);
+          }
+          assert.ok(rgb[0]<100&&rgb[1]<160&&rgb[2]<165,side+' thumbnail preserves the slide background, not a white fallback: '+rgb.join(','));
         }
         const firstDetails=page.locator('#matchList .semantic-details').first();
         assert.ok(await firstDetails.count(),'at least one slide has a change');
