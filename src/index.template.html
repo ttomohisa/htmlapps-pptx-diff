@@ -470,8 +470,7 @@
     .drop-zone.has-file { place-items:start; text-align:left; cursor:default; border-style:solid; background:var(--surface); }
     .drop-zone-icon { width:42px; height:42px; margin:0 auto 10px; display:grid; place-items:center; border-radius:12px; background:var(--accent-soft); color:var(--accent); }
     .drop-zone-icon svg { width:23px; height:23px; }
-    .drop-zone-title { margin:0; font-size:14px; font-weight:780; }
-    .drop-zone-note { margin:4px 0 12px; color:var(--muted); font-size:12px; }
+    .drop-zone-title { margin:0 0 12px; font-size:14px; font-weight:780; }
     .file-info { width:100%; min-width:0; }
     .selected-file { display:grid; grid-template-columns:minmax(0,156px) minmax(0,1fr); align-items:start; gap:12px; }
     .file-details { min-width:0; }
@@ -621,8 +620,11 @@
     .status-chip[data-status="removed"] { color:var(--danger); }
     .status-chip[data-status="review"] { color:#765d10; border-color:#e2c56b; background:#fffaf0; }
     .match-confidence { color:var(--muted); font-size:9px; line-height:1.35; }
-    .semantic-details { grid-column:1 / -1; margin:2px 0 0; border-top:1px solid var(--line); padding-top:10px; }
-    .semantic-details > summary { display:flex; align-items:center; gap:7px; width:max-content; max-width:100%; cursor:pointer; color:var(--accent); font-size:10px; font-weight:780; list-style:none; }
+    .semantic-details { grid-column:1 / -1; min-width:0; margin:0; padding:0; border:0; border-radius:0; background:transparent; box-shadow:none; }
+    .semantic-details > summary { display:flex; align-items:center; gap:7px; width:fit-content; max-width:100%; min-height:26px; padding:3px 0; cursor:pointer; color:var(--accent); font-size:10px; font-weight:780; list-style:none; overflow-wrap:anywhere; }
+    .semantic-details > summary:hover { text-decoration:underline; text-underline-offset:2px; }
+    .semantic-details > summary:focus-visible { outline:2px solid var(--focus); outline-offset:-2px; }
+    @media (max-width:760px) { .match-row .semantic-details > summary { min-height:44px; } }
     .semantic-details > summary::-webkit-details-marker { display:none; }
     .semantic-details > summary::before { content:''; width:6px; height:6px; border-right:1.5px solid currentColor; border-bottom:1.5px solid currentColor; transform:rotate(-45deg); transition:transform .15s ease; }
     .semantic-details[open] > summary::before { transform:rotate(45deg); }
@@ -956,12 +958,11 @@
       <div class="file-pair" id="filePair">
         <article class="file-panel">
           <div class="file-panel-head"><h3 class="file-panel-title" data-i18n="original">元のファイル</h3><span class="file-panel-index">1</span></div>
-          <div class="drop-zone" id="originalDrop" data-slot="original" aria-describedby="originalDropNote">
+          <div class="drop-zone" id="originalDrop" data-slot="original">
             <input class="sr-only" id="originalInput" type="file" accept=".pptx,application/vnd.openxmlformats-officedocument.presentationml.presentation">
             <div class="drop-empty" id="originalEmpty">
               <div class="drop-zone-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15.5V19h16v-3.5"/><path d="M12 4v10"/><path d="m8.5 10.5 3.5 3.5 3.5-3.5"/></svg></div>
               <p class="drop-zone-title" data-i18n="dropTitle">PPTXをここにドロップ</p>
-              <p class="drop-zone-note" id="originalDropNote" data-i18n="dropNote">またはファイルを選択</p>
               <button class="button" type="button" data-pick="original" data-i18n="chooseFile">ファイルを選択</button>
             </div>
             <div class="file-info" id="originalInfo" hidden>
@@ -987,12 +988,11 @@
 
         <article class="file-panel">
           <div class="file-panel-head"><h3 class="file-panel-title" data-i18n="revised">変更後のファイル</h3><span class="file-panel-index">2</span></div>
-          <div class="drop-zone" id="revisedDrop" data-slot="revised" aria-describedby="revisedDropNote">
+          <div class="drop-zone" id="revisedDrop" data-slot="revised">
             <input class="sr-only" id="revisedInput" type="file" accept=".pptx,application/vnd.openxmlformats-officedocument.presentationml.presentation">
             <div class="drop-empty" id="revisedEmpty">
               <div class="drop-zone-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15.5V19h16v-3.5"/><path d="M12 4v10"/><path d="m8.5 10.5 3.5 3.5 3.5-3.5"/></svg></div>
               <p class="drop-zone-title" data-i18n="dropTitle">PPTXをここにドロップ</p>
-              <p class="drop-zone-note" id="revisedDropNote" data-i18n="dropNote">またはファイルを選択</p>
               <button class="button" type="button" data-pick="revised" data-i18n="chooseFile">ファイルを選択</button>
             </div>
             <div class="file-info" id="revisedInfo" hidden>
@@ -1332,7 +1332,7 @@
           switchLanguage:'英語に切り替え', brandMeta:'PowerPoint比較 · スライドの差分', helpTitle:'使い方と注意事項', close:'閉じる',
           introTitle:'PowerPointの変更を、見た目まで比較', lead:'2つのPowerPointを比べて、スライドごとの変更点を確認できます。', localBadge:'完全ローカル処理',
           workspaceTitle:'比較する2つのファイル', workspaceBody:'変更前と変更後のPowerPointファイルを選んでください。',
-          original:'元のファイル', revised:'変更後のファイル', dropTitle:'PPTXをここにドロップ', dropNote:'またはファイルを選択', chooseFile:'ファイルを選択', replaceFile:'ファイルを変更', swapFiles:'ファイルを入れ替え', analyze:'スライドを比較', analyzing:'比較しています…',
+          original:'元のファイル', revised:'変更後のファイル', dropTitle:'PPTXをここにドロップ', chooseFile:'ファイルを選択', replaceFile:'ファイルを変更', swapFiles:'ファイルを入れ替え', analyze:'スライドを比較', analyzing:'比較しています…',
           statusChoose:'比較する2つのPPTXを選択してください。', statusOne:'もう一方のPPTXを選択してください。', statusReady:'2つのファイルを比較できます。', statusProcessing:'PPTXを解析しています', statusMatching:'対応するスライドを探しています', statusSemantic:'変更内容を確認しています', statusDone:'比較が完了しました。文章・数値・画像・配置・書式・発表者ノートの変更を確認できます。',
           inspectionTitle:'比較結果', inspectionLead:'対応するスライドを見つけ、内容差分と見た目の違いを同時に確認できます。', resultPair:'{original} → {revised}', slides:'スライド', textElements:'テキスト', objects:'オブジェクト', noTitle:'（タイトルなし）', structureDetails:'解析したスライド構造を見る',
           summaryUnchanged:'変更なし', summaryChanged:'変更あり', summaryAdded:'追加', summaryRemoved:'削除', summaryMoved:'移動', slideSummaryLabel:'スライドの集計', changeBreakdownTitle:'変更内訳', breakdownHint:'変更要素の件数です。同じ変更が複数の項目に含まれる場合があります。', changeUnit:'件', slideUnit:'枚', semanticText:'文章変更', semanticNumber:'数値変更', semanticObject:'オブジェクト', semanticImage:'画像', semanticLayout:'配置', semanticFormatting:'書式', semanticTextNote:'変更されたテキスト要素', semanticNumberNote:'変更された数値', semanticObjectNote:'追加・削除・要確認', semanticImageNote:'追加・削除・差し替え', semanticLayoutNote:'位置・サイズ・回転', semanticFormattingNote:'文字・図形の基本書式', semanticNotes:'発表者ノート', semanticNotesNote:'ノート本文の追加・削除・変更', filterLabel:'表示（スライド枚数）', searchLabel:'スライドを検索', searchPlaceholder:'タイトル・本文で検索', searchResult:'{count}枚のスライド', searchEmpty:'見つかりませんでした。検索語や表示条件を変えてください。', filterAll:'すべて', filterText:'文章変更', filterNumber:'数値変更', filterObject:'オブジェクト', filterImage:'画像', filterLayout:'配置', filterFormatting:'書式', filterNotes:'発表者ノート', changedOnly:'変更されたスライドのみ', filterEmpty:'この条件に該当する変更はありません。', showSemantic:'変更内容を見る', textChanged:'変更', textAdded:'追加', textRemoved:'削除', numberChanged:'数値変更', notesChanged:'変更', notesAdded:'追加', notesRemoved:'削除', notesTitle:'発表者ノート', beforeLabel:'元', afterLabel:'変更後', emptyText:'（なし）', objectTitle:'テキスト {index}', objectAdded:'追加', objectRemoved:'削除', objectReview:'要確認', imageReplaced:'差し替え', imageLayout:'配置変更', objectAddedNote:'変更後の資料に追加されたオブジェクトです。', objectRemovedNote:'元の資料から削除されたオブジェクトです。', imageReplacedNote:'画像データが変更されています。', imageLayoutNote:'画像データ自体は同じですが、位置またはサイズが変更されています。', unsupportedChangeNote:'このオブジェクトに変更がありますが、詳細な比較にはまだ対応していません。', resourceOriginal:'元', resourceRevised:'変更後', resourceSame:'同じ画像データ', typeShape:'図形', typeImage:'画像', typeConnector:'コネクタ', typeGroup:'グループ', typeTable:'表', typeChart:'グラフ', typeGraphicFrame:'グラフィック', typeUnknown:'オブジェクト', layoutChanged:'配置変更', formattingChanged:'書式変更', positionX:'横位置', positionY:'縦位置', sizeWidth:'幅', sizeHeight:'高さ', rotation:'回転', fontFamily:'フォント', fontSize:'文字サイズ', fontBold:'太字', fontItalic:'斜体', textColor:'文字色', fillColor:'塗り', lineColor:'線色', lineWidth:'線の太さ', notSpecified:'未指定', mixedValue:'複数の書式', enabledValue:'あり', disabledValue:'なし', noneValue:'なし', gradientValue:'グラデーション', patternValue:'パターン', compareSettings:'比較設定', layoutToleranceLabel:'微小な位置・サイズ差', layoutToleranceAuto:'自動（約1pt以下を無視）', layoutToleranceStrict:'厳密に比較', layoutTolerance1px:'1px相当以下を無視', layoutTolerance2px:'2px相当以下を無視',
@@ -1351,7 +1351,7 @@
           switchLanguage:'Switch to Japanese', brandMeta:'PowerPoint comparison · Slide differences', helpTitle:'How to use & notes', close:'Close',
           introTitle:'Compare PowerPoint revisions down to layout and formatting', lead:'Compare two PowerPoint files and see what changed on each slide.', localBadge:'Fully local processing',
           workspaceTitle:'Choose two files', workspaceBody:'Choose the original and revised PowerPoint files.',
-          original:'Original', revised:'Revised', dropTitle:'Drop a PPTX here', dropNote:'or choose a file', chooseFile:'Choose file', replaceFile:'Replace file', swapFiles:'Swap files', analyze:'Compare slides', analyzing:'Comparing…',
+          original:'Original', revised:'Revised', dropTitle:'Drop a PPTX here', chooseFile:'Choose file', replaceFile:'Replace file', swapFiles:'Swap files', analyze:'Compare slides', analyzing:'Comparing…',
           statusChoose:'Choose two PPTX files to compare.', statusOne:'Choose the other PPTX file.', statusReady:'Both files are ready to compare.', statusProcessing:'Analyzing PPTX files', statusMatching:'Matching corresponding slides', statusSemantic:'Reviewing semantic changes', statusDone:'Comparison complete. Review text, number, object, image, layout, formatting, and speaker-note changes below.',
           inspectionTitle:'Comparison results', inspectionLead:'Matched slides let you review both semantic differences and the visual result together.', resultPair:'{original} → {revised}', slides:'Slides', textElements:'Text', objects:'Objects', noTitle:'(Untitled)', structureDetails:'View parsed slide structure',
           summaryUnchanged:'Unchanged', summaryChanged:'Changed', summaryAdded:'Added', summaryRemoved:'Removed', summaryMoved:'Moved', slideSummaryLabel:'Slide summary', changeBreakdownTitle:'Change breakdown', breakdownHint:'Counts of changed elements. Some changes appear in more than one category.', changeUnit:'items', slideUnit:'slides', semanticText:'Text changes', semanticNumber:'Number changes', semanticObject:'Objects', semanticImage:'Images', semanticLayout:'Layout', semanticFormatting:'Formatting', semanticTextNote:'Changed text elements', semanticNumberNote:'Changed numbers', semanticObjectNote:'Added, removed, or review', semanticImageNote:'Added, removed, or replaced', semanticLayoutNote:'Position, size, and rotation', semanticFormattingNote:'Basic text and shape styles', semanticNotes:'Speaker notes', semanticNotesNote:'Added, removed, or changed note text', filterLabel:'Show (slides)', searchLabel:'Find slides', searchPlaceholder:'Search titles or slide text', searchResult:'{count} slides', searchEmpty:'No matching slides. Try different search terms or filters.', filterAll:'All', filterText:'Text changes', filterNumber:'Number changes', filterObject:'Objects', filterImage:'Images', filterLayout:'Layout', filterFormatting:'Formatting', filterNotes:'Speaker notes', changedOnly:'Changed slides only', filterEmpty:'No changes match this filter.', showSemantic:'View changes', textChanged:'Changed', textAdded:'Added', textRemoved:'Removed', numberChanged:'Number changes', notesChanged:'Changed', notesAdded:'Added', notesRemoved:'Removed', notesTitle:'Speaker notes', beforeLabel:'Original', afterLabel:'Revised', emptyText:'(none)', objectTitle:'Text {index}', objectAdded:'Added', objectRemoved:'Removed', objectReview:'Review', imageReplaced:'Replaced', imageLayout:'Layout changed', objectAddedNote:'This object was added in the revised presentation.', objectRemovedNote:'This object was removed from the original presentation.', imageReplacedNote:'The image data changed.', imageLayoutNote:'The image data is the same, but its position or size changed.', unsupportedChangeNote:'This object changed, but detailed comparison is not supported yet.', resourceOriginal:'Original', resourceRevised:'Revised', resourceSame:'Same image data', typeShape:'Shape', typeImage:'Image', typeConnector:'Connector', typeGroup:'Group', typeTable:'Table', typeChart:'Chart', typeGraphicFrame:'Graphic', typeUnknown:'Object', layoutChanged:'Layout changed', formattingChanged:'Formatting changed', positionX:'Horizontal position', positionY:'Vertical position', sizeWidth:'Width', sizeHeight:'Height', rotation:'Rotation', fontFamily:'Font', fontSize:'Font size', fontBold:'Bold', fontItalic:'Italic', textColor:'Text color', fillColor:'Fill', lineColor:'Line color', lineWidth:'Line width', notSpecified:'Not specified', mixedValue:'Mixed formatting', enabledValue:'On', disabledValue:'Off', noneValue:'None', gradientValue:'Gradient', patternValue:'Pattern', compareSettings:'Comparison settings', layoutToleranceLabel:'Tiny position / size differences', layoutToleranceAuto:'Auto (ignore about 1 pt or less)', layoutToleranceStrict:'Compare exactly', layoutTolerance1px:'Ignore about 1 px or less', layoutTolerance2px:'Ignore about 2 px or less',
@@ -2515,11 +2515,30 @@
         else {path('M7 7h10l-2.7-2.7');path('M17 17H7l2.7 2.7');}
         wrap.append(svg); return wrap;
       }
-      const matchThumbs={observer:null,queue:[],frame:0,token:0,handles:new Map(),limit:16};
+      const matchThumbs={observer:null,resizeObserver:null,queue:[],frame:0,token:0,handles:new Map(),limit:16};
+      function fitMatchThumbnail(thumb) {
+        const record=matchThumbs.handles.get(thumb);
+        if(!record||!thumb.isConnected||thumb.clientWidth<=0||thumb.clientHeight<=0)return;
+        fitRenderFrame(thumb,record.frame,record.handle.element);
+      }
+      function observeMatchThumbnailSize(thumb) {
+        // Mode switches change the list from 94px thumbnails to two wider
+        // columns without a window resize. Refitting only on window resize
+        // leaves the already rendered first pair at its former scale.
+        if(typeof ResizeObserver!=='function')return;
+        if(!matchThumbs.resizeObserver)matchThumbs.resizeObserver=new ResizeObserver(entries=>{
+          for(const entry of entries)fitMatchThumbnail(entry.target);
+        });
+        matchThumbs.resizeObserver.observe(thumb);
+      }
+      function refitMatchThumbnails() {
+        for(const thumb of matchThumbs.handles.keys())fitMatchThumbnail(thumb);
+      }
       function disposeMatchThumbnail(thumb,restore=false) {
         const record=matchThumbs.handles.get(thumb);
         if(!record)return;
         matchThumbs.handles.delete(thumb);
+        matchThumbs.resizeObserver?.unobserve(thumb);
         try{record.handle.dispose?.();}catch(error){console.warn('Thumbnail cleanup',error);}
         if(restore&&thumb.isConnected){
           const badge=thumb.querySelector('.match-thumb-index');
@@ -2531,6 +2550,7 @@
       function clearMatchThumbnails() {
         matchThumbs.token++;
         matchThumbs.observer?.disconnect();matchThumbs.observer=null;
+        matchThumbs.resizeObserver?.disconnect();matchThumbs.resizeObserver=null;
         if(matchThumbs.frame)cancelAnimationFrame(matchThumbs.frame);
         matchThumbs.frame=0;matchThumbs.queue.length=0;
         for(const thumb of [...matchThumbs.handles.keys()])disposeMatchThumbnail(thumb);
@@ -2548,7 +2568,7 @@
         const rendererSlide=presentation?.slides?.[Math.max(0,slide.index-1)];
         if(!module||!rendererSlide)return;
         const token=matchThumbs.token;
-        const current=()=>token===matchThumbs.token&&thumb.isConnected&&matchThumbs.handles.has(thumb);
+        const current=()=>token===matchThumbs.token&&thumb.isConnected&&matchThumbs.handles.get(thumb)?.handle===handle;
         let handle=null;
         try{
           handle=module.renderSlide(presentation,rendererSlide,{
@@ -2558,7 +2578,8 @@
           const frame=document.createElement('div');frame.className='pptx-render-frame';frame.append(handle.element);
           thumb.replaceChildren(frame,badge);
           matchThumbs.handles.set(thumb,{handle,frame,slide});
-          const fit=()=>{if(current())fitRenderFrame(thumb,frame,handle.element);};
+          observeMatchThumbnailSize(thumb);
+          const fit=()=>{if(current())fitMatchThumbnail(thumb);};
           requestAnimationFrame(fit);
           Promise.resolve(handle.ready).then(()=>requestAnimationFrame(fit)).catch(error=>{
             if(!current())return;
@@ -3517,7 +3538,7 @@
         clearTimeout(searchDelay);
         searchDelay=setTimeout(()=>{if(state.matching)renderMatching(state.matching);},100);
       });
-      document.querySelectorAll('[data-visual-mode]').forEach(button=>button.addEventListener('click',()=>{ state.visualMode=button.dataset.visualMode; if(state.matching) renderVisualCompare(state.matching); }));
+      document.querySelectorAll('[data-visual-mode]').forEach(button=>button.addEventListener('click',()=>{ state.visualMode=button.dataset.visualMode; if(state.matching) renderVisualCompare(state.matching); requestAnimationFrame(refitMatchThumbnails); }));
       bindVisualPan();
       $('#visualZoomOut').addEventListener('click',()=>moveVisualZoom(-1));
       $('#visualZoomIn').addEventListener('click',()=>moveVisualZoom(1));
@@ -3530,7 +3551,7 @@
         const layer=$('#visualCompareStage .visual-pane[data-overlay-top-layer="true"]');
         if(layer)layer.style.opacity=String(state.visualOverlayOpacity/100);
       });
-      $('#reviewListTab').addEventListener('click',()=>setReviewPane('list'));
+      $('#reviewListTab').addEventListener('click',()=>{setReviewPane('list');requestAnimationFrame(refitMatchThumbnails);});
       $('#reviewPreviewTab').addEventListener('click',()=>setReviewPane('preview'));
       for(const tab of [$('#reviewListTab'),$('#reviewPreviewTab')]){
         tab.addEventListener('keydown',event=>{
@@ -3543,9 +3564,7 @@
       }
       let visualViewportResizeRequest=0;
       window.addEventListener('resize',()=>{
-        for(const [thumb,record] of matchThumbs.handles){
-          if(thumb.isConnected)fitRenderFrame(thumb,record.frame,record.handle.element);
-        }
+        refitMatchThumbnails();
         if($('#visualCompare').hidden)return;
         cancelAnimationFrame(visualViewportResizeRequest);
         visualViewportResizeRequest=requestAnimationFrame(()=>{
