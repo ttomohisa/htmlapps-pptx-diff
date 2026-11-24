@@ -149,6 +149,8 @@ async function main(){
         await preview('revised','second.pptx','FIRST_SLIDE_BETA');
         await expectThumbnail(page,'revised');
         for(const slot of ['original','revised']){
+          // The drop-zone background transitions for 160ms after selection.
+          await page.waitForFunction(slot=>getComputedStyle(document.getElementById(slot+'Drop')).backgroundColor==='rgba(0, 0, 0, 0)',slot,{timeout:5000});
           const style=await page.locator('#'+slot+'Drop').evaluate(el=>{const s=getComputedStyle(el);return [s.borderTopWidth,s.minHeight,s.backgroundColor];});
           assert.deepEqual(style,['0px','0px','rgba(0, 0, 0, 0)'],'selected file is not framed or forced to empty-drop height');
         }
