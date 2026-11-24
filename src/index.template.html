@@ -2515,12 +2515,67 @@
         else {path('M7 7h10l-2.7-2.7');path('M17 17H7l2.7 2.7');}
         wrap.append(svg); return wrap;
       }
-      const matchThumbs={observer:null,queue:[],frame:0,token:0};
+      const matchThumbs={observer:null,queue:[],frame:0,token:0,handles:new Map(),limit:16};
+      function disposeMatchThumbnail(thumb,restore=false) {
+        const record=matchThumbs.handles.get(thumb);
+        if(!record)return;
+        matchThumbs.handles.delete(thumb);
+        try{record.handle.dispose?.();}catch(error){console.warn('Thumbnail cleanup',error);}
+        if(restore&&thumb.isConnected){
+          const badge=thumb.querySelector('.match-thumb-index');
+          thumb.replaceChildren(createSlideCanvas(record.slide),badge);
+          thumb.dataset.thumbPending='true';
+          matchThumbs.observer?.observe(thumb);
+        }
+      }
       function clearMatchThumbnails() {
         matchThumbs.token++;
         matchThumbs.observer?.disconnect();matchThumbs.observer=null;
         if(matchThumbs.frame)cancelAnimationFrame(matchThumbs.frame);
         matchThumbs.frame=0;matchThumbs.queue.length=0;
+        for(const thumb of [...matchThumbs.handles.keys()])disposeMatchThumbnail(thumb);
+      }
+      function renderMatchThumbnail(thumb) {
+        const slide=thumb._slide,side=thumb.dataset.thumbSide;
+        if(!slide)return;
+        const badge=thumb.querySelector('.match-thumb-index');
+        const fallback=()=>thumb.replaceChildren(createSlideCanvas(slide),badge);
+        fallback();
+        // Basic object previews omit slide-master backgrounds. Reuse the
+        // already parsed renderer presentation so list thumbnails match the
+        // larger visual comparison, including its background and media.
+        const module=state.rendererModule,presentation=state.rendererPresentations?.[side];
+        const rendererSlide=presentation?.slides?.[Math.max(0,slide.index-1)];
+        if(!module||!rendererSlide)return;
+        const token=matchThumbs.token;
+        const current=()=>token===matchThumbs.token&&thumb.isConnected&&matchThumbs.handles.has(thumb);
+        let handle=null;
+        try{
+          handle=module.renderSlide(presentation,rendererSlide,{
+            mediaUrlCache:state.rendererMediaCaches[side],pdfjs:false,
+            onNodeError:(nodeId,error)=>console.warn('Slide list thumbnail node',nodeId,error)
+          });
+          const frame=document.createElement('div');frame.className='pptx-render-frame';frame.append(handle.element);
+          thumb.replaceChildren(frame,badge);
+          matchThumbs.handles.set(thumb,{handle,frame,slide});
+          const fit=()=>{if(current())fitRenderFrame(thumb,frame,handle.element);};
+          requestAnimationFrame(fit);
+          Promise.resolve(handle.ready).then(()=>requestAnimationFrame(fit)).catch(error=>{
+            if(!current())return;
+            console.warn('Slide list thumbnail fallback',error);
+            disposeMatchThumbnail(thumb);fallback();
+          });
+          // Bound memory when browsing decks with many slides; evicted items
+          // re-enter the lazy observer and render again if scrolled back to.
+          while(matchThumbs.handles.size>matchThumbs.limit){
+            const oldest=matchThumbs.handles.keys().next().value;
+            disposeMatchThumbnail(oldest,true);
+          }
+        }catch(error){
+          console.warn('Slide list thumbnail fallback',error);
+          if(handle)try{handle.dispose?.();}catch{}
+          fallback();
+        }
       }
       function flushMatchThumbnails() {
         matchThumbs.frame=0;
@@ -2528,12 +2583,7 @@
         while(matchThumbs.queue.length&&rendered<2){
           const thumb=matchThumbs.queue.shift();
           if(!thumb.isConnected||thumb.dataset.thumbToken!==String(matchThumbs.token))continue;
-          const slide=thumb._slide;
-          if(!slide)continue;
-          try{
-            const badge=thumb.querySelector('.match-thumb-index');
-            thumb.replaceChildren(createSlideCanvas(slide),badge);
-          }catch(error){console.warn('Slide thumbnail fallback',error);}
+          try{renderMatchThumbnail(thumb);}catch(error){console.warn('Slide list thumbnail fallback',error);}
           rendered++;
         }
         if(matchThumbs.queue.length)matchThumbs.frame=requestAnimationFrame(flushMatchThumbnails);
@@ -2556,13 +2606,13 @@
           thumbs.forEach(thumb=>matchThumbs.observer.observe(thumb));
         }else thumbs.forEach(enqueue);
       }
-      function slideCell(slide) {
+      function slideCell(slide,side) {
         const cell=document.createElement('div');cell.className='match-slide'+(slide?'':' empty');
         const index=document.createElement('div');index.className='match-thumb';
         if(slide){
           const placeholder=document.createElement('span');placeholder.className='match-thumb-placeholder';placeholder.textContent='…';
           const badge=document.createElement('span');badge.className='match-thumb-index';badge.textContent=String(slide.index);
-          index.append(placeholder,badge);index._slide=slide;index.dataset.thumbPending='true';
+          index.append(placeholder,badge);index._slide=slide;index.dataset.thumbSide=side;index.dataset.thumbPending='true';
           index.style.aspectRatio=`${slide.slideWidth||12192000} / ${slide.slideHeight||6858000}`;
         }else {index.textContent='—';}
         index.setAttribute('aria-hidden','true');
@@ -3264,7 +3314,7 @@
           const item=document.createElement('div'); item.className='match-row'; item.dataset.review=String(Boolean(row.reviewRequired)); item.dataset.pairId=String(row.pairId); const comparable=Boolean(row.original||row.revised); if(comparable){ item.classList.add('is-selectable'); item.tabIndex=0; item.setAttribute('role','button'); item.setAttribute('aria-label',(row.original?formatPreviewSlideTitle(row.original):t('missingOriginal'))+' / '+(row.revised?formatPreviewSlideTitle(row.revised):t('missingRevised'))); if(selectedRow&&selectedRow.pairId===row.pairId){ item.classList.add('is-selected'); item.setAttribute('aria-current','true'); } item.addEventListener('click',event=>{ if(event.target.closest('.semantic-details,button,a,input,select,textarea,label,summary')) return; selectVisualPair(row.pairId); }); item.addEventListener('keydown',event=>{ if(event.target!==item||!['Enter',' '].includes(event.key)) return; event.preventDefault(); selectVisualPair(row.pairId); }); } const desc=statusDescriptor(row), relation=document.createElement('div'); relation.className='match-relation';
           const chip=document.createElement('span'); chip.className='status-chip'; chip.dataset.status=desc.status; chip.append(statusIcon(desc.status)); const label=document.createElement('span'); label.textContent=t(desc.key); chip.append(label);
           const confidence=document.createElement('span'); confidence.className='match-confidence'; const confLabel=row.original&&row.revised ? t(row.confidence==='high'?'confidenceHigh':row.confidence==='medium'?'confidenceMedium':'confidenceLow') : ''; confidence.textContent=[reasonFor(row),confLabel].filter(Boolean).join(' · ');
-          relation.append(chip,confidence); item.append(slideCell(row.original),relation,slideCell(row.revised)); const details=semanticDetails(row,state.diffFilter); if(details) item.append(details); list.append(item);
+          relation.append(chip,confidence); item.append(slideCell(row.original,'original'),relation,slideCell(row.revised,'revised')); const details=semanticDetails(row,state.diffFilter); if(details) item.append(details); list.append(item);
         });
         list.hidden=visible===0; $('#diffEmpty').hidden=visible!==0;
         $('#diffEmpty').textContent=t(state.searchTerms?.length?'searchEmpty':'filterEmpty');
