@@ -18,6 +18,7 @@
 - Render slide-list thumbnails with the local presentation renderer, preserving backgrounds; refit existing thumbnails when switching layouts, resizing, or revealing the list to avoid white margins.
 - Remove the redundant file-selection hint and use a compact borderless change-details disclosure in the slide list.
 - Flatten the selected-file layout, comparison breakdown, preview chrome and structural inspection: remove nested cards and decorative shadows, keep the empty drop target and actual slide borders, and arrange the four structural metrics in a single row.
+- Prioritize the visual comparison on all screen sizes; place the summary and change breakdown below it, group the search/filter controls, and use subtle unframed file groups without redundant slot numbers.
 - Automatically package and publish a versioned Git tag and GitHub Release after a merged PR passes the main-branch build, with release asset checksums, duplicate protection, and draft recovery.
 
 
