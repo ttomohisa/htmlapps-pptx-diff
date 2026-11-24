@@ -1,0 +1,39 @@
+name: Temporary PR screenshot refresh
+on:
+  push:
+    branches:
+      - fix/pptx-diff-semantic-audit-20261122
+permissions:
+  contents: write
+jobs:
+  screenshots:
+    if: github.repository == 'ttomohisa/htmlapps-pptx-diff' && github.ref == 'refs/heads/fix/pptx-diff-semantic-audit-20261122'
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
+        with:
+          node-version: 24
+      - name: Build verified app and capture screenshots
+        shell: pwsh
+        run: |
+          ./scripts/check-repository.ps1
+          $testTools = Join-Path $env:RUNNER_TEMP "mobile-layout-tests"
+          npm install --prefix $testTools --ignore-scripts --no-audit --no-fund --package-lock=false playwright@1.58.2
+          if ($LASTEXITCODE -ne 0) { throw "Playwright install failed" }
+          $env:NODE_PATH = Join-Path $testTools "node_modules"
+          & (Join-Path $testTools "node_modules/.bin/playwright.cmd") install chromium
+          if ($LASTEXITCODE -ne 0) { throw "Chromium install failed" }
+          node scripts/capture-readme-screenshots.cjs
+          if ($LASTEXITCODE -ne 0) { throw "Screenshot capture failed" }
+      - name: Synchronize screenshots only
+        shell: bash
+        run: |
+          set -euo pipefail
+          git add -- assets/screenshot.png assets/screenshot-en.png
+          if git diff --cached --quiet; then exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "docs: refresh bilingual release screenshots"
+          git push origin HEAD:refs/heads/fix/pptx-diff-semantic-audit-20261122
