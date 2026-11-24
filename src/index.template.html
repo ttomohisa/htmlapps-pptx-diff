@@ -459,11 +459,11 @@
     .help-features li { margin-bottom:10px; }
     .help-features strong { display:block; font-weight:750; }
     .help-features span { display:block; }
-    .file-pair { display:grid; grid-template-columns:minmax(0,1fr) auto minmax(0,1fr); gap:12px; align-items:stretch; }
-    .file-panel { min-width:0; }
-    .file-panel-head { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:0 0 9px; }
-    .file-panel-title { margin:0; font-size:14px; font-weight:780; }
-    .file-panel-index { color:var(--muted); font-size:11px; font-weight:750; font-variant-numeric:tabular-nums; }
+    .file-pair { display:grid; grid-template-columns:minmax(0,1fr) auto minmax(0,1fr); gap:14px; align-items:stretch; max-width:960px; margin:0 auto; }
+    .file-panel { min-width:0; padding:12px 14px; }
+    .file-panel:has(.drop-zone.has-file) { background:var(--surface-muted); border-radius:8px; }
+    .file-panel-head { display:flex; align-items:center; gap:8px; padding:0 0 10px; }
+    .file-panel-title { margin:0; font-size:13px; font-weight:780; }
     .drop-zone { margin:0; min-height:168px; display:grid; place-items:center; padding:18px; border:1.5px dashed var(--line-strong); border-radius:8px; background:var(--surface-muted); text-align:center; cursor:pointer; transition:border-color .16s ease, background .16s ease, transform .16s ease; }
     .drop-zone:hover, .drop-zone.dragover { border-color:var(--accent); background:var(--accent-soft); }
     .drop-zone:active { transform:translateY(1px); }
@@ -474,7 +474,7 @@
     .drop-zone-icon svg { width:23px; height:23px; }
     .drop-zone-title { margin:0 0 12px; font-size:14px; font-weight:780; }
     .file-info { width:100%; min-width:0; }
-    .selected-file { display:grid; grid-template-columns:minmax(0,156px) minmax(0,1fr); align-items:start; gap:12px; }
+    .selected-file { display:grid; grid-template-columns:minmax(0,156px) minmax(0,1fr); align-items:center; gap:14px; }
     .file-details { min-width:0; }
     .file-thumbnail { position:relative; width:100%; aspect-ratio:16 / 9; display:grid; place-items:center; overflow:hidden; border:1px solid var(--line); border-radius:8px; background:#fff; container-type:size; }
     .file-thumbnail .slide-canvas { width:100%; height:100%; aspect-ratio:auto !important; box-shadow:none; border:0; border-radius:0; }
@@ -489,14 +489,21 @@
     .swap-column { display:grid; place-items:center; }
     .swap-button { width:42px; height:42px; padding:0; border-radius:12px; }
     .swap-button svg { width:19px; height:19px; }
-    .analysis-action { display:flex; align-items:center; justify-content:center; gap:12px; padding:18px 0 4px; }
+    .analysis-action { display:flex; align-items:center; justify-content:center; gap:12px; padding:16px 0 0; }
     .analysis-action .button.primary { min-width:min(100%,260px); display:inline-flex; align-items:center; justify-content:center; gap:8px; }
-    .analysis-status { margin:10px 0 0; display:flex; align-items:center; gap:8px; padding:4px 0; color:var(--muted); font-size:12px; }
+    .analysis-status { margin:7px auto 0; max-width:960px; display:flex; align-items:center; justify-content:center; gap:8px; padding:4px 0; color:var(--muted); font-size:12px; text-align:center; }
     .analysis-status[data-tone="processing"]::before { content:""; width:14px; height:14px; flex:0 0 auto; border:2px solid color-mix(in srgb,var(--accent) 24%,transparent); border-top-color:var(--accent); border-radius:50%; animation:spin .8s linear infinite; }
     .analysis-status[data-tone="processing"], .analysis-status[data-tone="success"] { color:var(--accent); }
-    .analysis-status[data-tone="error"] { color:var(--danger); border-left:2px solid var(--danger); padding-left:10px; }
+    .analysis-status[data-tone="error"] { color:var(--danger); border-left:2px solid var(--danger); padding-left:10px; justify-content:flex-start; text-align:left; }
     .result-shell { margin-top:18px; scroll-margin-top:76px; }
-    .result-head { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; margin-bottom:12px; }
+    .result-head { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; margin-bottom:16px; padding-bottom:12px; border-bottom:1px solid var(--line); }
+    .review-tools { display:grid; gap:8px; padding:12px 14px 8px; margin:0 0 16px; background:var(--surface-muted); border-radius:8px; }
+    .review-tools .slide-search-wrap,.review-tools .diff-toolbar,.review-tools .compare-settings { margin:0; }
+    .review-tools .diff-toolbar { justify-content:flex-start; }
+    .result-overview { margin-top:24px; padding-top:18px; border-top:1px solid var(--line); }
+    .result-overview > h3 { margin:0 0 10px; font-size:15px; font-weight:780; }
+    .result-overview .match-summary { margin-top:0; }
+    .result-overview .change-breakdown { margin-bottom:0; }
     .result-head h2 { margin:0; font-size:19px; }
     .result-head p { margin:4px 0 0; color:var(--muted); font-size:12px; }
     .result-file-pair { max-width:760px; overflow-wrap:anywhere; font-weight:700; color:var(--text)!important; }
@@ -849,7 +856,11 @@
       .page-intro .local-badge { display:none; }
       .language-button, .header-icon-button { min-width:44px; min-height:44px; display:grid; place-items:center; padding:0; }
       .local-badge { margin-top:12px; }
-      .file-pair { grid-template-columns:1fr; }
+      .file-pair { grid-template-columns:1fr; gap:4px; }
+      .file-panel { padding:10px 12px; }
+      .review-tools { padding:10px 10px 6px; }
+      .result-head { gap:10px; }
+      .result-overview { margin-top:18px; padding-top:14px; }
       .swap-column { min-height:44px; }
       .swap-button { transform:rotate(90deg); width:44px; height:44px; }
       .diff-filter, .changed-only-button, .visual-mode, .overlay-order-button, .visual-highlight-toggle { min-height:44px; padding-block:8px; }
@@ -971,7 +982,7 @@
 
       <div class="file-pair" id="filePair">
         <article class="file-panel">
-          <div class="file-panel-head"><h3 class="file-panel-title" data-i18n="original">元のファイル</h3><span class="file-panel-index">1</span></div>
+          <div class="file-panel-head"><h3 class="file-panel-title" data-i18n="original">元のファイル</h3></div>
           <div class="drop-zone" id="originalDrop" data-slot="original">
             <input class="sr-only" id="originalInput" type="file" accept=".pptx,application/vnd.openxmlformats-officedocument.presentationml.presentation">
             <div class="drop-empty" id="originalEmpty">
@@ -1001,7 +1012,7 @@
         </div>
 
         <article class="file-panel">
-          <div class="file-panel-head"><h3 class="file-panel-title" data-i18n="revised">変更後のファイル</h3><span class="file-panel-index">2</span></div>
+          <div class="file-panel-head"><h3 class="file-panel-title" data-i18n="revised">変更後のファイル</h3></div>
           <div class="drop-zone" id="revisedDrop" data-slot="revised">
             <input class="sr-only" id="revisedInput" type="file" accept=".pptx,application/vnd.openxmlformats-officedocument.presentationml.presentation">
             <div class="drop-empty" id="revisedEmpty">
@@ -1041,16 +1052,11 @@
           </button>
         </div>
       </div>
-      <div class="match-summary" id="matchSummary" role="group" data-i18n-aria-label="slideSummaryLabel" aria-label="スライドの集計"></div>
-      <section class="change-breakdown" aria-labelledby="changeBreakdownTitle">
-        <h3 id="changeBreakdownTitle" data-i18n="changeBreakdownTitle">変更内訳</h3>
-        <p class="breakdown-hint" data-i18n="breakdownHint">変更した要素の件数です。複数の項目に数えられる変更もあります。</p>
-        <div class="semantic-summary" id="semanticSummary" role="list"></div>
-      </section>
       <div class="review-banner" id="reviewBanner" hidden>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 2.8 19h18.4L12 3Z"/><path d="M12 9v4"/><path d="M12 16.8h.01"/></svg>
         <span id="reviewBannerText"></span>
       </div>
+      <div class="review-tools">
       <div class="slide-search-wrap">
         <label for="slideSearch" class="slide-search-label" data-i18n="searchLabel">スライドを検索</label>
         <input id="slideSearch" class="slide-search" type="search" autocomplete="off" spellcheck="false" placeholder="タイトルや本文で検索" data-i18n-placeholder="searchPlaceholder" aria-describedby="searchResultCount">
@@ -1084,10 +1090,11 @@
           </select>
         </div>
       </details>
-      <div class="review-layout" id="reviewLayout" data-pane="list">
+      </div>
+      <div class="review-layout" id="reviewLayout" data-pane="preview">
         <div class="review-tabs" role="tablist" data-i18n-aria-label="reviewViewsLabel" aria-label="表示を切り替え">
-          <button class="review-tab" type="button" id="reviewListTab" role="tab" aria-controls="matchList" aria-selected="true" tabindex="0" data-i18n="reviewListTab">スライド一覧</button>
-          <button class="review-tab" type="button" id="reviewPreviewTab" role="tab" aria-controls="visualCompare" aria-selected="false" tabindex="-1" data-i18n="reviewPreviewTab">プレビュー</button>
+          <button class="review-tab" type="button" id="reviewListTab" role="tab" aria-controls="matchList" aria-selected="false" tabindex="-1" data-i18n="reviewListTab">スライド一覧</button>
+          <button class="review-tab" type="button" id="reviewPreviewTab" role="tab" aria-controls="visualCompare" aria-selected="true" tabindex="0" data-i18n="reviewPreviewTab">プレビュー</button>
         </div>
       <section class="visual-compare" id="visualCompare" hidden role="tabpanel" aria-labelledby="visualCompareTitle">
         <div class="visual-compare-head">
@@ -1150,6 +1157,15 @@
       <div class="match-list" id="matchList" role="tabpanel" aria-labelledby="reviewListTab"></div>
       <p class="diff-empty" id="diffEmpty" hidden data-i18n="filterEmpty">この条件に該当する変更はありません。</p>
       </div>
+      <section class="result-overview" aria-labelledby="slideSummaryTitle">
+        <h3 id="slideSummaryTitle" data-i18n="slideSummaryLabel">スライドの集計</h3>
+      <div class="match-summary" id="matchSummary" role="group" data-i18n-aria-label="slideSummaryLabel" aria-label="スライドの集計"></div>
+      <section class="change-breakdown" aria-labelledby="changeBreakdownTitle">
+        <h3 id="changeBreakdownTitle" data-i18n="changeBreakdownTitle">変更内訳</h3>
+        <p class="breakdown-hint" data-i18n="breakdownHint">変更した要素の件数です。複数の項目に数えられる変更もあります。</p>
+        <div class="semantic-summary" id="semanticSummary" role="list"></div>
+      </section>
+      </section>
       <details class="structure-details">
         <summary data-i18n="structureDetails">解析したスライド構造を見る</summary>
         <div class="result-columns" id="resultColumns"></div>
@@ -1401,7 +1417,7 @@
         selectedPairId: null,
         visualMode: 'side',
         visualZoom: 100,
-        reviewPane: 'list',
+        reviewPane: 'preview',
         visualOverlayOpacity: 50,
         focusedEntryId: null,
         visualSplit: 50,
@@ -1595,7 +1611,7 @@
         state.runGeneration+=1;
         clearMatchThumbnails();
         state.focusedEntryId=null;
-        setReviewPane('list',false,false);
+        setReviewPane('preview',false,false);
         releaseModelUrls(state.models); disposeVisualRenderHandles();
         state.rendererPresentations={original:null,revised:null};
         clearRendererCache('original'); clearRendererCache('revised');
