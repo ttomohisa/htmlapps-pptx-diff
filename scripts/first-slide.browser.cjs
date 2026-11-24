@@ -222,10 +222,17 @@ async function main(){
         for(const side of ['original','revised']){
           const thumb=page.locator('#matchList .match-thumb[data-thumb-side="'+side+'"]').first();
           assert.ok(await thumb.count(),side+' has a comparison thumbnail');
-          await thumb.scrollIntoViewIfNeeded();
+          // Opening/closing the structure section and using search changes
+          // scroll position. A thumbnail may be in the viewport yet covered
+          // by the sticky header. Center it before sampling actual pixels.
+          await thumb.evaluate(el=>el.scrollIntoView({block:'center',inline:'nearest',behavior:'instant'}));
           await page.waitForFunction(side=>{
             const thumb=document.querySelector('#matchList .match-thumb[data-thumb-side="'+side+'"]');
-            return Boolean(thumb?.querySelector('.pptx-render-frame'));
+            const frame=thumb?.querySelector('.pptx-render-frame');
+            if(!frame)return false;
+            const r=thumb.getBoundingClientRect(),f=frame.getBoundingClientRect();
+            const hit=document.elementFromPoint(r.left+r.width*.78,r.top+r.height*.76);
+            return !!hit&&thumb.contains(hit)&&Math.abs(f.width-thumb.clientWidth)<=3&&Math.abs(f.height-thumb.clientHeight)<=3;
           },side,{timeout:15000});
           assert.equal(await thumb.locator('.slide-canvas').count(),0,side+' uses a rendered slide rather than the white structural fallback');
           assert.ok(await thumb.locator('.pptx-render-frame').evaluate(frame=>frame.getBoundingClientRect().width>0&&frame.getBoundingClientRect().height>0),side+' preview fits inside the slide list thumbnail');
@@ -235,7 +242,14 @@ async function main(){
             if(rgb[0]<100&&rgb[1]<160&&rgb[2]<165)break;
             await page.waitForTimeout(90);
           }
-          assert.ok(rgb[0]<100&&rgb[1]<160&&rgb[2]<165,side+' thumbnail preserves the slide background, not a white fallback: '+rgb.join(','));
+          if(!(rgb[0]<100&&rgb[1]<160&&rgb[2]<165)){
+            await thumb.screenshot({path:path.resolve('test-results/mobile-layout','failed-thumb-'+lang+'-'+width+'-'+side+'.png')});
+            const diagnostic=await thumb.evaluate(el=>{
+              const r=el.getBoundingClientRect(),f=el.querySelector('.pptx-render-frame'),hit=document.elementFromPoint(r.left+r.width*.78,r.top+r.height*.76);
+              return {thumb:r.toJSON(),frame:f?.getBoundingClientRect().toJSON(),frameStyle:f?.style.cssText,hit:hit?.outerHTML.slice(0,500),renderer:f?.firstElementChild?.outerHTML.slice(0,800),scrollY:window.scrollY};
+            });
+            assert.fail(side+' thumbnail preserves the slide background, not a white fallback: '+rgb.join(',')+' '+JSON.stringify(diagnostic));
+          }
         }
         // Existing thumbnails are drawn at the narrow 94px list size first.
         // Switching to overlay enlarges their hosts without a window resize.
