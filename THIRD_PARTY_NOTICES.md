@@ -1,6 +1,6 @@
 # Third-party notices
 
-PPTX Diff v0.7.3 embeds the following pinned runtime component in the generated standalone HTML.
+PPTX Diff embeds the following pinned runtime component in the generated standalone HTML.
 
 ## PowerPoint renderer
 
@@ -16,7 +16,7 @@ PPTX Diff continues to use its own local OOXML parsing and Semantic Diff logic a
 
 ### Local compatibility patch
 
-PPTX Diff v0.7.3 applies a narrow in-memory compatibility patch to the embedded `@aiden0z/pptx-renderer` 1.2.4 browser module before importing it. The patch changes text-color precedence so a resolved paragraph/run color can override the shape-level `fontRef` color, matching PowerPoint behavior for files where color is declared in paragraph `defRPr`. The original pinned third-party asset remains hash-locked and embedded unchanged; the patch is application code and is applied only at runtime in memory.
+PPTX Diff applies a narrow in-memory compatibility patch to the embedded `@aiden0z/pptx-renderer` 1.2.4 browser module before importing it. The patch changes text-color precedence so a resolved paragraph/run color can override the shape-level `fontRef` color, matching PowerPoint behavior for files where color is declared in paragraph `defRPr`. The original pinned third-party asset remains hash-locked and embedded unchanged; the patch is application code and is applied only at runtime in memory.
 
 ## Runtime behavior
 

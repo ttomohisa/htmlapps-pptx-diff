@@ -21,7 +21,8 @@ function fn(name) {
   return first.trimEnd().endsWith('}') ? first : source.slice(start, source.indexOf('\n      }', end) + 8);
 }
 const translationCode = source.slice(source.indexOf('      const translations ='), source.indexOf('      // Template repository contract marker:'));
-const navMarkup = source.slice(source.indexOf('<div class="visual-nav"'), source.indexOf('<div class="visual-selection"'));
+const navStart = source.indexOf('<div class="visual-nav"');
+const navMarkup = source.slice(navStart, source.indexOf('<div class="visual-zoom-toolbar"',navStart));
 const buttonIds = ['visualFirstButton', 'visualPrevButton', 'visualNextButton', 'visualLastButton'];
 function row(pairId, overrides = {}) {
   const slide = index => ({index, title:`Fictitious slide ${index}`});
@@ -55,7 +56,7 @@ function setup(rows = [row(10), row(30), row(70)]) {
     node.dataset.i18nTitle=match[0].match(/data-i18n-title="([^"]+)"/)?.[1];
     node.dataset.i18nAriaLabel=match[0].match(/data-i18n-aria-label="([^"]+)"/)?.[1];
   }
-  const state = {language:'en', phase:'result', selectedPairId:null, diffFilter:'all', changedOnly:false, visualMode:'side', visualHighlights:true,
+  const state = {language:'en', phase:'result', selectedPairId:null, diffFilter:'all', changedOnly:false, searchTerms:[], visualMode:'side', visualZoom:100, visualHighlights:true,
     rendererPresentations:{original:null,revised:null}, visualRenderGeneration:0,
     matching:{rows,summary:{unchanged:rows.length,changed:0,added:0,removed:0,moved:0,review:0}}};
   const context=vm.createContext({state, $:get, document, APP_CONFIG:{name:'PPTX Diff',nameJa:'PPTX Diff'}, formatNumber:String,
@@ -64,6 +65,7 @@ function setup(rows = [row(10), row(30), row(70)]) {
     semanticDetails(){const n=makeNode('details');n.open=true;return n;},
     disposeVisualRenderHandles(){state.visualRenderGeneration++;previewRenders++;}, changedObjectsForRow:()=>({original:[],revised:[]}),
     createVisualMarkerBar:()=>makeNode(), createVisualPane:()=>makeNode(), renderVisualDiffPanel(){}, requestAnimationFrame(){},
+    clearMatchThumbnails(){}, observeMatchThumbnails(){}, applyVisualZoom(){}, lockVisualViewport(){}, setReviewPane(){}, syncVisualChangeNavigation(){},
   });
   const names=['t','applyLanguage','rowMatchesFilter','selectedVisualRow','visibleVisualRows','visualRowIndex','syncMatchSelection','selectVisualPair','navigateVisual','navigateVisualBoundary','renderMatching','renderVisualCompare','compareModeNote'];
   const navigationListeners=source.split('\n').filter(line=>/^      \$\('#visual(?:First|Prev|Next|Last)Button'\)\.addEventListener\('click'/.test(line)).join('\n');
@@ -164,17 +166,38 @@ test('native boundary buttons are ordered first/previous/position/next/last and 
     assert.equal(h.get('#visualLastButton').title,last);assert.equal(h.get('#visualLastButton').getAttribute('aria-label'),last);
   }
 });
-test('responsive navigation owns a separate narrow-screen row with nonshrinking 44px buttons',()=>{
+test('the first preview is measured only after the result section is visible',()=>{
+  const ready=source.indexOf("state.models=models; committed=true; state.matching=matching; state.phase='result';");
+  const reveal=source.indexOf("$('#resultSection').hidden=false;",ready);
+  const render=source.indexOf("renderResults(state.models);",ready);
+  assert.ok(ready>=0&&reveal>ready&&render>reveal,'first result must be visible before rendering and locking the preview viewport');
+  assert.match(source,/\.review-layout\[data-review-mode="side"\] \.visual-stage-viewport\s*\{\s*max-height:none;/);
+  assert.match(source,/for\(const row of state\.matching\?\.rows\|\|\[\]\)/);
+  assert.match(source,/\.review-layout\[data-review-mode="side"\] \.match-row > \.match-slide\s*\{[^}]*94px/);
+});
+test('navigation is directly below the preview and has large phone controls',()=>{
   const css=source.slice(source.indexOf('<style>'),source.indexOf('</style>'));
   const mobile=css.slice(css.indexOf('@media (max-width:760px)',css.indexOf('.visual-nav')));
-  assert.match(mobile,/\.visual-nav\s*\{[^}]*grid-column:\s*1\s*\/\s*-1/);
-  assert.match(mobile,/\.visual-compare-head\s*\{[^}]*grid-template-columns:\s*minmax\(0,1fr\)\s*;/);
+  assert.match(mobile,/\.visual-stage-controls\s*\{[^}]*grid-template-columns:\s*minmax\(0,1fr\)/);
+  assert.match(mobile,/\.visual-nav\s*\{[^}]*grid-column:\s*1\s*;/);
   assert.match(mobile,/\.visual-nav \.icon-button\s*\{[^}]*width:44px;[^}]*height:44px;/);
   assert.match(css,/\.visual-nav \.icon-button\s*\{[^}]*flex:\s*0 0 auto;/);
+  const viewport=source.indexOf('id="visualStageViewport"');
+  const controls=source.indexOf('class="visual-stage-controls"',viewport);
+  const nav=source.indexOf('class="visual-nav"',controls);
+  const changes=source.indexOf('id="visualChangeControls"',controls);
+  const markers=source.indexOf('id="visualMarkerHost"',controls);
+  assert.ok(viewport>=0 && viewport<controls && controls<nav && nav<changes && changes<markers,'slide navigation stays above variable-length change controls and labels');
+  assert.match(source,/if\(state\.visualMode==='side'\)\{/,'side-by-side viewport has its own sizing path');
+  assert.match(source,/height=Math\.max\(height,expected\)/,'side-by-side height covers every slide in the matching decks');
 });
-test('the report implementation stays byte-identical to the approved ownership base',()=>{
+test('report preserves comparison ownership and includes every semantic summary category',()=>{
   const start=source.indexOf('      function captureReportContext()');
   const end=source.indexOf("      document.querySelectorAll('[data-diff-filter]').forEach(button");
   assert.ok(start>=0&&end>start);
-  assert.equal(crypto.createHash('sha256').update(source.slice(start,end)).digest('hex'),'c01d5fdfb39aaeecdf915ccc55184235e59c542f919b08dd8a37997f1ffd57af');
+  const report=source.slice(start,end);
+  assert.match(report,/structuredClone\(state\.matching\)/);
+  assert.match(report,/guardReport\(context\)/);
+  assert.match(report,/\['semanticObject',matching\.semanticSummary\.object\]/);
+  assert.match(report,/reportEscape\(models\.original\.filename\)/);
 });

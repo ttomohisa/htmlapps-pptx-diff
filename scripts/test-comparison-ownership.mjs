@@ -44,13 +44,13 @@ function setup() {
   const context=vm.createContext({console:{warn(){},error(){}},Map,Set,Intl,Date,TextDecoder,Uint16Array,DOMException,Blob,Response,URL:{revokeObjectURL:url=>revoked.push(url)},setTimeout,clearTimeout,structuredClone,CompressionStream:undefined,
     detectLanguage:()=> 'en', $:node, translations:{en:{reportTitle:'Comparison report'},ja:{reportTitle:'比較レポート'}},
     document:{querySelector:selector=>selector==='link[rel~="icon"]'?{href:'data:image/svg+xml,fake'}:node(selector),querySelectorAll:()=>[],createElement:()=>node(`element-${++serial}`),body:{append(){}}},
-    t:key=>key,formatBytes:String,AppToast:{show:value=>toasts.push(value)},matchMedia:()=>({matches:true}),renderResults(){},renderMatching(){},renderVisualCompare(){},
+    t:key=>key,formatBytes:String,AppToast:{show:value=>toasts.push(value)},matchMedia:()=>({matches:true}),renderResults(){},renderMatching(){},renderVisualCompare(){},setReviewPane(){},renderSlotThumbnail(){},queueSlotThumbnail(){},releaseSlotThumbnail(){},stopSlotThumbnailView(){},clearMatchThumbnails(){},
     loadHighFidelityRenderer:async()=>renderer,
     parsePresentation:async(f,progress)=>{files.set(f.name,f); if(parseGates.has(f.name)) await parseGates.get(f.name).promise; const model={filename:f.name,sourceBuffer:f.name,slides:f.slides||[slide(f.title)],slideCount:1,previewUrls:[`blob:model-${f.name}-${++serial}`]};parsed.push(model);progress(1,1);return model;},
     showAppConfirmDialog:async()=>true,downloadBlobFile:(blob,name)=>downloads.push({blob,name}),waitForReportCharts:async()=>{},reportInlineComputedStyles(){},reportInlineBlobReferences:async()=>{},
     PptxError:class PptxError extends Error{}
   });
-  const names=['t','setStatus','setPhase','updateReadyState','renderFileSlot','acceptFile','releaseModelUrls','disposeVisualRenderHandles','clearRendererCache','releaseRendererCache','resetComparison','updateReportState','invalidateReport','captureReportContext','guardReport','prepareHighFidelityPresentation','analyze','rowMatchesFilter','selectedVisualRow','visibleVisualRows','visualRowIndex','syncMatchSelection','selectVisualPair','navigateVisual','statusDescriptor','reportEscape','reportDiffText','reportStatus','reportFaviconHref','renderedSize','reportHighFidelitySnapshot','buildReportPreviewSnapshots','reportPreviewMarkup','reportPropertyLabel','reportPropertyValue','mixedValue','displayPropertyValue','reportChangeBlocks','createReportHtml','gzipReportHtml','bytesToBase64','createSelfExtractingReportHtml','buildDownloadableReportHtml'];
+  const names=['t','setStatus','setPhase','updateReadyState','renderFileSlot','acceptFile','releaseModelUrls','disposeVisualRenderHandles','clearRendererCache','releaseRendererCache','resetComparison','updateReportState','invalidateReport','captureReportContext','guardReport','prepareHighFidelityPresentation','analyze','rowMatchesFilter','selectedVisualRow','visibleVisualRows','visualRowIndex','syncMatchSelection','selectVisualPair','navigateVisual','statusDescriptor','reportEscape','reportDiffText','reportStatus','reportFaviconHref','renderedSize','reportHighFidelitySnapshot','buildReportPreviewSnapshots','reportPreviewMarkup','reportPropertyLabel','reportPropertyValue','mixedValue','displayPropertyValue','reportChangeBlocks','createReportHtml','normalizeReportFilename','gzipReportHtml','bytesToBase64','createSelfExtractingReportHtml','buildDownloadableReportHtml'];
   vm.runInContext(stateCode+'\n'+matchingCode+'\n'+names.map(fn).join('\n')+'\n'+listener("      $('#saveReportButton').addEventListener('click',async()=>{", "      document.querySelectorAll('[data-diff-filter]')")+'\n'+listener("      $('#swapButton').addEventListener('click',()=>{", '      class PptxError')+'\n'+listener("      $('#layoutTolerance').addEventListener('change'", "      $('#languageButton')"),context);
   const state=vm.runInContext('state',context); state.rendererModule=renderer;
   return {context,state,node,downloads,toasts,revoked,renderCalls,parsed,parseGates,renderGates,snapshotGates};
@@ -85,7 +85,7 @@ test('current analysis failure releases earlier parsed models and permits retry'
   assert.equal(h.state.phase,'error');assert.ok(h.revoked.includes(h.parsed[0].previewUrls[0]));assert.equal(h.node('#saveReportButton').disabled,true);h.parseGates.clear();await h.context.analyze();assert.equal(h.state.phase,'result');assert.equal(h.node('#analyzeSpinner').hidden,true);
 });
 test('renderer failure retains current structural comparison fallback',async()=>{
-  const h=setup();h.context.loadHighFidelityRenderer=async()=>({parseZip:async()=>{throw new Error('renderer unavailable');}});await initial(h);assert.equal(h.state.rendererPresentations.original,null);assert.equal(h.state.matching.rows.length,2);
+  const h=setup();h.context.loadHighFidelityRenderer=async()=>({parseZip:async()=>{throw new Error('renderer unavailable');}});await initial(h);assert.equal(h.state.rendererPresentations.original,null);assert.equal(h.state.matching.rows.length,1);assert.equal(h.state.matching.rows[0].reviewRequired,true);
 });
 for(const mutation of ['replace','swap','reanalyze','tolerance']) test(`report snapshot interrupted by ${mutation} produces no download`,async()=>{
   const h=setup();await initial(h);const gate=deferred();h.snapshotGates.set('Original-A.pptx:Alpha',gate);const saving=h.node('#saveReportButton').click();await until(()=>h.renderCalls.length===1);
@@ -159,4 +159,8 @@ for(const replacement of [true,false]) test(`late visual media cleanup ${replace
   // Mirrors the pinned renderer's non-abortable EMF toBlob callback.
   cache.set('late','blob:late-visual');gate.resolve();await rendering;
   assert.equal(cache.has('late'),!replacement);assert.equal(h.revoked.includes('blob:late-visual'),replacement);assert.equal(h.renderCalls[0].handle.disposed,true);
+});
+
+ test('report filename is editable and sanitized without changing the comparison',async()=>{
+  const h=setup();await initial(h);h.node('#reportFilename').value='Review: July.html';await h.node('#saveReportButton').click();assert.equal(h.downloads[0].name,'Review_ July.html');assert.equal(h.context.normalizeReportFilename('CON'),'_CON.html');assert.equal(h.context.normalizeReportFilename(' .html '),'pptx-diff-report.html');assert.equal(h.context.normalizeReportFilename('review.HTM'),'review.html');assertReady(h);
 });

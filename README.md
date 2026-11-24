@@ -18,9 +18,14 @@ GitHub Pages delivers the initial HTML. After it loads, PPTX parsing, slide matc
 
 ## Features
 
+- **Preview selected files** — See the first slide of each PPTX as soon as it is chosen, before running the comparison. Selecting the first file hides the introduction and local-processing badge; Replace file is styled as a link.
+- **Jump to a change** — Use “Show in preview” in a change detail to select its slide and highlight the affected area when positional information exists. Notes and other non-positional changes cannot be outlined on a slide.
+- **Find slides faster** — Slide-list thumbnails render lazily as they become visible. Search slide titles and text, and combine the search with existing difference filters.
+- **Zoom a visual comparison** — Use the joined minus / percentage / plus controls beneath the slide at 50–200%. Select the percentage to return to 100%. The preview frame and slide pager remain fixed; drag with a mouse to pan enlarged content (swipe on phones). Neither action changes computed differences.
+- **Distinguish counts** — Breakdown numbers count changed elements, while filter numbers count slides. One change can be counted in more than one breakdown category.
 - **Match slides across revisions** — Compare corresponding slides without relying only on slide numbers, including added, removed, and moved slides.
 - **Review semantic changes** — Detect text, numbers, objects, images, layout, formatting, and speaker-note changes slide by slide.
-- **Confirm changes visually** — Use high-fidelity Side by side, Overlay, Split, and Blink views with optional difference markers.
+- **Confirm changes visually** — On desktop, Side by side uses the full result width with a compact slide list below; its complete preview is sized correctly on the first render. Other modes show the list beside the preview. On phones, the preview opens first, and you can switch to the slide list. The slide summary and change breakdown follow the comparison view. Step through individual changes and adjust the top slide opacity in Overlay mode.
 - **Keep chart previews visible** — Charts rendered by the embedded PPTX renderer are initialized after the slide DOM is mounted, so chart-heavy slides can be reviewed visually.
 - **Filter large comparisons** — Show only a change category or only slides that changed without altering the underlying comparison.
 - **Save a local comparison report** — Export a collapsible HTML report with high-fidelity slide previews. The report is gzip-compressed into a self-extracting single HTML file when supported.
@@ -34,7 +39,7 @@ Just [open the demo](https://ttomohisa.github.io/htmlapps-pptx-diff/). No instal
 
 ### Use the downloaded single HTML
 
-1. Download `dist/index.html` or `dist/index.self-extract.html` from a release/build artifact.
+1. Download the readable or self-extracting HTML from [GitHub Releases](https://github.com/ttomohisa/htmlapps-pptx-diff/releases), or use `dist/index.html` or `dist/index.self-extract.html` from a build.
 2. Open the file in a current browser.
 3. Select the Original and Revised `.pptx` files and start the comparison.
 
@@ -54,16 +59,18 @@ The builder uses Windows PowerShell and `tar.exe`; Node.js, Python, and a local 
 1. Add the **Original** PowerPoint file.
 2. Add the **Revised** PowerPoint file.
 3. Select **Compare slides**.
-4. Review the matched slide list. Slides can be marked Unchanged, Changed, Added, Removed, Moved, or Review.
-5. Expand **View changes** to inspect text, number, object, image, layout, formatting, and speaker-note differences.
-6. Select a slide row to open **Visual compare**.
+4. Review the first slide in **Visual compare**; use the pager to move between slides.
+5. Review the matched slide list. Slides can be marked Unchanged, Changed, Added, Removed, Moved, or Review.
+6. Expand **View changes** for text, number, object, image, layout, formatting, and speaker-note differences. Select a row or use Show in preview to return to that slide.
 7. Switch between **Side by side**, **Overlay**, **Split**, and **Blink**. Difference markers can be hidden without re-rendering the slide.
 8. Use the category filters or **Changed slides only** to narrow the result list.
-9. Use **Save comparison as HTML** when you need an offline report. The app asks for confirmation because the report can contain presentation text, images, and speaker notes.
+9. Use **Save comparison as HTML** when you need an offline report. Choose a file name in the confirmation dialog. The app asks for confirmation because the report can contain presentation text, images, and speaker notes.
 
 ### Visual comparison
 
-Use **First / Previous / Next / Last** beside the preview to move through the currently filtered comparison rows. First and Last jump to the visible boundaries, including added and removed slides. Navigation preserves expanded change details and scroll position; the current row is also identified for assistive technology.
+Use **First / Previous / Next / Last** directly below the preview to move through the currently filtered comparison rows. In Side by side mode the pager and viewport retain their positions when one slide is missing or the number of detected changes varies. First and Last jump to the visible boundaries, including added and removed slides. Navigation preserves expanded change details and scroll position; the current row is also identified for assistive technology.
+
+The separate previous/next change controls step through the currently selected slide's differences. Notes and changes without positional data cannot be outlined on a slide. On phones, switch between the **Slide list** and **Preview** tabs.
 
 Semantic Diff is the source of truth for detected changes. The visual renderer is used to confirm how those changes look on the slide.
 
@@ -142,6 +149,9 @@ The GitHub Pages version requires the initial page request, but the selected PPT
 - Detailed chart data/style diff is not implemented. Chart/detail changes that cannot be compared safely are surfaced as **Review**, while the chart can still be inspected in Visual compare.
 - SmartArt, animations, transitions, complex groups, and some inherited PowerPoint behaviors are not compared in full detail.
 - High-fidelity rendering is intended for review, but it is not a complete PowerPoint rendering engine. Complex effects may differ from PowerPoint.
+- PPTX inputs larger than 100 MiB, ZIP entries larger than 64 MiB when expanded, and archives advertising more than 256 MiB of expanded data or containing more than 10,000 ZIP entries are rejected to limit memory exhaustion.
+- Heavily rewritten slides may be matched conservatively with a **Review** status. Shape kinds, picture crops, slide backgrounds and overlapping object stacking changes that cannot be described at property level are flagged for review; slide-size changes are reported under Layout.
+- Master/layout inheritance, animations and other unsupported effects may still escape semantic detection; use Visual compare for an additional check.
 - Very large decks, high-resolution images, and chart-heavy presentations can use substantial browser memory.
 - A saved HTML report can contain presentation text, images, and speaker notes even though it does not contain the original PPTX binaries.
 - Compressed PPTX/report handling depends on the browser's `DecompressionStream` support; report compression additionally uses `CompressionStream` when available.
@@ -156,7 +166,11 @@ PPTX ZIP parsing, slide matching, Semantic Diff, filtering, and report generatio
 
 ## Release status
 
-**v1.0.4 is the stable release.**
+**v1.0.5 is the stable release.**
+
+When a pull request is merged into `main` and `app.config.json` contains an unpublished stable Semantic Version, the `deploy-pages.yml` workflow builds and verifies the two standalone HTML files, then creates the matching `vX.Y.Z` Git tag and publishes a GitHub Release. Direct pushes and manual workflow runs do not publish releases. Existing tags and releases are never overwritten; a further release requires a version bump.
+
+Each release includes readable and self-extracting standalone HTML, a distribution ZIP with documentation and license notices, and `SHA256SUMS.txt`. Release downloads are made from the exact successful `main` build artifact; the Windows PR validation workflow also performs a dry-run of the release packaging. If publication fails, the Actions run can be retried. Merging PRs is always manual.
 
 ## Contributing
 

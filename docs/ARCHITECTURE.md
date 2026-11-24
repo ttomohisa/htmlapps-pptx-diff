@@ -119,6 +119,14 @@ Report jobs snapshot serializable comparison rows, filenames, language, and pres
 
 The default builder refreshes the tracked `pptx-diff.html` alias. Repository checks execute the same ownership regressions against source, readable release, root alias, and the locally inflated self-extract release. Custom output builds do not update the root alias.
 
+## Automated GitHub Release after merge
+
+`.github/workflows/deploy-pages.yml` runs when `main` receives a push. Its Windows build validates `dist/index.html` and `dist/index.self-extract.html` and uploads them as one job artifact. The separate, contents-write release job waits for that verified build, is serialized independently from Pages deployment, and checks that the commit belongs to a merged PR targeting `main`. It does not run on manual dispatch or publish on direct pushes.
+
+The release gate reads stable Semantic Versioning from `app.config.json`, skips published releases, and refuses to move an existing version tag pointing to a different commit. `actions/download-artifact` restores the verified build; `scripts/package-release.py` creates the readable HTML, self-extracting HTML, versioned ZIP, SHA-256 checksums and changelog-derived release notes. `gh release create --target` publishes the tag and release against the exact merged SHA. A failed publication can be retried; previously published tags and releases are never overwritten.
+
+`.github/workflows/build-standalone.yml` also dry-runs the release package generator on PRs, but never publishes a tag or release.
+
 ## Visible comparison navigation
 
 First / Last derive their targets from `visibleVisualRows` and reuse `selectVisualPair`, so category and changed-only filters define the navigation order. Repeated activation at the current boundary is a no-op. Initial row rendering and `syncMatchSelection` keep `aria-current` aligned with the existing visual selection, without replacing result nodes during navigation. Boundary-navigation regressions run beside the unchanged ownership suite against every release variant and pin the report implementation to the preceding ownership fix.

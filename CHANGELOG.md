@@ -1,5 +1,38 @@
 # Changelog
 
+## 1.0.5 - 2026-11-22
+
+- Match identical blank slides and keep low-confidence one-slide wholesale rewrites together for review.
+- Detect case/whitespace edits, picture crop/appearance edits, shape kind, slide background, slide size and overlapping shape order changes.
+- Bound PPTX input sizes and ZIP inflation to reduce memory exhaustion from malformed or oversized archives.
+- Include object-change totals in HTML reports and test the comparison engine across standalone distributions.
+- Simplify the introduction and file-selection copy, remove the extra hero heading and framed comparison settings, hide the local-processing badge on phones, and move feature descriptions into Help.
+- Show the first slide of each selected PPTX before comparison. Use the local high-fidelity renderer when possible, fall back to a basic thumbnail, and discard stale previews when files change.
+- Replace the comparison result cards with a single slide-count strip and a two-column change breakdown; add SVG icons, clearer active states, and a separate differences toggle for visual compare modes.
+- Add jump-to-change actions, lazy thumbnails in the matched-slide list, slide title/text search combined with filters, explicit element/slide count units, per-mode descriptions, and 50–200% visual zoom.
+- Group zoom into a compact − / clickable percentage / + control and move slide pagination directly below the preview, including the phone layout.
+- Keep the preview frame and adjacent slide navigation stationary across 50–200% zoom; pan the enlarged slide inside the frame, and recompute the frame only when its content or screen size changes.
+- Arrange the slide list next to the preview on desktop and add list/preview tabs on phones. Remove redundant zoom and mode labels and the view-mode explanatory sentence. Add change-by-change navigation, mouse drag-to-pan when zoomed, and an adjustable top-layer opacity in overlay mode.
+- Hide the introduction/local-processing badge once a PPTX is selected, display file-replacement buttons as text links, and remove the preview-renderer quality label. Give side-by-side slides the full comparison width and place the slide list below, with a consistent preview height and pager location even when one slide or its changes are absent.
+- Correct the first-preview sizing order: reveal the result before measuring its slide container. Remove the side-by-side 75vh clip, reserve a full-height frame based on the decks' tallest slide ratio, and return the underneath slide list to compact thumbnails rather than oversized duplicate previews.
+- Render slide-list thumbnails with the local presentation renderer, preserving backgrounds; refit existing thumbnails when switching layouts, resizing, or revealing the list to avoid white margins.
+- Remove the redundant file-selection hint and use a compact borderless change-details disclosure in the slide list.
+- Flatten the selected-file layout, comparison breakdown, preview chrome and structural inspection: remove nested cards and decorative shadows, keep the empty drop target and actual slide borders, and arrange the four structural metrics in a single row.
+- Prioritize the visual comparison on all screen sizes; place the summary and change breakdown below it, group the search/filter controls, and use subtle unframed file groups without redundant slot numbers.
+- Automatically package and publish a versioned Git tag and GitHub Release after a merged PR passes the main-branch build, with release asset checksums, duplicate protection, and draft recovery.
+
+- Allow an editable, sanitized report filename and correct export success messages and input-limit descriptions.
+- Standardize the phone informational footer, final Help build metadata, and equivalent local-processing badge wording.
+
+
+- Add localized First / Last controls for the currently filtered comparison rows, with disabled boundary/empty states and a separate navigation row on narrow screens.
+- Expose the current comparison row with `aria-current`, retaining expanded details, focus, and scroll position when navigating.
+- Cover navigation and current-row state with synthetic regression checks across source, root, readable, and self-extract releases; preserve the report implementation byte-for-byte.
+
+- Keep asynchronous parsing and renderer results owned by their current comparison; stale completion cannot replace a new result or clear its busy indicator.
+- Capture one comparison and language for report export, cancel stale reports after source/recomparison/tolerance changes, and isolate temporary report media cleanup.
+- Add source-level lifecycle regressions and source/root/readable/self-extract parity checks, and regenerate the root download during default builds.
+
 ## 1.0.4 - 2026-10-27
 
 - Keep the header version badge visible at narrow widths by truncating only the app title.
@@ -17,20 +50,6 @@
 
 - Normalize icon background green and exact 25% corner geometry, retaining all foreground and cutout paths.
 - Rebuild matching header/favicon and standalone aliases without changing runtime assets.
-
-## Unreleased
-
-- Standardize the phone informational footer, final Help build metadata, and equivalent local-processing badge wording.
-
-
-- Add localized First / Last controls for the currently filtered comparison rows, with disabled boundary/empty states and a separate navigation row on narrow screens.
-- Expose the current comparison row with `aria-current`, retaining expanded details, focus, and scroll position when navigating.
-- Cover navigation and current-row state with synthetic regression checks across source, root, readable, and self-extract releases; preserve the report implementation byte-for-byte.
-
-- Keep asynchronous parsing and renderer results owned by their current comparison; stale completion cannot replace a new result or clear its busy indicator.
-- Capture one comparison and language for report export, cancel stale reports after source/recomparison/tolerance changes, and isolate temporary report media cleanup.
-- Add source-level lifecycle regressions and source/root/readable/self-extract parity checks, and regenerate the root download during default builds.
-- Validation uses synthetic boundary doubles; real browser PPTX rendering and download flows remain unverified for this change.
 
 ## 1.0.1
 
