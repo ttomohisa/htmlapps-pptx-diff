@@ -133,6 +133,10 @@ async function main(){
         assert.equal(await page.locator('.page-intro').isVisible(),true,'initial intro is visible before selecting files');
         assert.equal(await page.locator('.drop-zone-note,[data-i18n="dropNote"]').count(),0,'redundant file choice hint is removed');
         assert.equal(await page.locator('.drop-empty [data-pick]').count(),2,'both file chooser buttons remain');
+        const emptyDrop=await page.locator('#originalDrop').evaluate(el=>getComputedStyle(el).borderTopStyle);
+        assert.equal(emptyDrop,'dashed','empty drop area retains a visible drop target');
+        const panelStyle=await page.locator('.file-panel').first().evaluate(el=>{const s=getComputedStyle(el);return [s.borderTopWidth,s.boxShadow,s.backgroundColor];});
+        assert.deepEqual(panelStyle,['0px','none','rgba(0, 0, 0, 0)'],'no enclosing card around file picker');
         const preview=async(slot,name,label)=>page.locator('#'+slot+'Input').setInputFiles({
           name,mimeType:'application/vnd.openxmlformats-officedocument.presentationml.presentation',buffer:pptx(label)
         });
@@ -144,6 +148,10 @@ async function main(){
         await expectThumbnail(page,'original');
         await preview('revised','second.pptx','FIRST_SLIDE_BETA');
         await expectThumbnail(page,'revised');
+        for(const slot of ['original','revised']){
+          const style=await page.locator('#'+slot+'Drop').evaluate(el=>{const s=getComputedStyle(el);return [s.borderTopWidth,s.minHeight,s.backgroundColor];});
+          assert.deepEqual(style,['0px','0px','rgba(0, 0, 0, 0)'],'selected file is not framed or forced to empty-drop height');
+        }
         assert.equal(await page.locator('#analyzeButton').isEnabled(),true);
         await page.locator('#swapButton').click();
         assert.equal(await page.locator('#originalName').innerText(),'second.pptx');
@@ -175,6 +183,20 @@ async function main(){
         assert.equal(await page.locator('#semanticSummary .semantic-summary-item').count(),7);
         assert.equal(await page.locator('#changeBreakdownTitle').innerText(),lang==='ja'?'変更内訳':'Change breakdown');
         assert.equal(await page.locator('.change-breakdown').count(),1);
+        const structure=page.locator('.structure-details');
+        await structure.locator('summary').click();
+        const flat=await structure.evaluate(el=>{
+          const style=node=>{const s=getComputedStyle(node);return {radius:s.borderRadius,shadow:s.boxShadow,background:s.backgroundColor};};
+          return {outer:style(el),cards:[...el.querySelectorAll('.inspection-card')].map(style),stats:[...el.querySelectorAll('.summary-item')].map(style),columns:[...el.querySelectorAll('.summary-grid')].map(n=>getComputedStyle(n).gridTemplateColumns.split(' ').length),rows:el.querySelectorAll('.slide-row').length};
+        });
+        for(const item of [flat.outer,...flat.cards,...flat.stats]){
+          assert.deepEqual(item,{radius:'0px',shadow:'none',background:'rgba(0, 0, 0, 0)'},'structure and metrics use plain surfaces rather than nested cards');
+        }
+        assert.deepEqual(flat.columns,[4,4],'four metrics share one row on both layouts');
+        assert.equal(flat.rows,4,'slide structure remains complete');
+        assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'expanded structure does not overflow');
+        await structure.locator('summary').click();
+        assert.equal(await structure.evaluate(el=>el.open),false,'structure can still collapse');
         assert.equal(await page.locator('#semanticSummary [role="listitem"]').count(),7);
         assert.equal(await page.locator('#matchSummary').getAttribute('aria-label'),lang==='ja'?'スライドの集計':'Slide summary');
         // Search combines with the current slide filters, without sending data to a server.
