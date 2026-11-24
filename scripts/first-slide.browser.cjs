@@ -525,4 +525,5 @@ async function main(){
     }
   }finally{await browser.close();}
 }
-main().catch(error=>{console.error(error);process.exitCode=1;});
+module.exports={pptx};
+if(require.main===module)main().catch(error=>{console.error(error);process.exitCode=1;});
