@@ -50,7 +50,7 @@ function setup() {
     showAppConfirmDialog:async()=>true,downloadBlobFile:(blob,name)=>downloads.push({blob,name}),waitForReportCharts:async()=>{},reportInlineComputedStyles(){},reportInlineBlobReferences:async()=>{},
     PptxError:class PptxError extends Error{}
   });
-  const names=['t','setStatus','setPhase','updateReadyState','renderFileSlot','acceptFile','releaseModelUrls','disposeVisualRenderHandles','clearRendererCache','releaseRendererCache','resetComparison','updateReportState','invalidateReport','captureReportContext','guardReport','prepareHighFidelityPresentation','analyze','rowMatchesFilter','selectedVisualRow','visibleVisualRows','visualRowIndex','syncMatchSelection','selectVisualPair','navigateVisual','statusDescriptor','reportEscape','reportDiffText','reportStatus','reportFaviconHref','renderedSize','reportHighFidelitySnapshot','buildReportPreviewSnapshots','reportPreviewMarkup','reportPropertyLabel','reportPropertyValue','mixedValue','displayPropertyValue','reportChangeBlocks','createReportHtml','gzipReportHtml','bytesToBase64','createSelfExtractingReportHtml','buildDownloadableReportHtml'];
+  const names=['t','setStatus','setPhase','updateReadyState','renderFileSlot','acceptFile','releaseModelUrls','disposeVisualRenderHandles','clearRendererCache','releaseRendererCache','resetComparison','updateReportState','invalidateReport','captureReportContext','guardReport','prepareHighFidelityPresentation','analyze','rowMatchesFilter','selectedVisualRow','visibleVisualRows','visualRowIndex','syncMatchSelection','selectVisualPair','navigateVisual','statusDescriptor','reportEscape','reportDiffText','reportStatus','reportFaviconHref','renderedSize','reportHighFidelitySnapshot','buildReportPreviewSnapshots','reportPreviewMarkup','reportPropertyLabel','reportPropertyValue','mixedValue','displayPropertyValue','reportChangeBlocks','createReportHtml','normalizeReportFilename','gzipReportHtml','bytesToBase64','createSelfExtractingReportHtml','buildDownloadableReportHtml'];
   vm.runInContext(stateCode+'\n'+matchingCode+'\n'+names.map(fn).join('\n')+'\n'+listener("      $('#saveReportButton').addEventListener('click',async()=>{", "      document.querySelectorAll('[data-diff-filter]')")+'\n'+listener("      $('#swapButton').addEventListener('click',()=>{", '      class PptxError')+'\n'+listener("      $('#layoutTolerance').addEventListener('change'", "      $('#languageButton')"),context);
   const state=vm.runInContext('state',context); state.rendererModule=renderer;
   return {context,state,node,downloads,toasts,revoked,renderCalls,parsed,parseGates,renderGates,snapshotGates};
@@ -159,4 +159,8 @@ for(const replacement of [true,false]) test(`late visual media cleanup ${replace
   // Mirrors the pinned renderer's non-abortable EMF toBlob callback.
   cache.set('late','blob:late-visual');gate.resolve();await rendering;
   assert.equal(cache.has('late'),!replacement);assert.equal(h.revoked.includes('blob:late-visual'),replacement);assert.equal(h.renderCalls[0].handle.disposed,true);
+});
+
+ test('report filename is editable and sanitized without changing the comparison',async()=>{
+  const h=setup();await initial(h);h.node('#reportFilename').value='Review: July.html';await h.node('#saveReportButton').click();assert.equal(h.downloads[0].name,'Review_ July.html');assert.equal(h.context.normalizeReportFilename('CON'),'_CON.html');assert.equal(h.context.normalizeReportFilename(' .html '),'pptx-diff-report.html');assert.equal(h.context.normalizeReportFilename('review.HTM'),'review.html');assertReady(h);
 });
