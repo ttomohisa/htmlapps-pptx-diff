@@ -39,7 +39,7 @@ Just [open the demo](https://ttomohisa.github.io/htmlapps-pptx-diff/). No instal
 
 ### Use the downloaded single HTML
 
-1. Download `dist/index.html` or `dist/index.self-extract.html` from a release/build artifact.
+1. Download the readable or self-extracting HTML from [GitHub Releases](https://github.com/ttomohisa/htmlapps-pptx-diff/releases), or use `dist/index.html` or `dist/index.self-extract.html` from a build.
 2. Open the file in a current browser.
 3. Select the Original and Revised `.pptx` files and start the comparison.
 
@@ -59,12 +59,12 @@ The builder uses Windows PowerShell and `tar.exe`; Node.js, Python, and a local 
 1. Add the **Original** PowerPoint file.
 2. Add the **Revised** PowerPoint file.
 3. Select **Compare slides**.
-4. Review the matched slide list. Slides can be marked Unchanged, Changed, Added, Removed, Moved, or Review.
-5. Expand **View changes** to inspect text, number, object, image, layout, formatting, and speaker-note differences.
-6. Select a slide row to open **Visual compare**.
+4. Review the first slide in **Visual compare**; use the pager to move between slides.
+5. Review the matched slide list. Slides can be marked Unchanged, Changed, Added, Removed, Moved, or Review.
+6. Expand **View changes** for text, number, object, image, layout, formatting, and speaker-note differences. Select a row or use Show in preview to return to that slide.
 7. Switch between **Side by side**, **Overlay**, **Split**, and **Blink**. Difference markers can be hidden without re-rendering the slide.
 8. Use the category filters or **Changed slides only** to narrow the result list.
-9. Use **Save comparison as HTML** when you need an offline report. The app asks for confirmation because the report can contain presentation text, images, and speaker notes.
+9. Use **Save comparison as HTML** when you need an offline report. Choose a file name in the confirmation dialog. The app asks for confirmation because the report can contain presentation text, images, and speaker notes.
 
 ### Visual comparison
 
@@ -149,7 +149,7 @@ The GitHub Pages version requires the initial page request, but the selected PPT
 - Detailed chart data/style diff is not implemented. Chart/detail changes that cannot be compared safely are surfaced as **Review**, while the chart can still be inspected in Visual compare.
 - SmartArt, animations, transitions, complex groups, and some inherited PowerPoint behaviors are not compared in full detail.
 - High-fidelity rendering is intended for review, but it is not a complete PowerPoint rendering engine. Complex effects may differ from PowerPoint.
-- PPTX inputs larger than 100 MiB, ZIP entries larger than 64 MiB when expanded, and archives advertising more than 256 MiB of expanded data are rejected to limit memory exhaustion.
+- PPTX inputs larger than 100 MiB, ZIP entries larger than 64 MiB when expanded, and archives advertising more than 256 MiB of expanded data or containing more than 10,000 ZIP entries are rejected to limit memory exhaustion.
 - Heavily rewritten slides may be matched conservatively with a **Review** status. Shape kinds, picture crops, slide backgrounds and overlapping object stacking changes that cannot be described at property level are flagged for review; slide-size changes are reported under Layout.
 - Master/layout inheritance, animations and other unsupported effects may still escape semantic detection; use Visual compare for an additional check.
 - Very large decks, high-resolution images, and chart-heavy presentations can use substantial browser memory.
